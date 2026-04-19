@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Enums;
+
+enum AppointmentStatus: string
+{
+    case Booked = 'booked';
+    case Pending = 'pending';
+    case Confirmed = 'confirmed';
+    case Completed = 'completed';
+    case Cancelled = 'cancelled';
+    case NoShow = 'no_show';
+}

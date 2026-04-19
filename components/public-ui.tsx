@@ -1,0 +1,354 @@
+"use client";
+
+import Link from "next/link";
+import { Manrope } from "next/font/google";
+import { ReactNode } from "react";
+
+const publicFont = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+export const publicPageClass = `${publicFont.className} min-h-screen bg-[#f5f3ef] text-neutral-950`;
+export const publicCardClass =
+  "rounded-[32px] border border-neutral-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]";
+export const publicInputClass =
+  "w-full rounded-2xl border border-neutral-300 bg-white px-4 py-4 text-base text-neutral-950 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-2 focus:ring-neutral-950/8";
+export const publicPrimaryButtonClass =
+  "inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-6 py-4 text-base font-semibold text-white transition-all hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300";
+export const publicSecondaryButtonClass =
+  "inline-flex items-center justify-center rounded-2xl border border-neutral-300 bg-white px-5 py-4 text-base font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50";
+
+export function PublicPageShell({
+  children,
+  topLink,
+}: {
+  children: ReactNode;
+  topLink?: ReactNode;
+}) {
+  return (
+    <main className={publicPageClass}>
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 md:px-6">
+        <div className="mb-6 flex items-center justify-between">
+          <Link href="/" className="text-lg font-semibold tracking-tight text-neutral-950">
+            BarberPro
+          </Link>
+          {topLink}
+        </div>
+        {children}
+      </div>
+    </main>
+  );
+}
+
+export function MinimalAuthCard({
+  title,
+  subtitle,
+  alternateText,
+  alternateHref,
+  alternateLabel,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  alternateText: string;
+  alternateHref: string;
+  alternateLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <PublicPageShell
+      topLink={
+        <Link href="/" className="text-sm font-medium text-neutral-500 transition-all hover:text-neutral-900">
+          Voltar ao site
+        </Link>
+      }
+    >
+      <div className="mx-auto flex w-full max-w-xl flex-1 items-center justify-center py-8">
+        <section className={`${publicCardClass} w-full p-7 md:p-9`}>
+          <div className="mb-8">
+            <p className="text-sm font-semibold tracking-tight text-neutral-500">BarberPro</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-neutral-950 md:text-[2rem]">{title}</h1>
+            <p className="mt-3 text-[15px] leading-7 text-neutral-500">{subtitle}</p>
+          </div>
+          {children}
+          <p className="mt-6 text-sm text-neutral-500">
+            {alternateText}{" "}
+            <Link href={alternateHref} className="font-semibold text-neutral-950 transition-all hover:text-neutral-700">
+              {alternateLabel}
+            </Link>
+          </p>
+        </section>
+      </div>
+    </PublicPageShell>
+  );
+}
+
+export function MinimalSocialButton({
+  provider,
+  label,
+  onClick,
+}: {
+  provider: "google" | "apple";
+  label: string;
+  onClick: () => void;
+}) {
+  const isGoogle = provider === "google";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex w-full items-center justify-center gap-3 rounded-2xl border px-4 py-3.5 text-sm font-semibold transition-all ${
+        isGoogle
+          ? "border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
+          : "border-neutral-950 bg-neutral-950 text-white hover:bg-neutral-800"
+      }`}
+    >
+      {isGoogle ? <GoogleIcon /> : <AppleIcon />}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+export function MinimalDivider() {
+  return (
+    <div className="relative my-6">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-neutral-200" />
+      </div>
+      <div className="relative flex justify-center">
+        <span className="bg-white px-3 text-sm text-neutral-400">ou</span>
+      </div>
+    </div>
+  );
+}
+
+export function BookingHeader({
+  name,
+  subtitle,
+  badges,
+  avatarLabel,
+}: {
+  name: string;
+  subtitle: string;
+  badges: string[];
+  avatarLabel: string;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-neutral-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+      <div className="relative h-52 bg-[linear-gradient(135deg,#d6d0c8_0%,#c8c1b6_28%,#9f978b_56%,#8f887d_100%)] md:h-64">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_42%),linear-gradient(180deg,rgba(17,24,39,0.08),rgba(17,24,39,0.24))]" />
+      </div>
+      <div className="relative space-y-5 p-6 pt-0 text-center md:p-10 md:pt-0">
+        <div className="mx-auto -mt-14 flex h-28 w-28 items-center justify-center rounded-full border-4 border-white bg-neutral-950 text-3xl font-extrabold text-white shadow-sm">
+          {avatarLabel}
+        </div>
+        <div>
+          <p className="text-sm font-semibold tracking-[0.14em] text-neutral-500">NOVA MARCAÇÃO</p>
+          <h1 className="mt-3 text-[2rem] font-bold tracking-[-0.04em] text-neutral-950 md:text-[3.5rem]">{name}</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-8 text-neutral-500 md:text-base">{subtitle}</p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          {badges.map((badge) => (
+            <span
+              key={badge}
+              className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm font-medium text-neutral-600"
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function BookingStepCard({
+  title,
+  description,
+  children,
+  onBack,
+  onNext,
+  isNextDisabled,
+  footer,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  onBack?: () => void;
+  onNext?: () => void;
+  isNextDisabled?: boolean;
+  footer?: ReactNode;
+}) {
+  return (
+    <section className={`${publicCardClass} overflow-hidden`}>
+      <div className="border-b border-neutral-200 px-7 py-6 md:px-10">
+        <div className="flex items-start gap-4">
+          <div className="w-10">
+            {onBack ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-all hover:bg-neutral-100 hover:text-neutral-950"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+            ) : (
+              <span className="block h-10 w-10" />
+            )}
+          </div>
+          <div className="flex-1 text-center">
+            <h2 className="text-2xl font-bold tracking-[-0.04em] text-neutral-950 md:text-3xl">{title}</h2>
+            {description ? <p className="mt-2 text-base leading-7 text-neutral-500">{description}</p> : null}
+          </div>
+          <div className="w-10">
+            {onNext ? (
+              <button
+                type="button"
+                onClick={onNext}
+                disabled={isNextDisabled}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-all hover:bg-neutral-100 hover:text-neutral-950 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </button>
+            ) : (
+              <span className="block h-10 w-10" />
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="px-7 py-7 md:px-10 md:py-8">{children}</div>
+      {footer ? <div className="border-t border-neutral-200 px-7 py-6 md:px-10">{footer}</div> : null}
+    </section>
+  );
+}
+
+export function StepNavigation({
+  currentStep,
+  totalSteps,
+  onBack,
+}: {
+  currentStep: number;
+  totalSteps: number;
+  onBack?: () => void;
+}) {
+  return (
+    <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="flex gap-2">
+        {Array.from({ length: totalSteps }).map((_, index) => (
+          <span
+            key={index}
+            className={`h-2.5 w-10 rounded-full transition-all ${
+              index + 1 <= currentStep ? "bg-neutral-950" : "bg-neutral-200"
+            }`}
+          />
+        ))}
+      </div>
+      {onBack ? (
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-base font-semibold text-neutral-500 transition-all hover:text-neutral-900"
+        >
+          Voltar
+        </button>
+      ) : (
+        <span className="text-base font-medium text-neutral-400">Passo {currentStep}</span>
+      )}
+    </div>
+  );
+}
+
+export function SelectionList({ children }: { children: ReactNode }) {
+  return <div className="grid gap-3">{children}</div>;
+}
+
+export function SelectionTile({
+  active,
+  onClick,
+  title,
+  subtitle,
+  meta,
+  disabled,
+  leading,
+}: {
+  active?: boolean;
+  onClick?: () => void;
+  title: string;
+  subtitle?: string;
+  meta?: string;
+  disabled?: boolean;
+  leading?: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-full rounded-2xl border px-4 py-4 text-left transition-all ${
+        disabled
+          ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
+          : active
+            ? "border-neutral-950 bg-neutral-950 text-white"
+            : "border-neutral-200 bg-white hover:border-neutral-400 hover:bg-neutral-50"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {leading ? <div>{leading}</div> : null}
+          <div>
+            <p className="text-lg font-semibold tracking-[-0.02em]">{title}</p>
+            {subtitle ? (
+              <p className={`mt-1 text-base leading-6 ${active ? "text-white/75" : "text-neutral-500"}`}>{subtitle}</p>
+            ) : null}
+          </div>
+        </div>
+        {meta ? (
+          <span
+            className={`rounded-full px-3 py-1.5 text-base font-semibold ${
+              active ? "bg-white text-neutral-950" : "bg-neutral-100 text-neutral-700"
+            }`}
+          >
+            {meta}
+          </span>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+      <path
+        fill="#EA4335"
+        d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.5 12 2.5A9.5 9.5 0 0 0 2.5 12 9.5 9.5 0 0 0 12 21.5c5.5 0 9.1-3.9 9.1-9.4 0-.6-.1-1.1-.2-1.9H12Z"
+      />
+      <path
+        fill="#34A853"
+        d="M3.6 7.6 6.8 9.9A6 6 0 0 1 12 6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.5 12 2.5 8.3 2.5 5.1 4.6 3.6 7.6Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M12 21.5c2.5 0 4.6-.8 6.2-2.3l-2.9-2.4c-.8.6-1.8 1.2-3.3 1.2a6 6 0 0 1-5.6-4.1l-3.1 2.4A9.5 9.5 0 0 0 12 21.5Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M21.1 12.1c0-.6-.1-1.1-.2-1.9H12v3.9h5.5c-.3 1.4-1.1 2.4-2.2 3.1l2.9 2.4c1.7-1.6 2.9-4 2.9-7.5Z"
+      />
+    </svg>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+      <path d="M16.7 12.6c0-2 1.6-3 1.7-3.1-1-.9-2.4-1-2.9-1-.9-.1-1.9.5-2.4.5-.6 0-1.4-.5-2.3-.5-1.2 0-2.3.7-2.9 1.8-1.3 2.2-.3 5.5.9 7.2.6.8 1.2 1.7 2.1 1.7.8 0 1.1-.5 2.1-.5.9 0 1.2.5 2.1.5s1.5-.8 2.1-1.6c.7-.9 1-1.9 1-2-.1 0-1.8-.7-1.8-3ZM14.9 6.3c.5-.6.9-1.4.8-2.3-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.2.9.1 1.7-.4 2.2-1Z" />
+    </svg>
+  );
+}
