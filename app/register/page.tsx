@@ -74,6 +74,7 @@ export default function RegisterPage() {
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
+    const normalizedEmail = form.email.trim().toLowerCase();
 
     try {
       const response = await fetch(apiUrl("/register"), {
@@ -83,8 +84,8 @@ export default function RegisterPage() {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
+          name: form.name.trim(),
+          email: normalizedEmail,
           password: form.password,
           password_confirmation: form.passwordConfirmation,
           role: "client",
@@ -97,7 +98,11 @@ export default function RegisterPage() {
         setStatus({
           kind: "error",
           title: "Não foi possível criar conta",
-          body: payload?.message ?? "Verifica os dados e tenta novamente.",
+          body:
+            payload?.errors?.email?.[0] ??
+            payload?.errors?.password?.[0] ??
+            payload?.message ??
+            "Verifica os dados e tenta novamente.",
         });
         return;
       }

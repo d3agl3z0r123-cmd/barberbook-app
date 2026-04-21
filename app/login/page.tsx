@@ -73,6 +73,7 @@ export default function LoginPage() {
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
+    const normalizedEmail = form.email.trim().toLowerCase();
 
     try {
       const response = await fetch(apiUrl("/login"), {
@@ -82,7 +83,7 @@ export default function LoginPage() {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          email: form.email,
+          email: normalizedEmail,
           password: form.password,
           device_name: "next-login-page",
         }),
@@ -94,7 +95,7 @@ export default function LoginPage() {
         setStatus({
           kind: "error",
           title: "Não foi possível entrar",
-          body: payload?.message ?? "Verifica as credenciais e tenta novamente.",
+          body: payload?.errors?.email?.[0] ?? payload?.message ?? "Verifica as credenciais e tenta novamente.",
         });
         return;
       }
