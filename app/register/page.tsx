@@ -10,8 +10,8 @@ import {
   publicInputClass,
   publicPrimaryButtonClass,
 } from "@/components/public-ui";
+import { apiUrl, googleRedirectUrl } from "@/lib/api-url";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 const TOKEN_TYPE_STORAGE_KEY = "token_type";
 
@@ -39,10 +39,6 @@ function getRedirectPath(role?: string) {
   return "/dashboard-day";
 }
 
-function startGoogleLogin() {
-  window.location.assign(`${API_BASE_URL}/auth/google/redirect`);
-}
-
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -57,13 +53,53 @@ export default function RegisterPage() {
     body: "Começa com o teu e-mail e a tua palavra-passe e depois liga a tua barbearia ao sistema.",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStartingGoogle, setIsStartingGoogle] = useState(false);
+
+  async function handleGoogleLogin() {
+    setIsStartingGoogle(true);
+
+    try {
+      const response = await fetch(apiUrl("/auth/social/providers"), {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      const payload = await parseApiResponse(response);
+      const missingGoogleConfig = payload?.providers?.google?.missing_configuration;
+
+      if (!response.ok) {
+        throw new Error("Google providers endpoint unavailable");
+      }
+
+      if (missingGoogleConfig) {
+        setStatus({
+          kind: "error",
+          title: "Google OAuth não configurado",
+          body: Array.isArray(missingGoogleConfig)
+            ? `Faltam variáveis no backend: ${missingGoogleConfig.join(", ")}.`
+            : "Confirma as credenciais Google no backend.",
+        });
+        return;
+      }
+
+      window.location.assign(googleRedirectUrl());
+    } catch {
+      setStatus({
+        kind: "error",
+        title: "Backend indisponível",
+        body: "Não foi possível contactar o backend para criar conta com Google.",
+      });
+    } finally {
+      setIsStartingGoogle(false);
+    }
+  }
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
+      const response = await fetch(apiUrl("/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -122,7 +158,11 @@ export default function RegisterPage() {
       alternateHref="/login"
       alternateLabel="Entrar"
     >
-      <MinimalSocialButton provider="google" label="Continuar com Google" onClick={startGoogleLogin} />
+      <MinimalSocialButton
+        provider="google"
+        label={isStartingGoogle ? "A abrir Google..." : "Continuar com Google"}
+        onClick={handleGoogleLogin}
+      />
 
       <MinimalDivider />
 

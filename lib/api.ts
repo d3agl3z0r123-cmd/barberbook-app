@@ -6,6 +6,7 @@ import {
   services as mockServices,
   team as mockTeam,
 } from "@/lib/mock-data";
+import { normalizeApiBaseUrl } from "@/lib/api-url";
 
 export type ServiceCard = {
   id: string;
@@ -152,12 +153,10 @@ type ApiOwnerDashboard = {
 };
 
 export const publicApiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL ??
-  process.env.API_URL ??
-  "http://localhost:8000/api";
+  normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL);
 
 function getServerApiBaseUrl() {
-  return process.env.API_URL ?? publicApiBaseUrl;
+  return normalizeApiBaseUrl(process.env.API_URL ?? publicApiBaseUrl);
 }
 
 async function safeFetch<T>(
