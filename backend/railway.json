@@ -1,6 +1,6 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "deploy": {
-    "startCommand": "php artisan optimize:clear || true; php artisan config:clear || true; php artisan route:clear || true; php artisan view:clear || true; php artisan cache:clear || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"
+    "startCommand": "export DB_CONNECTION=sqlite; export DB_DATABASE=database/database.sqlite; export DB_DATABASE_RUNTIME=database/database.sqlite; mkdir -p database; touch database/database.sqlite; php artisan optimize:clear || true; php artisan config:clear || true; php artisan route:clear || true; php artisan view:clear || true; php artisan cache:clear || true; php artisan migrate --force; php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"
   }
 }
