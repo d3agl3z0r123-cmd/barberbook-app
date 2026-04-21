@@ -24,12 +24,24 @@ class Barbershop extends Model
         'email',
         'description',
         'is_active',
+        'qr_path',
+        'qr_url',
+        'qr_generated_at',
+        'qr_last_regenerated_at',
+        'qr_metadata',
+        'qr_scan_count',
+        'qr_last_scanned_at',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'qr_generated_at' => 'datetime',
+            'qr_last_regenerated_at' => 'datetime',
+            'qr_metadata' => 'array',
+            'qr_scan_count' => 'integer',
+            'qr_last_scanned_at' => 'datetime',
         ];
     }
 
@@ -78,5 +90,10 @@ class Barbershop extends Model
     public function subscription(): HasOne
     {
         return $this->hasOne(Subscription::class);
+    }
+
+    public function qrScanEvents(): HasMany
+    {
+        return $this->hasMany(QrScanEvent::class);
     }
 }

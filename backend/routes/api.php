@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Client\DiscoveryController;
 use App\Http\Controllers\Api\Client\PublicAppointmentController;
 use App\Http\Controllers\Api\Owner\AppointmentController as OwnerAppointmentController;
 use App\Http\Controllers\Api\Owner\BarberController;
+use App\Http\Controllers\Api\Owner\BarbershopQrCodeController;
 use App\Http\Controllers\Api\Owner\BarbershopController;
 use App\Http\Controllers\Api\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Api\Owner\ManagementAppointmentController;
@@ -31,6 +32,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('barbershop', [UserBarbershopController::class, 'show']);
     Route::post('barbershop', [UserBarbershopController::class, 'store']);
     Route::put('barbershop', [UserBarbershopController::class, 'update']);
+    Route::get('barbershop/qr-code', [BarbershopQrCodeController::class, 'show']);
+    Route::post('barbershop/qr-code/regenerate', [BarbershopQrCodeController::class, 'regenerate']);
+    Route::get('barbershop/qr-code/download', [BarbershopQrCodeController::class, 'download']);
+    Route::get('barbershop/qr-code/pdf', [BarbershopQrCodeController::class, 'pdf']);
 
     Route::get('barbers', [ManagementBarberController::class, 'index']);
     Route::post('barbers', [ManagementBarberController::class, 'store']);

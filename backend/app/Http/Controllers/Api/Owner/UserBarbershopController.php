@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Owner\StoreUserBarbershopRequest;
 use App\Http\Requests\Owner\UpdateUserBarbershopRequest;
 use App\Models\Barbershop;
+use App\Services\BarbershopQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,6 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class UserBarbershopController extends Controller
 {
+    public function __construct(private readonly BarbershopQrCodeService $qrCodes)
+    {
+    }
+
     public function show(Request $request): JsonResponse
     {
         $barbershop = $request->user()?->barbershop;
@@ -52,6 +57,7 @@ class UserBarbershopController extends Controller
             'timezone' => $payload['timezone'] ?? 'Atlantic/Azores',
             'is_active' => true,
         ]);
+        $barbershop = $this->qrCodes->ensure($barbershop);
 
         return response()->json([
             'message' => 'Barbearia criada com sucesso.',
@@ -70,6 +76,7 @@ class UserBarbershopController extends Controller
         }
 
         $payload = $request->validated();
+        $previousSlug = $barbershop->slug;
 
         if (array_key_exists('name', $payload) || array_key_exists('slug', $payload)) {
             $barbershop->slug = $this->resolveSlug(
@@ -87,10 +94,14 @@ class UserBarbershopController extends Controller
             'timezone' => $payload['timezone'] ?? $barbershop->timezone,
         ]);
         $barbershop->save();
+        $barbershop = $barbershop->fresh();
+        $barbershop = $barbershop->slug !== $previousSlug
+            ? $this->qrCodes->regenerate($barbershop)
+            : $this->qrCodes->ensure($barbershop);
 
         return response()->json([
             'message' => 'Barbearia atualizada com sucesso.',
-            'barbershop' => $this->formatBarbershop($barbershop->fresh()),
+            'barbershop' => $this->formatBarbershop($barbershop),
         ]);
     }
 
@@ -125,6 +136,13 @@ class UserBarbershopController extends Controller
             'email' => $barbershop->email,
             'address' => $barbershop->address,
             'timezone' => $barbershop->timezone,
+            'qr_path' => $barbershop->qr_path,
+            'qr_url' => $barbershop->qr_url,
+            'qr_generated_at' => $barbershop->qr_generated_at,
+            'qr_last_regenerated_at' => $barbershop->qr_last_regenerated_at,
+            'qr_metadata' => $barbershop->qr_metadata,
+            'qr_scan_count' => $barbershop->qr_scan_count ?? 0,
+            'qr_last_scanned_at' => $barbershop->qr_last_scanned_at,
             'created_at' => $barbershop->created_at,
             'updated_at' => $barbershop->updated_at,
         ];

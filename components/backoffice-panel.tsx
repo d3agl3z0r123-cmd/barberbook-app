@@ -56,6 +56,23 @@ type Barbershop = {
   timezone: string;
 };
 
+type BarbershopQrCode = {
+  public_url: string;
+  qr_url: string | null;
+  qr_path: string | null;
+  qr_data_uri: string | null;
+  qr_generated_at: string | null;
+  qr_last_regenerated_at: string | null;
+  qr_scan_count?: number;
+  qr_last_scanned_at: string | null;
+  qr_metadata?: Record<string, unknown> | null;
+  premium_ready?: {
+    scan_tracking: boolean;
+    custom_logo: boolean;
+    pdf_export: boolean;
+  };
+};
+
 type Barber = {
   id: number;
   name: string;
@@ -247,6 +264,26 @@ function formatDateLabel(date: string, timezone: string) {
   }).format(new Date(`${date}T12:00:00`));
 }
 
+function formatDateTimeLabel(value: string, timezone: string) {
+  return new Intl.DateTimeFormat("pt-PT", {
+    timeZone: timezone || "Atlantic/Azores",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function formatTime(value: string) {
   return value.slice(11, 16);
 }
@@ -289,11 +326,16 @@ export function BackofficePanel() {
   const [token, setToken] = useState("");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
+  const [qrCode, setQrCode] = useState<BarbershopQrCode | null>(null);
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [dayAgenda, setDayAgenda] = useState<DayPayload | null>(null);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
+  const [isQrLoading, setIsQrLoading] = useState(false);
+  const [isQrDownloading, setIsQrDownloading] = useState(false);
+  const [isQrRegenerating, setIsQrRegenerating] = useState(false);
+  const [qrActionFeedback, setQrActionFeedback] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [status, setStatus] = useState<StatusState>({
     kind: "idle",
@@ -345,6 +387,7 @@ export function BackofficePanel() {
     if (!token) {
       setUser(null);
       setBarbershop(null);
+      setQrCode(null);
       setBarbers([]);
       setServices([]);
       setDayAgenda(null);
@@ -381,9 +424,10 @@ export function BackofficePanel() {
 
     try {
       const headers = { Accept: "application/json", Authorization: `Bearer ${currentToken}` };
-      const [userResponse, barbershopResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
+      const [userResponse, barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/user`, { headers }),
         fetch(`${API_BASE_URL}/barbershop`, { headers }),
+        fetch(`${API_BASE_URL}/barbershop/qr-code`, { headers }),
         fetch(`${API_BASE_URL}/barbers`, { headers }),
         fetch(`${API_BASE_URL}/services`, { headers }),
         fetch(`${API_BASE_URL}/appointments/day?date=${currentDate}`, { headers }),
@@ -391,6 +435,7 @@ export function BackofficePanel() {
 
       const userPayload = parseApiResponse(await userResponse.text());
       const barbershopPayload = parseApiResponse(await barbershopResponse.text());
+      const qrPayload = parseApiResponse(await qrResponse.text());
       const barbersPayload = parseApiResponse(await barbersResponse.text());
       const servicesPayload = parseApiResponse(await servicesResponse.text());
       const agendaPayload = parseApiResponse(await agendaResponse.text());
@@ -408,6 +453,7 @@ export function BackofficePanel() {
 
       if (barbershopResponse.status === 404 || agendaResponse.status === 404) {
         setBarbershop(null);
+        setQrCode(null);
         setBarbers([]);
         setServices([]);
         setDayAgenda(null);
@@ -426,6 +472,7 @@ export function BackofficePanel() {
 
       const currentBarbershop = barbershopPayload?.barbershop ?? null;
       setBarbershop(currentBarbershop);
+      setQrCode(qrResponse.ok ? qrPayload?.qr_code ?? null : null);
       setBarbers(barbersPayload?.barbers ?? []);
       setServices(servicesPayload?.services ?? []);
       setDayAgenda(agendaPayload ?? null);
@@ -454,6 +501,33 @@ export function BackofficePanel() {
     if (response.ok) {
       setDayAgenda(payload);
     }
+  }
+
+  async function loadQrCode(currentToken = token) {
+    if (!currentToken) return null;
+
+    setIsQrLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/barbershop/qr-code`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
+      });
+      const payload = parseApiResponse(await response.text());
+
+      if (!response.ok) {
+        setQrCode(null);
+        return null;
+      }
+
+      setQrCode(payload?.qr_code ?? null);
+      return payload?.qr_code ?? null;
+    } finally {
+      setIsQrLoading(false);
+    }
+  }
+
+  function showQrFeedback(message: string) {
+    setQrActionFeedback(message);
+    window.setTimeout(() => setQrActionFeedback(""), 3200);
   }
 
   async function refreshBarbers() {
@@ -590,7 +664,118 @@ export function BackofficePanel() {
       address: payload.barbershop.address ?? "",
       timezone: payload.barbershop.timezone ?? "Atlantic/Azores",
     });
+    await loadQrCode();
     setStatus({ kind: "success", title: "Barbearia guardada", body: "Os dados da barbearia foram atualizados com sucesso." });
+  }
+
+  async function handleRegenerateQrCode() {
+    setIsQrRegenerating(true);
+    try {
+      const { response, payload } = await apiRequest("/barbershop/qr-code/regenerate", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        setStatus({ kind: "error", title: "Erro ao gerar QR Code", body: payload?.message ?? "Não foi possível gerar o QR Code." });
+        return;
+      }
+
+      setQrCode(payload?.qr_code ?? null);
+      showQrFeedback("QR Code regenerado com sucesso.");
+      setStatus({ kind: "success", title: "QR Code atualizado", body: "O QR Code da barbearia está pronto para partilha." });
+    } finally {
+      setIsQrRegenerating(false);
+    }
+  }
+
+  async function handleCopyQrLink(publicLink: string) {
+    await navigator.clipboard.writeText(publicLink);
+    showQrFeedback("Link copiado para a área de transferência.");
+    setStatus({ kind: "success", title: "Link copiado", body: "O link público da barbearia foi copiado." });
+  }
+
+  async function handleDownloadQrPng() {
+    if (!qrCode?.qr_data_uri || typeof window === "undefined") return;
+
+    setIsQrDownloading(true);
+    try {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1200;
+        canvas.height = 1200;
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          setIsQrDownloading(false);
+          return;
+        }
+
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 120, 120, 960, 960);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            setIsQrDownloading(false);
+            return;
+          }
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `barberpro-qr-${barbershop?.slug ?? "barbearia"}.png`;
+          link.click();
+          URL.revokeObjectURL(url);
+          showQrFeedback("PNG descarregado com sucesso.");
+          setIsQrDownloading(false);
+        }, "image/png");
+      };
+      image.onerror = () => {
+        setIsQrDownloading(false);
+        setStatus({ kind: "error", title: "Erro ao descarregar", body: "Não foi possível preparar o PNG do QR Code." });
+      };
+      image.src = qrCode.qr_data_uri;
+    } catch {
+      setIsQrDownloading(false);
+      setStatus({ kind: "error", title: "Erro ao descarregar", body: "Não foi possível preparar o PNG do QR Code." });
+    }
+  }
+
+  function handlePrintQrCode(publicLink: string) {
+    if (!qrCode?.qr_data_uri || typeof window === "undefined") return;
+
+    const printWindow = window.open("", "_blank", "width=720,height=900");
+    if (!printWindow) {
+      setStatus({ kind: "error", title: "Impressão bloqueada", body: "Permite pop-ups no navegador para imprimir o QR Code." });
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>QR Code ${escapeHtml(barbershop?.name ?? "BarberPro")}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 48px; color: #111; text-align: center; }
+            .card { border: 1px solid #ddd; border-radius: 24px; padding: 40px; max-width: 520px; margin: 0 auto; }
+            img { width: 320px; height: 320px; }
+            h1 { margin: 24px 0 8px; font-size: 28px; }
+            p { margin: 8px 0; color: #555; word-break: break-all; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <img src="${qrCode.qr_data_uri}" alt="QR Code da barbearia" />
+            <h1>${escapeHtml(barbershop?.name ?? "BarberPro")}</h1>
+            <p>Marca a tua visita através deste QR Code.</p>
+            <p>${escapeHtml(publicLink)}</p>
+          </div>
+          <script>window.onload = () => { window.print(); window.close(); };</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    showQrFeedback("Janela de impressão aberta.");
   }
 
   async function handleBarberSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1052,38 +1237,109 @@ export function BackofficePanel() {
   }
 
   function renderPublicLink() {
-    const publicLink = typeof window !== "undefined" && barbershop ? `${window.location.origin}/book/${barbershop.slug}` : "";
+    const publicLink = barbershop ? qrCode?.public_url ?? `${typeof window !== "undefined" ? window.location.origin : ""}/book/${barbershop.slug}` : "";
+    const scanCount = qrCode?.qr_scan_count ?? 0;
 
     return (
-      <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <article className="overflow-hidden rounded-2xl bg-neutral-900 p-8 text-white shadow-sm">
-          <p className="text-sm text-[#E8DCCB]/45">Link público</p>
-          <h2 className="mt-3 text-2xl font-semibold">Partilha a tua página de marcações</h2>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-[#1A1A1A]/5 p-4 text-sm break-all">
-            {barbershop ? publicLink : "Cria primeiro a tua barbearia para gerar o link público."}
-          </div>
-          <div className="mt-5 flex flex-wrap gap-3">
-            {barbershop ? (
-              <>
-                <button type="button" onClick={() => navigator.clipboard.writeText(publicLink)} className={primaryButtonClass}>
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <article className={`${whiteCardClass} overflow-hidden rounded-2xl p-0`}>
+          <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="flex flex-col justify-between border-b border-white/10 bg-[#131313] p-6 sm:p-8 lg:border-b-0 lg:border-r">
+              <div>
+                <span className="inline-flex rounded-full border border-[#A63A3A]/35 bg-[#A63A3A]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#E8DCCB]/80">
+                  QR Code da barbearia
+                </span>
+                <h2 className="mt-5 text-2xl font-semibold tracking-tight text-[#E8DCCB] sm:text-3xl">
+                  Recebe marcações diretas em qualquer ponto de contacto.
+                </h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-[#E8DCCB]/60">
+                  Coloca este QR na porta, balcão ou redes sociais para receber marcações diretas.
+                </p>
+              </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-[#0B0B0B] p-4">
+                  <p className="text-xs text-[#E8DCCB]/45">Scans</p>
+                  <p className="mt-2 text-2xl font-semibold text-[#E8DCCB]">{scanCount}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[#0B0B0B] p-4 sm:col-span-2">
+                  <p className="text-xs text-[#E8DCCB]/45">Último scan</p>
+                  <p className="mt-2 text-sm font-medium text-[#E8DCCB]">
+                    {qrCode?.qr_last_scanned_at ? formatDateTimeLabel(qrCode.qr_last_scanned_at, timezone) : "Ainda sem scans registados"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-white/10 bg-[#0B0B0B] p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#E8DCCB]/40">URL pública</p>
+                <p className="mt-2 break-all text-sm text-[#E8DCCB]/80">
+                  {barbershop ? publicLink : "Cria primeiro a tua barbearia para gerar o link público."}
+                </p>
+              </div>
+
+              {qrActionFeedback ? (
+                <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-100">
+                  {qrActionFeedback}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="p-6 sm:p-8">
+              <div className="mx-auto max-w-sm rounded-[2rem] border border-white/10 bg-[#0B0B0B] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
+                <div className="rounded-[1.5rem] bg-white p-5 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]">
+                  <div className="flex aspect-square items-center justify-center rounded-2xl border border-neutral-100 bg-white">
+                    {isQrLoading ? (
+                      <span className="text-sm font-medium text-neutral-500">A gerar QR...</span>
+                    ) : qrCode?.qr_data_uri ? (
+                      <img src={qrCode.qr_data_uri} alt="QR Code da barbearia" className="h-full w-full object-contain p-2" />
+                    ) : (
+                      <span className="px-6 text-center text-sm font-medium text-neutral-500">QR Code disponível depois de criares a barbearia.</span>
+                    )}
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-sm font-semibold text-neutral-950">{barbershop?.name ?? "BarberBook"}</p>
+                    <p className="mt-1 text-xs text-neutral-500">Marcações online em segundos</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={() => handleCopyQrLink(publicLink)} disabled={!barbershop} className={`${primaryButtonClass} w-full`}>
                   Copiar link
                 </button>
-                <Link href={`/book/${barbershop.slug}`} className="inline-flex items-center justify-center rounded-xl border border-white/15 px-5 py-3 text-sm font-medium text-white/88 transition-all hover:bg-[#1A1A1A]/10">
+                <button type="button" onClick={handleDownloadQrPng} disabled={!qrCode?.qr_data_uri || isQrDownloading} className={`${secondaryButtonClass} w-full`}>
+                  {isQrDownloading ? "A preparar..." : "Descarregar PNG"}
+                </button>
+                <button type="button" onClick={() => handlePrintQrCode(publicLink)} disabled={!qrCode?.qr_data_uri} className={`${secondaryButtonClass} w-full`}>
+                  Imprimir
+                </button>
+                <button type="button" onClick={handleRegenerateQrCode} disabled={!barbershop || isQrRegenerating} className={`${ghostButtonClass} w-full`}>
+                  {isQrRegenerating ? "A regenerar..." : "Regenerar QR"}
+                </button>
+              </div>
+
+              {barbershop ? (
+                <Link href={`/book/${barbershop.slug}`} className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-[#0B0B0B] px-4 py-2.5 text-sm font-medium text-[#E8DCCB]/80 transition-all hover:border-[#A63A3A]/45 hover:text-[#E8DCCB]">
                   Abrir página pública
                 </Link>
-              </>
-            ) : null}
+              ) : null}
+
+              <p className="mt-4 text-center text-xs text-[#E8DCCB]/45">
+                {qrCode?.qr_last_regenerated_at ? `Atualizado em ${formatDateTimeLabel(qrCode.qr_last_regenerated_at, timezone)}` : "Gerado automaticamente quando a barbearia existe."}
+              </p>
+            </div>
           </div>
         </article>
 
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
-          <p className="text-sm text-[#E8DCCB]/55">Checklist</p>
+          <p className="text-sm text-[#E8DCCB]/55">Checklist de partilha</p>
           <div className="mt-5 space-y-3">
             {[
               { label: "Barbearia criada", ok: Boolean(barbershop) },
               { label: "Pelo menos um barbeiro", ok: barbers.length > 0 },
               { label: "Pelo menos um serviço", ok: services.length > 0 },
               { label: "Slug pronto para partilha", ok: Boolean(barbershop?.slug) },
+              { label: "QR Code gerado", ok: Boolean(qrCode?.qr_data_uri) },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[#131313] px-4 py-4">
                 <p className="font-medium text-[#E8DCCB]">{item.label}</p>
@@ -1092,6 +1348,26 @@ export function BackofficePanel() {
                 </span>
               </div>
             ))}
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0B0B] p-5">
+            <p className="text-sm font-semibold text-[#E8DCCB]">Preparado para premium</p>
+            <p className="mt-2 text-sm leading-6 text-[#E8DCCB]/55">
+              A estrutura já guarda metadados para tracking de scans, QR personalizado com logo e exportação em PDF.
+            </p>
+            <div className="mt-4 grid gap-3">
+              {[
+                "Contagem de scans por QR",
+                "Último scan registado",
+                "PDF de impressão pronto para ativar",
+                "QR com branding e logo da barbearia",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-3 rounded-xl bg-[#131313] px-3 py-3 text-sm text-[#E8DCCB]/70">
+                  <span className="h-2 w-2 rounded-full bg-[#A63A3A]" />
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </article>
       </div>

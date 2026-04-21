@@ -85,27 +85,20 @@ export function MinimalAuthCard({
 }
 
 export function MinimalSocialButton({
-  provider,
   label,
   onClick,
 }: {
-  provider: "google" | "apple";
+  provider: "google";
   label: string;
   onClick: () => void;
 }) {
-  const isGoogle = provider === "google";
-
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex w-full items-center justify-center gap-3 rounded-2xl border px-4 py-3.5 text-sm font-semibold transition-all ${
-        isGoogle
-          ? "border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
-          : "border-neutral-950 bg-neutral-950 text-white hover:bg-neutral-800"
-      }`}
+      className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-neutral-300 bg-white px-4 py-3.5 text-sm font-semibold text-neutral-900 transition-all hover:bg-neutral-50"
     >
-      {isGoogle ? <GoogleIcon /> : <AppleIcon />}
+      <GoogleIcon />
       <span>{label}</span>
     </button>
   );
@@ -341,14 +334,6 @@ function GoogleIcon() {
         fill="#4285F4"
         d="M21.1 12.1c0-.6-.1-1.1-.2-1.9H12v3.9h5.5c-.3 1.4-1.1 2.4-2.2 3.1l2.9 2.4c1.7-1.6 2.9-4 2.9-7.5Z"
       />
-    </svg>
-  );
-}
-
-function AppleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
-      <path d="M16.7 12.6c0-2 1.6-3 1.7-3.1-1-.9-2.4-1-2.9-1-.9-.1-1.9.5-2.4.5-.6 0-1.4-.5-2.3-.5-1.2 0-2.3.7-2.9 1.8-1.3 2.2-.3 5.5.9 7.2.6.8 1.2 1.7 2.1 1.7.8 0 1.1-.5 2.1-.5.9 0 1.2.5 2.1.5s1.5-.8 2.1-1.6c.7-.9 1-1.9 1-2-.1 0-1.8-.7-1.8-3ZM14.9 6.3c.5-.6.9-1.4.8-2.3-.8 0-1.7.5-2.2 1.1-.5.5-.9 1.4-.8 2.2.9.1 1.7-.4 2.2-1Z" />
     </svg>
   );
 }

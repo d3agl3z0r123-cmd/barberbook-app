@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { StatusNotice } from "@/components/app-ui";
 import {
   MinimalAuthCard,
   MinimalDivider,
@@ -10,9 +11,8 @@ import {
   publicInputClass,
   publicPrimaryButtonClass,
 } from "@/components/public-ui";
-import { StatusNotice } from "@/components/app-ui";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 const TOKEN_TYPE_STORAGE_KEY = "token_type";
 
@@ -33,11 +33,15 @@ async function parseApiResponse(response: Response) {
 }
 
 function getRedirectPath(role?: string) {
-  if (role === "barber") {
+  if (role === "barber" || role === "owner") {
     return "/backoffice";
   }
 
   return "/dashboard-day";
+}
+
+function startGoogleLogin() {
+  window.location.assign(`${API_BASE_URL}/auth/google/redirect`);
 }
 
 export default function LoginPage() {
@@ -115,18 +119,7 @@ export default function LoginPage() {
       alternateHref="/register"
       alternateLabel="Criar conta"
     >
-      <div className="space-y-4">
-        <MinimalSocialButton
-          provider="google"
-          label="Continuar com Google"
-          onClick={() => console.log("TODO: integrar OAuth Google")}
-        />
-        <MinimalSocialButton
-          provider="apple"
-          label="Continuar com Apple"
-          onClick={() => console.log("TODO: integrar OAuth Apple")}
-        />
-      </div>
+      <MinimalSocialButton provider="google" label="Continuar com Google" onClick={startGoogleLogin} />
 
       <MinimalDivider />
 

@@ -25,6 +25,7 @@ class User extends Authenticatable
         'phone',
         'role',
         'timezone',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -61,6 +62,11 @@ class User extends Authenticatable
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class, 'client_id');
+    }
+
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
     }
 
     public function sendPasswordResetNotification($token): void
