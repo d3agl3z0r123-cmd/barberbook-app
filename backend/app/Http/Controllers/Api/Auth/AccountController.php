@@ -32,7 +32,7 @@ class AccountController extends Controller
 
         if (! Hash::check($request->validated('current_password'), $user->password)) {
             throw ValidationException::withMessages([
-                'current_password' => ['A password atual nao esta correta.'],
+                'current_password' => ['A palavra-passe atual não está correta.'],
             ]);
         }
 
@@ -41,7 +41,7 @@ class AccountController extends Controller
         ])->save();
 
         return response()->json([
-            'message' => 'Password atualizada com sucesso.',
+            'message' => 'Palavra-passe atualizada com sucesso.',
         ]);
     }
 }

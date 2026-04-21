@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
-import { Manrope, Playfair_Display } from "next/font/google";
+import { Nunito_Sans } from "next/font/google";
 import "./globals.css";
 
-const bodyFont = Manrope({
+const appFont = Nunito_Sans({
   subsets: ["latin"],
-  variable: "--font-body",
-});
-
-const displayFont = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-app",
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
-  title: "BarberPro | SaaS para Barbearias",
+  title: "BarberBook | SaaS para Barbearias",
   description:
-    "Gestao de agenda, clientes, barbeiros e assinatura em um SaaS moderno para barbearias.",
+    "Gestão de agenda, clientes, barbeiros e marcações online num SaaS moderno para barbearias.",
 };
 
 export default function RootLayout({
@@ -24,11 +20,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${bodyFont.variable} ${displayFont.variable} bg-canvas text-ink antialiased`}>
+    <html lang="pt-PT">
+      <body className={`${appFont.variable} bg-canvas text-ink antialiased`}>
         {children}
       </body>
     </html>
   );
 }
-

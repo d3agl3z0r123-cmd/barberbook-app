@@ -106,14 +106,14 @@ function ResetPasswordContent() {
 
   return (
     <AuthShell
-      title="Nova Palavra-passe"
+      title="Nova palavra-passe"
       subtitle="Atualiza a palavra-passe da tua conta com o link de recuperação enviado por e-mail."
       alternateHref="/login"
       alternateLabel="Entrar"
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <label className="grid gap-2">
-          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#E8D6B0]/70">E-mail</span>
+          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#5B4F3A]">E-mail</span>
           <input
             className={luxuryInputClass}
             type="email"
@@ -124,24 +124,24 @@ function ResetPasswordContent() {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#E8D6B0]/70">Nova palavra-passe</span>
+          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#5B4F3A]">Nova palavra-passe</span>
           <input
             className={luxuryInputClass}
             type="password"
             value={form.password}
             onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-            placeholder="Password123!"
+            placeholder="Palavra-passe123!"
           />
         </label>
 
         <label className="grid gap-2">
-          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#E8D6B0]/70">Confirmação</span>
+          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#5B4F3A]">Confirmação</span>
           <input
             className={luxuryInputClass}
             type="password"
             value={form.passwordConfirmation}
             onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
-            placeholder="Password123!"
+            placeholder="Palavra-passe123!"
           />
         </label>
 
@@ -154,9 +154,9 @@ function ResetPasswordContent() {
         <StatusNotice kind={status.kind} title={status.title} body={status.body} />
       </div>
 
-      <p className="mt-6 text-sm text-white/55">
+      <p className="mt-6 text-sm text-[#5B4F3A]">
         Voltar ao acesso principal?{" "}
-        <Link href="/login" className="font-medium text-[#E8D6B0] underline underline-offset-4">
+        <Link href="/login" className="font-medium text-[#A86840] underline underline-offset-4">
           Entrar
         </Link>
       </p>

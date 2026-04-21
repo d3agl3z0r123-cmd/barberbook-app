@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import {
@@ -106,7 +106,7 @@ export default function BarbershopTestPage() {
         setStatus({
           kind: "error",
           title: "Erro ao carregar barbearia",
-          body: "O backend nao conseguiu devolver a barbearia do utilizador autenticado.",
+          body: "O backend não conseguiu devolver a barbearia do utilizador autenticado.",
         });
         setResponsePayload(JSON.stringify(payload, null, 2));
         return;
@@ -131,7 +131,7 @@ export default function BarbershopTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -145,7 +145,7 @@ export default function BarbershopTestPage() {
     if (!token) {
       setStatus({
         kind: "error",
-        title: "Login necessario",
+        title: "Entrar necessário",
         body: "Faz primeiro login em /auth-test para obter um Bearer token.",
       });
       return;
@@ -202,7 +202,7 @@ export default function BarbershopTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -216,13 +216,13 @@ export default function BarbershopTestPage() {
       title="Configuracao da barbearia"
       subtitle="Cria e atualiza a unidade principal associada ao utilizador autenticado."
       shopLabel={barbershop?.name}
-      userLabel={token ? "Sessao ativa" : "Sem sessao ativa"}
+      userLabel={token ? "Sessão ativa" : "Sem sessão ativa"}
     >
       {!token ? (
-        <SectionCard title="Login necessario">
+        <SectionCard title="Entrar necessário">
           <EmptyState
-            title="Autenticacao em falta"
-            body="Primeiro faz login em /auth-test. Esta pagina usa Authorization: Bearer TOKEN."
+            title="Autenticação em falta"
+            body="Primeiro faz login em /auth-test. Esta página usa Authorization: Bearer TOKEN."
           />
         </SectionCard>
       ) : (
@@ -275,7 +275,7 @@ export default function BarbershopTestPage() {
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-neutral-700">Email</span>
+                <span className="text-sm font-medium text-neutral-700">E-mail</span>
                 <input
                   className={inputClass}
                   type="email"

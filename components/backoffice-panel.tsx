@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -183,14 +183,14 @@ const topMetrics = [
 ];
 
 const inputClass =
-  "w-full rounded-xl border border-white/10 bg-[#1A1A1A] px-4 py-2.5 text-sm text-[#E8DCCB] outline-none transition-all placeholder:text-[#E8DCCB]/35 focus:border-[#A63A3A] focus:ring-2 focus:ring-[#A63A3A]/20";
+  "w-full rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-2.5 text-sm text-[#2B2118] outline-none transition-all placeholder:text-[#2B2118]/35 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
 const primaryButtonClass =
-  "inline-flex items-center justify-center rounded-xl bg-[#A63A3A] px-4 py-2.5 text-sm font-medium text-[#F5F1EA] transition-all hover:bg-[#8D2F2F] disabled:opacity-50";
+  "inline-flex items-center justify-center rounded-xl bg-[#A86840] px-4 py-2.5 text-sm font-medium text-[#FFF7EC] transition-all hover:bg-[#8A5433] disabled:opacity-50";
 const secondaryButtonClass =
-  "inline-flex items-center justify-center rounded-xl border border-white/10 bg-[#1A1A1A] px-4 py-2.5 text-sm font-medium text-[#E8DCCB] transition-all hover:border-[#A63A3A]/45 hover:bg-[#202020]";
+  "inline-flex items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-2.5 text-sm font-medium text-[#2B2118] transition-all hover:border-[#A86840]/45 hover:bg-[#F1DDC2]";
 const ghostButtonClass =
-  "inline-flex items-center justify-center rounded-xl border border-white/10 bg-[#1A1A1A] px-3.5 py-2 text-sm font-medium text-[#E8DCCB]/80 transition-all hover:border-[#A63A3A]/45 hover:bg-[#202020]";
-const whiteCardClass = "rounded-2xl border border-white/10 bg-[#1A1A1A] shadow-[0_12px_40px_rgba(0,0,0,0.18)]";
+  "inline-flex items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-3.5 py-2 text-sm font-medium text-[#5B4F3A] transition-all hover:border-[#A86840]/45 hover:bg-[#F1DDC2]";
+const whiteCardClass = "rounded-2xl border border-[#D8C3A5]/70 bg-[#FFF7EC] shadow-[0_12px_40px_rgba(0,0,0,0.18)]";
 
 function IconDashboard() {
   return (
@@ -738,7 +738,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao atualizar a conta",
-        body: payload?.message ?? payload?.errors?.email?.[0] ?? "Não foi possível atualizar o e-mail e o telemóvel.",
+      body: payload?.message ?? payload?.errors?.email?.[0] ?? "Não foi possível atualizar o e-mail e o telemóvel.",
       });
       return;
     }
@@ -878,7 +878,7 @@ export function BackofficePanel() {
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = `barberpro-qr-${barbershop?.slug ?? "barbearia"}.png`;
+          link.download = `barberbook-qr-${barbershop?.slug ?? "barbearia"}.png`;
           link.click();
           URL.revokeObjectURL(url);
           showQrFeedback("PNG descarregado com sucesso.");
@@ -908,7 +908,7 @@ export function BackofficePanel() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>QR Code ${escapeHtml(barbershop?.name ?? "BarberPro")}</title>
+          <title>QR Code ${escapeHtml(barbershop?.name ?? "BarberBook")}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 0; padding: 48px; color: #111; text-align: center; }
             .card { border: 1px solid #ddd; border-radius: 24px; padding: 40px; max-width: 520px; margin: 0 auto; }
@@ -920,7 +920,7 @@ export function BackofficePanel() {
         <body>
           <div class="card">
             <img src="${qrCode.qr_data_uri}" alt="QR Code da barbearia" />
-            <h1>${escapeHtml(barbershop?.name ?? "BarberPro")}</h1>
+            <h1>${escapeHtml(barbershop?.name ?? "BarberBook")}</h1>
             <p>Marca a tua visita através deste QR Code.</p>
             <p>${escapeHtml(publicLink)}</p>
           </div>
@@ -994,10 +994,8 @@ export function BackofficePanel() {
     });
 
     const conflict =
-          payload?.errors?.starts_at?.[0] === "Este horário já não está disponível" ||
-          payload?.errors?.starts_at?.[0] === "Este horÃƒÂ¡rio jÃƒÂ¡ nÃƒÂ£o estÃƒÂ¡ disponÃƒÂ­vel" ||
-          payload?.message === "Este horário já não está disponível" ||
-          payload?.message === "Este horÃƒÂ¡rio jÃƒÂ¡ nÃƒÂ£o estÃƒÂ¡ disponÃƒÂ­vel";
+      payload?.errors?.starts_at?.[0] === "Este horário já não está disponível" ||
+      payload?.message === "Este horário já não está disponível";
 
     if (!response.ok) {
       setStatus({
@@ -1060,7 +1058,7 @@ export function BackofficePanel() {
     if (!barbershop) {
       return (
         <div className="rounded-[28px] border border-dashed border-black/10 bg-[#fff8f1] p-6 text-sm text-black/65">
-          Ainda nao tens nenhuma barbearia criada. Vai ao separador <strong>Barbearia</strong> para comecar.
+          Ainda não tens nenhuma barbearia criada. Vai ao separador <strong>Barbearia</strong> para começar.
         </div>
       );
     }
@@ -1069,53 +1067,53 @@ export function BackofficePanel() {
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { label: "Marcacoes hoje", value: dayAgenda?.summary.total ?? 0 },
+            { label: "Marcações hoje", value: dayAgenda?.summary.total ?? 0 },
             { label: "Booked", value: dayAgenda?.summary.booked ?? 0 },
             { label: "Completed", value: dayAgenda?.summary.completed ?? 0 },
             { label: "Cancelled", value: dayAgenda?.summary.cancelled ?? 0 },
           ].map((metric) => (
             <article key={metric.label} className={`${whiteCardClass} rounded-2xl p-6`}>
-              <p className="text-sm text-[#E8DCCB]/55">{metric.label}</p>
-              <p className="mt-3 text-4xl font-semibold text-[#E8DCCB]">{metric.value}</p>
+              <p className="text-sm text-[#5B4F3A]/75">{metric.label}</p>
+              <p className="mt-3 text-4xl font-semibold text-[#2B2118]">{metric.value}</p>
             </article>
           ))}
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <article className={`${whiteCardClass} rounded-2xl p-6`}>
-            <p className="text-sm text-[#E8DCCB]/55">Resumo da unidade</p>
-            <h2 className="mt-2 text-2xl font-semibold text-[#E8DCCB]">{barbershop.name}</h2>
+            <p className="text-sm text-[#5B4F3A]/75">Resumo da unidade</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">{barbershop.name}</h2>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl bg-[#131313] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Barbeiros ativos</p>
-                <p className="mt-2 text-2xl font-medium text-[#E8DCCB]">{barbers.length}</p>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">Barbeiros ativos</p>
+                <p className="mt-2 text-2xl font-medium text-[#2B2118]">{barbers.length}</p>
               </div>
-              <div className="rounded-2xl bg-[#131313] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Servicos ativos</p>
-                <p className="mt-2 text-2xl font-medium text-[#E8DCCB]">{services.length}</p>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">Serviços ativos</p>
+                <p className="mt-2 text-2xl font-medium text-[#2B2118]">{services.length}</p>
               </div>
             </div>
           </article>
 
           <article className={`${whiteCardClass} rounded-2xl p-6`}>
-            <p className="text-sm text-[#E8DCCB]/55">Proximas marcacoes</p>
+            <p className="text-sm text-[#5B4F3A]/75">Próximas marcações</p>
             <div className="mt-4 space-y-3">
               {upcomingAppointments.length === 0 ? (
-                <div className="flex items-start gap-3 rounded-2xl border border-dashed border-white/10 bg-[#131313] px-4 py-5 text-sm text-[#E8DCCB]/55">
+                <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm text-[#5B4F3A]/75">
                   <IconEmpty />
                   <div>
-                    <p className="font-medium text-[#E8DCCB]">Sem proximas marcacoes</p>
-                    <p className="mt-1">Nao ha atendimentos futuros para esta data.</p>
+                    <p className="font-medium text-[#2B2118]">Sem próximas marcações</p>
+                    <p className="mt-1">Não há atendimentos futuros para esta data.</p>
                   </div>
                 </div>
               ) : (
                 upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="rounded-2xl border border-white/10 bg-[#131313] p-4">
-                    <p className="font-medium text-[#E8DCCB]">{appointment.client_name}</p>
-                    <p className="mt-1 text-sm text-[#E8DCCB]/55">
-                      {formatTime(appointment.starts_at)} Â· {appointment.service?.name ?? "Servico"}
+                  <div key={appointment.id} className="rounded-2xl border border-[#D8C3A5]/70 bg-[#F8E8D3] p-4">
+                    <p className="font-medium text-[#2B2118]">{appointment.client_name}</p>
+                    <p className="mt-1 text-sm text-[#5B4F3A]/75">
+                      {formatTime(appointment.starts_at)} · {appointment.service?.name ?? "Serviço"}
                     </p>
-                    <p className="mt-1 text-sm text-[#E8DCCB]/55">{appointment.barber?.name ?? "Barbeiro"}</p>
+                    <p className="mt-1 text-sm text-[#5B4F3A]/75">{appointment.barber?.name ?? "Barbeiro"}</p>
                   </div>
                 ))
               )}
@@ -1131,14 +1129,14 @@ export function BackofficePanel() {
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <form className={`${whiteCardClass} rounded-2xl p-8`} onSubmit={handleBarbershopSubmit}>
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-[#E8DCCB]">{barbershop ? "Atualizar barbearia" : "Criar barbearia"}</h2>
-            <p className="mt-2 text-sm text-[#E8DCCB]/55">Ajusta os dados principais da tua unidade sem sair do painel.</p>
+            <h2 className="text-2xl font-semibold text-[#2B2118]">{barbershop ? "Atualizar barbearia" : "Criar barbearia"}</h2>
+            <p className="mt-2 text-sm text-[#5B4F3A]/75">Ajusta os dados principais da tua unidade sem sair do painel.</p>
           </div>
           <div className="mt-5 grid gap-4">
             <input className={inputClass} placeholder="Nome" value={barbershopForm.name} onChange={(event) => setBarbershopForm((current) => ({ ...current, name: event.target.value }))} />
             <input className={inputClass} placeholder="Slug" value={barbershopForm.slug} onChange={(event) => setBarbershopForm((current) => ({ ...current, slug: event.target.value }))} />
             <input className={inputClass} placeholder="Telefone" value={barbershopForm.phone} onChange={(event) => setBarbershopForm((current) => ({ ...current, phone: event.target.value }))} />
-            <input className={inputClass} placeholder="Email" value={barbershopForm.email} onChange={(event) => setBarbershopForm((current) => ({ ...current, email: event.target.value }))} />
+            <input className={inputClass} placeholder="E-mail" value={barbershopForm.email} onChange={(event) => setBarbershopForm((current) => ({ ...current, email: event.target.value }))} />
             <input className={inputClass} placeholder="Morada" value={barbershopForm.address} onChange={(event) => setBarbershopForm((current) => ({ ...current, address: event.target.value }))} />
             <input className={inputClass} placeholder="Timezone" value={barbershopForm.timezone} onChange={(event) => setBarbershopForm((current) => ({ ...current, timezone: event.target.value }))} />
           </div>
@@ -1148,19 +1146,19 @@ export function BackofficePanel() {
         </form>
 
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
-          <p className="text-sm text-[#E8DCCB]/55">Resumo da barbearia</p>
+          <p className="text-sm text-[#5B4F3A]/75">Resumo da barbearia</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl bg-[#131313] p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Nome</p>
-              <p className="mt-2 text-base font-medium text-[#E8DCCB]">{barbershop?.name ?? "Ainda sem barbearia"}</p>
+            <div className="rounded-2xl bg-[#F8E8D3] p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">Nome</p>
+              <p className="mt-2 text-base font-medium text-[#2B2118]">{barbershop?.name ?? "Ainda sem barbearia"}</p>
             </div>
-            <div className="rounded-2xl bg-[#131313] p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Slug</p>
-              <p className="mt-2 text-base font-medium text-[#E8DCCB]">{barbershop?.slug ?? "-"}</p>
+            <div className="rounded-2xl bg-[#F8E8D3] p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">Slug</p>
+              <p className="mt-2 text-base font-medium text-[#2B2118]">{barbershop?.slug ?? "-"}</p>
             </div>
-            <div className="rounded-2xl bg-[#131313] p-4 md:col-span-2">
-              <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Morada</p>
-              <p className="mt-2 text-base font-medium text-[#E8DCCB]">{barbershop?.address ?? "Sem morada definida"}</p>
+            <div className="rounded-2xl bg-[#F8E8D3] p-4 md:col-span-2">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">Morada</p>
+              <p className="mt-2 text-base font-medium text-[#2B2118]">{barbershop?.address ?? "Sem morada definida"}</p>
             </div>
           </div>
         </article>
@@ -1172,11 +1170,11 @@ export function BackofficePanel() {
     return (
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <form className={`${whiteCardClass} rounded-2xl p-8`} onSubmit={handleBarberSubmit}>
-          <h2 className="text-2xl font-semibold text-[#E8DCCB]">{barberForm.id ? "Editar barbeiro" : "Criar barbeiro"}</h2>
-          <p className="mt-2 text-sm text-[#E8DCCB]/55">Adiciona ou atualiza elementos da equipa.</p>
+          <h2 className="text-2xl font-semibold text-[#2B2118]">{barberForm.id ? "Editar barbeiro" : "Criar barbeiro"}</h2>
+          <p className="mt-2 text-sm text-[#5B4F3A]/75">Adiciona ou atualiza elementos da equipa.</p>
           <div className="mt-5 grid gap-4">
             <input className={inputClass} placeholder="Nome" value={barberForm.name} onChange={(event) => setBarberForm((current) => ({ ...current, name: event.target.value }))} />
-            <input className={inputClass} placeholder="Email" value={barberForm.email} onChange={(event) => setBarberForm((current) => ({ ...current, email: event.target.value }))} />
+            <input className={inputClass} placeholder="E-mail" value={barberForm.email} onChange={(event) => setBarberForm((current) => ({ ...current, email: event.target.value }))} />
             <input className={inputClass} placeholder="Telefone" value={barberForm.phone} onChange={(event) => setBarberForm((current) => ({ ...current, phone: event.target.value }))} />
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
@@ -1192,16 +1190,16 @@ export function BackofficePanel() {
         </form>
 
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
-          <h2 className="text-2xl font-semibold text-[#E8DCCB]">Barbeiros</h2>
+          <h2 className="text-2xl font-semibold text-[#2B2118]">Barbeiros</h2>
           <div className="mt-5 space-y-3">
             {barbers.length === 0 ? (
-              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-white/10 bg-[#131313] px-4 py-5 text-sm text-[#E8DCCB]/55"><IconEmpty /><div><p className="font-medium text-[#E8DCCB]">Ainda sem barbeiros</p><p className="mt-1">Cria o primeiro profissional para comecar a gerir a agenda.</p></div></div>
+              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm text-[#5B4F3A]/75"><IconEmpty /><div><p className="font-medium text-[#2B2118]">Ainda sem barbeiros</p><p className="mt-1">Cria o primeiro profissional para começar a gerir a agenda.</p></div></div>
             ) : (
               barbers.map((barber) => (
-                <div key={barber.id} className="rounded-2xl border border-white/10 p-4 transition-all hover:border-white/10 hover:shadow-sm">
-                  <p className="font-medium text-[#E8DCCB]">{barber.name}</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">{barber.email || "Sem email"}</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">{barber.phone || "Sem telefone"}</p>
+                <div key={barber.id} className="rounded-2xl border border-[#D8C3A5]/70 p-4 transition-all hover:border-[#D8C3A5]/70 hover:shadow-sm">
+                  <p className="font-medium text-[#2B2118]">{barber.name}</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">{barber.email || "Sem e-mail"}</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">{barber.phone || "Sem telefone"}</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" onClick={() => setBarberForm({ id: String(barber.id), name: barber.name, email: barber.email ?? "", phone: barber.phone ?? "" })} className={ghostButtonClass}>
                       Editar
@@ -1223,8 +1221,8 @@ export function BackofficePanel() {
     return (
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <form className={`${whiteCardClass} rounded-2xl p-8`} onSubmit={handleServiceSubmit}>
-          <h2 className="text-2xl font-semibold text-[#E8DCCB]">{serviceForm.id ? "Editar servico" : "Criar servico"}</h2>
-          <p className="mt-2 text-sm text-[#E8DCCB]/55">Define o catalogo e o tempo de atendimento de cada servico.</p>
+          <h2 className="text-2xl font-semibold text-[#2B2118]">{serviceForm.id ? "Editar serviço" : "Criar serviço"}</h2>
+          <p className="mt-2 text-sm text-[#5B4F3A]/75">Define o catálogo e o tempo de atendimento de cada serviço.</p>
           <div className="mt-5 grid gap-4">
             <input className={inputClass} placeholder="Nome" value={serviceForm.name} onChange={(event) => setServiceForm((current) => ({ ...current, name: event.target.value }))} />
             <input className={inputClass} placeholder="Preco" value={serviceForm.price} onChange={(event) => setServiceForm((current) => ({ ...current, price: event.target.value }))} />
@@ -1232,7 +1230,7 @@ export function BackofficePanel() {
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button type="submit" className={primaryButtonClass}>
-              {serviceForm.id ? "Atualizar servico" : "Criar servico"}
+              {serviceForm.id ? "Atualizar serviço" : "Criar serviço"}
             </button>
             {serviceForm.id ? (
               <button type="button" onClick={() => setServiceForm({ id: "", name: "", price: "", duration_minutes: "" })} className={secondaryButtonClass}>
@@ -1243,16 +1241,16 @@ export function BackofficePanel() {
         </form>
 
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
-          <h2 className="text-2xl font-semibold text-[#E8DCCB]">Servicos</h2>
+          <h2 className="text-2xl font-semibold text-[#2B2118]">Serviços</h2>
           <div className="mt-5 space-y-3">
             {services.length === 0 ? (
-              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-white/10 bg-[#131313] px-4 py-5 text-sm text-[#E8DCCB]/55"><IconEmpty /><div><p className="font-medium text-[#E8DCCB]">Ainda sem servicos</p><p className="mt-1">Adiciona o primeiro servico para abrir marcacoes online.</p></div></div>
+              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm text-[#5B4F3A]/75"><IconEmpty /><div><p className="font-medium text-[#2B2118]">Ainda sem serviços</p><p className="mt-1">Adiciona o primeiro serviço para abrir marcações online.</p></div></div>
             ) : (
               services.map((service) => (
-                <div key={service.id} className="rounded-2xl border border-white/10 p-4 transition-all hover:border-white/10 hover:shadow-sm">
-                  <p className="font-medium text-[#E8DCCB]">{service.name}</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">Preco: {service.price} EUR</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">Duracao: {service.duration_minutes} minutos</p>
+                <div key={service.id} className="rounded-2xl border border-[#D8C3A5]/70 p-4 transition-all hover:border-[#D8C3A5]/70 hover:shadow-sm">
+                  <p className="font-medium text-[#2B2118]">{service.name}</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Preco: {service.price} EUR</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Duracao: {service.duration_minutes} minutos</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" onClick={() => setServiceForm({ id: String(service.id), name: service.name, price: String(service.price), duration_minutes: String(service.duration_minutes) })} className={ghostButtonClass}>
                       Editar
@@ -1276,8 +1274,8 @@ export function BackofficePanel() {
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm text-[#E8DCCB]/55">Agenda</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#E8DCCB]">{dayAgenda ? formatDayTitle(dayAgenda.date, timezone) : "Seleciona uma data"}</h2>
+              <p className="text-sm text-[#5B4F3A]/75">Agenda</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">{dayAgenda ? formatDayTitle(dayAgenda.date, timezone) : "Seleciona uma data"}</h2>
             </div>
             <div className="flex flex-wrap gap-3">
               <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className={inputClass} />
@@ -1290,20 +1288,20 @@ export function BackofficePanel() {
 
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <form className={`${whiteCardClass} rounded-2xl p-8`} onSubmit={handleAppointmentSubmit}>
-            <h3 className="text-2xl font-semibold text-[#E8DCCB]">{appointmentForm.id ? "Editar agendamento" : "Criar agendamento"}</h3>
-            <p className="mt-2 text-sm text-[#E8DCCB]/55">Agenda manual para a equipa quando o cliente marca diretamente com a barbearia.</p>
+            <h3 className="text-2xl font-semibold text-[#2B2118]">{appointmentForm.id ? "Editar agendamento" : "Criar agendamento"}</h3>
+            <p className="mt-2 text-sm text-[#5B4F3A]/75">Agenda manual para a equipa quando o cliente marca diretamente com a barbearia.</p>
             <div className="mt-5 grid gap-3">
               <select className={inputClass} value={appointmentForm.barber_id} onChange={(event) => setAppointmentForm((current) => ({ ...current, barber_id: event.target.value }))}>
                 <option value="">Selecionar barbeiro</option>
                 {barbers.map((barber) => <option key={barber.id} value={barber.id}>{barber.name}</option>)}
               </select>
               <select className={inputClass} value={appointmentForm.service_id} onChange={(event) => setAppointmentForm((current) => ({ ...current, service_id: event.target.value }))}>
-                <option value="">Selecionar servico</option>
+                <option value="">Selecionar serviço</option>
                 {services.map((service) => <option key={service.id} value={service.id}>{service.name} ({service.duration_minutes} min)</option>)}
               </select>
               <input className={inputClass} placeholder="Nome do cliente" value={appointmentForm.client_name} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_name: event.target.value }))} />
               <input className={inputClass} placeholder="Telefone do cliente" value={appointmentForm.client_phone} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_phone: event.target.value }))} />
-              <input className={inputClass} placeholder="Email do cliente" value={appointmentForm.client_email} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_email: event.target.value }))} />
+              <input className={inputClass} placeholder="E-mail do cliente" value={appointmentForm.client_email} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_email: event.target.value }))} />
               <input className={inputClass} type="datetime-local" value={appointmentForm.starts_at} onChange={(event) => setAppointmentForm((current) => ({ ...current, starts_at: event.target.value }))} />
               <textarea className={`${inputClass} min-h-24`} placeholder="Notas" value={appointmentForm.notes} onChange={(event) => setAppointmentForm((current) => ({ ...current, notes: event.target.value }))} />
             </div>
@@ -1321,38 +1319,38 @@ export function BackofficePanel() {
 
           <div className="space-y-6">
             <article className={`${whiteCardClass} rounded-2xl p-8`}>
-              <p className="text-sm text-[#E8DCCB]/55">Agenda visual</p>
+              <p className="text-sm text-[#5B4F3A]/75">Agenda visual</p>
               <div className="mt-5 grid gap-2">
                 {DAY_SLOTS.map((slot) => {
                   const appointment = (dayAgenda?.appointments ?? []).find((item) => slotIsCovered(item, slot));
                   return (
-                    <div key={slot} className={`rounded-xl border px-3 py-3 ${appointment ? "border-white/10 bg-[#131313] shadow-sm" : "border-dashed border-white/10 bg-[#1A1A1A]"}`}>
+                    <div key={slot} className={`rounded-xl border px-3 py-3 ${appointment ? "border-[#D8C3A5]/70 bg-[#F8E8D3] shadow-sm" : "border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC]"}`}>
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-semibold text-[#E8DCCB]">{slot}</p>
+                        <p className="text-sm font-semibold text-[#2B2118]">{slot}</p>
                         {!appointment ? (
-                          <span className="rounded-full border border-white/10 bg-[#131313] px-2.5 py-1 text-[11px] font-medium text-[#E8DCCB]/55">
+                          <span className="rounded-full border border-[#D8C3A5]/70 bg-[#F8E8D3] px-2.5 py-1 text-[11px] font-medium text-[#5B4F3A]/75">
                             Livre
                           </span>
                         ) : null}
                       </div>
                       {appointment ? (
                         <>
-                          <div className="mt-3 rounded-xl bg-[#1A1A1A] p-3 ring-1 ring-neutral-200">
+                          <div className="mt-3 rounded-xl bg-[#FFF7EC] p-3 ring-1 ring-neutral-200">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <p className="text-sm font-semibold text-[#E8DCCB]">{slot}</p>
-                                <p className="mt-1 font-medium text-[#E8DCCB]">{appointment.client_name}</p>
+                                <p className="text-sm font-semibold text-[#2B2118]">{slot}</p>
+                                <p className="mt-1 font-medium text-[#2B2118]">{appointment.client_name}</p>
                               </div>
                               <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusBadge(appointment.status)}`}>
                                 {appointment.status}
                               </span>
                             </div>
-                            <p className="mt-2 text-sm text-[#E8DCCB]/55">{appointment.service?.name ?? "Servico"}</p>
-                            <p className="mt-1 text-sm text-[#E8DCCB]/55">{appointment.barber?.name ?? "Barbeiro"}</p>
+                            <p className="mt-2 text-sm text-[#5B4F3A]/75">{appointment.service?.name ?? "Serviço"}</p>
+                            <p className="mt-1 text-sm text-[#5B4F3A]/75">{appointment.barber?.name ?? "Barbeiro"}</p>
                           </div>
                         </>
                       ) : (
-                        <p className="mt-2 text-sm text-[#E8DCCB]/55">Disponivel para marcacao.</p>
+                        <p className="mt-2 text-sm text-[#5B4F3A]/75">Disponível para marcação.</p>
                       )}
                     </div>
                   );
@@ -1361,15 +1359,15 @@ export function BackofficePanel() {
             </article>
 
             <article className={`${whiteCardClass} rounded-2xl p-8`}>
-              <p className="text-sm text-[#E8DCCB]/55">Lista por hora</p>
+              <p className="text-sm text-[#5B4F3A]/75">Lista por hora</p>
               <div className="mt-5 space-y-3">
                 {(dayAgenda?.appointments ?? []).length === 0 ? (
-                  <div className="flex items-start gap-3 rounded-2xl border border-dashed border-white/10 bg-[#131313] px-4 py-5 text-sm text-[#E8DCCB]/55"><IconEmpty /><div><p className="font-medium text-[#E8DCCB]">Sem agendamentos</p><p className="mt-1">Este dia ainda nao tem marcacoes.</p></div></div>
+                  <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm text-[#5B4F3A]/75"><IconEmpty /><div><p className="font-medium text-[#2B2118]">Sem agendamentos</p><p className="mt-1">Este dia ainda não tem marcações.</p></div></div>
                 ) : (
                   (dayAgenda?.appointments ?? []).map((appointment) => (
-                    <div key={appointment.id} className="rounded-2xl border border-white/10 p-4 transition-all hover:border-white/10 hover:shadow-sm">
-                      <p className="font-medium text-[#E8DCCB]">{formatTime(appointment.starts_at)} Â· {appointment.client_name}</p>
-                      <p className="mt-1 text-sm text-[#E8DCCB]/55">{appointment.service?.name ?? "Servico"} Â· {appointment.barber?.name ?? "Barbeiro"}</p>
+                    <div key={appointment.id} className="rounded-2xl border border-[#D8C3A5]/70 p-4 transition-all hover:border-[#D8C3A5]/70 hover:shadow-sm">
+                      <p className="font-medium text-[#2B2118]">{formatTime(appointment.starts_at)} · {appointment.client_name}</p>
+                      <p className="mt-1 text-sm text-[#5B4F3A]/75">{appointment.service?.name ?? "Serviço"} · {appointment.barber?.name ?? "Barbeiro"}</p>
                       <div className="mt-4 flex flex-wrap gap-3">
                         <button type="button" onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone, client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })} className={ghostButtonClass}>
                           Editar
@@ -1398,35 +1396,35 @@ export function BackofficePanel() {
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <article className={`${whiteCardClass} overflow-hidden rounded-2xl p-0`}>
           <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="flex flex-col justify-between border-b border-white/10 bg-[#131313] p-6 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="flex flex-col justify-between border-b border-[#D8C3A5]/70 bg-[#F8E8D3] p-6 sm:p-8 lg:border-b-0 lg:border-r">
               <div>
-                <span className="inline-flex rounded-full border border-[#A63A3A]/35 bg-[#A63A3A]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#E8DCCB]/80">
+                <span className="inline-flex rounded-full border border-[#A86840]/35 bg-[#A86840]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5B4F3A]">
                   QR Code da barbearia
                 </span>
-                <h2 className="mt-5 text-2xl font-semibold tracking-tight text-[#E8DCCB] sm:text-3xl">
+                <h2 className="mt-5 text-2xl font-semibold tracking-tight text-[#2B2118] sm:text-3xl">
                   Recebe marcações diretas em qualquer ponto de contacto.
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-[#E8DCCB]/60">
+                <p className="mt-3 max-w-xl text-sm leading-6 text-[#5B4F3A]/78">
                   Coloca este QR na porta, balcão ou redes sociais para receber marcações diretas.
                 </p>
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-[#0B0B0B] p-4">
-                  <p className="text-xs text-[#E8DCCB]/45">Scans</p>
-                  <p className="mt-2 text-2xl font-semibold text-[#E8DCCB]">{scanCount}</p>
+                <div className="rounded-2xl border border-[#D8C3A5]/70 bg-[#F4EADB] p-4">
+                  <p className="text-xs text-[#5B4F3A]/70">Scans</p>
+                  <p className="mt-2 text-2xl font-semibold text-[#2B2118]">{scanCount}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[#0B0B0B] p-4 sm:col-span-2">
-                  <p className="text-xs text-[#E8DCCB]/45">Último scan</p>
-                  <p className="mt-2 text-sm font-medium text-[#E8DCCB]">
+                <div className="rounded-2xl border border-[#D8C3A5]/70 bg-[#F4EADB] p-4 sm:col-span-2">
+                  <p className="text-xs text-[#5B4F3A]/70">Último scan</p>
+                  <p className="mt-2 text-sm font-medium text-[#2B2118]">
                     {qrCode?.qr_last_scanned_at ? formatDateTimeLabel(qrCode.qr_last_scanned_at, timezone) : "Ainda sem scans registados"}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/10 bg-[#0B0B0B] p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#E8DCCB]/40">URL pública</p>
-                <p className="mt-2 break-all text-sm text-[#E8DCCB]/80">
+              <div className="mt-5 rounded-2xl border border-[#D8C3A5]/70 bg-[#F4EADB] p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#2B2118]/40">URL pública</p>
+                <p className="mt-2 break-all text-sm text-[#5B4F3A]">
                   {barbershop ? publicLink : "Cria primeiro a tua barbearia para gerar o link público."}
                 </p>
               </div>
@@ -1439,7 +1437,7 @@ export function BackofficePanel() {
             </div>
 
             <div className="p-6 sm:p-8">
-              <div className="mx-auto max-w-sm rounded-[2rem] border border-white/10 bg-[#0B0B0B] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
+              <div className="mx-auto max-w-sm rounded-[2rem] border border-[#D8C3A5]/70 bg-[#F4EADB] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
                 <div className="rounded-[1.5rem] bg-white p-5 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]">
                   <div className="flex aspect-square items-center justify-center rounded-2xl border border-neutral-100 bg-white">
                     {isQrLoading ? (
@@ -1473,12 +1471,12 @@ export function BackofficePanel() {
               </div>
 
               {barbershop ? (
-                <Link href={`/book/${barbershop.slug}`} className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-[#0B0B0B] px-4 py-2.5 text-sm font-medium text-[#E8DCCB]/80 transition-all hover:border-[#A63A3A]/45 hover:text-[#E8DCCB]">
+                <Link href={`/book/${barbershop.slug}`} className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#F4EADB] px-4 py-2.5 text-sm font-medium text-[#5B4F3A] transition-all hover:border-[#A86840]/45 hover:text-[#2B2118]">
                   Abrir página pública
                 </Link>
               ) : null}
 
-              <p className="mt-4 text-center text-xs text-[#E8DCCB]/45">
+              <p className="mt-4 text-center text-xs text-[#5B4F3A]/70">
                 {qrCode?.qr_last_regenerated_at ? `Atualizado em ${formatDateTimeLabel(qrCode.qr_last_regenerated_at, timezone)}` : "Gerado automaticamente quando a barbearia existe."}
               </p>
             </div>
@@ -1486,7 +1484,7 @@ export function BackofficePanel() {
         </article>
 
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
-          <p className="text-sm text-[#E8DCCB]/55">Checklist de partilha</p>
+          <p className="text-sm text-[#5B4F3A]/75">Checklist de partilha</p>
           <div className="mt-5 space-y-3">
             {[
               { label: "Barbearia criada", ok: Boolean(barbershop) },
@@ -1495,8 +1493,8 @@ export function BackofficePanel() {
               { label: "Slug pronto para partilha", ok: Boolean(barbershop?.slug) },
               { label: "QR Code gerado", ok: Boolean(qrCode?.qr_data_uri) },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[#131313] px-4 py-4">
-                <p className="font-medium text-[#E8DCCB]">{item.label}</p>
+              <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[#F8E8D3] px-4 py-4">
+                <p className="font-medium text-[#2B2118]">{item.label}</p>
                 <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${item.ok ? "bg-emerald-100 text-emerald-800" : "bg-black/8 text-black/60"}`}>
                   {item.ok ? "OK" : "Pendente"}
                 </span>
@@ -1504,9 +1502,9 @@ export function BackofficePanel() {
             ))}
           </div>
 
-          <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0B0B] p-5">
-            <p className="text-sm font-semibold text-[#E8DCCB]">Preparado para premium</p>
-            <p className="mt-2 text-sm leading-6 text-[#E8DCCB]/55">
+          <div className="mt-6 rounded-2xl border border-[#D8C3A5]/70 bg-[#F4EADB] p-5">
+            <p className="text-sm font-semibold text-[#2B2118]">Preparado para premium</p>
+            <p className="mt-2 text-sm leading-6 text-[#5B4F3A]/75">
               A estrutura já guarda metadados para tracking de scans, QR personalizado com logo e exportação em PDF.
             </p>
             <div className="mt-4 grid gap-3">
@@ -1516,8 +1514,8 @@ export function BackofficePanel() {
                 "PDF de impressão pronto para ativar",
                 "QR com branding e logo da barbearia",
               ].map((item) => (
-                <div key={item} className="flex items-center gap-3 rounded-xl bg-[#131313] px-3 py-3 text-sm text-[#E8DCCB]/70">
-                  <span className="h-2 w-2 rounded-full bg-[#A63A3A]" />
+                <div key={item} className="flex items-center gap-3 rounded-xl bg-[#F8E8D3] px-3 py-3 text-sm text-[#5B4F3A]/85">
+                  <span className="h-2 w-2 rounded-full bg-[#A86840]" />
                   {item}
                 </div>
               ))}
@@ -1532,8 +1530,8 @@ export function BackofficePanel() {
     if (!isSuperAdmin) {
       return (
         <article className={`${whiteCardClass} p-8`}>
-          <h2 className="text-2xl font-semibold text-[#E8DCCB]">Acesso reservado</h2>
-          <p className="mt-2 text-sm text-[#E8DCCB]/55">Apenas o super admin principal pode abrir esta área.</p>
+          <h2 className="text-2xl font-semibold text-[#2B2118]">Acesso reservado</h2>
+          <p className="mt-2 text-sm text-[#5B4F3A]/75">Apenas o super admin principal pode abrir esta área.</p>
         </article>
       );
     }
@@ -1551,9 +1549,9 @@ export function BackofficePanel() {
         <article className={`${whiteCardClass} p-8`}>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm text-[#E8DCCB]/55">Administração global</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#E8DCCB]">Controlo da plataforma BarberBook</h2>
-              <p className="mt-2 text-sm text-[#E8DCCB]/55">
+              <p className="text-sm text-[#5B4F3A]/75">Administração global</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">Controlo da plataforma BarberBook</h2>
+              <p className="mt-2 text-sm text-[#5B4F3A]/75">
                 Gere contas, barbearias e acesso ativo sem interferir no fluxo normal dos barbeiros.
               </p>
             </div>
@@ -1566,33 +1564,33 @@ export function BackofficePanel() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {metricCards.map((metric) => (
             <article key={metric.label} className={`${whiteCardClass} p-5`}>
-              <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/45">{metric.label}</p>
-              <p className="mt-3 text-3xl font-semibold text-[#E8DCCB]">{metric.value}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/70">{metric.label}</p>
+              <p className="mt-3 text-3xl font-semibold text-[#2B2118]">{metric.value}</p>
             </article>
           ))}
         </section>
 
         <section className={`${whiteCardClass} overflow-hidden`}>
-          <div className="border-b border-white/10 p-6">
-            <h3 className="text-xl font-semibold text-[#E8DCCB]">Contas de utilizador</h3>
-            <p className="mt-1 text-sm text-[#E8DCCB]/55">Ativa ou desativa acessos à plataforma.</p>
+          <div className="border-b border-[#D8C3A5]/70 p-6">
+            <h3 className="text-xl font-semibold text-[#2B2118]">Contas de utilizador</h3>
+            <p className="mt-1 text-sm text-[#5B4F3A]/75">Ativa ou desativa acessos à plataforma.</p>
           </div>
           <div className="divide-y divide-white/10">
             {(adminPlatform?.users ?? []).map((adminUser) => (
               <div key={adminUser.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr_0.6fr_auto] lg:items-center">
                 <div>
-                  <p className="font-semibold text-[#E8DCCB]">{adminUser.name}</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">{adminUser.email}</p>
+                  <p className="font-semibold text-[#2B2118]">{adminUser.name}</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">{adminUser.email}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/40">Barbearia</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]">{adminUser.barbershop?.name ?? "Sem barbearia"}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#2B2118]/40">Barbearia</p>
+                  <p className="mt-1 text-sm text-[#2B2118]">{adminUser.barbershop?.name ?? "Sem barbearia"}</p>
                 </div>
                 <div>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${adminUser.is_active ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
                     {adminUser.is_active ? "Ativa" : "Desativada"}
                   </span>
-                  {adminUser.is_super_admin ? <span className="ml-2 inline-flex rounded-full bg-[#A63A3A]/20 px-3 py-1 text-xs font-semibold text-[#F5F1EA]">Super admin</span> : null}
+                  {adminUser.is_super_admin ? <span className="ml-2 inline-flex rounded-full bg-[#A86840]/20 px-3 py-1 text-xs font-semibold text-[#FFF7EC]">Super admin</span> : null}
                 </div>
                 <button
                   type="button"
@@ -1605,26 +1603,26 @@ export function BackofficePanel() {
               </div>
             ))}
             {!isAdminLoading && (adminPlatform?.users ?? []).length === 0 ? (
-              <div className="p-6 text-sm text-[#E8DCCB]/55">Ainda não existem contas registadas.</div>
+              <div className="p-6 text-sm text-[#5B4F3A]/75">Ainda não existem contas registadas.</div>
             ) : null}
           </div>
         </section>
 
         <section className={`${whiteCardClass} overflow-hidden`}>
-          <div className="border-b border-white/10 p-6">
-            <h3 className="text-xl font-semibold text-[#E8DCCB]">Barbearias</h3>
-            <p className="mt-1 text-sm text-[#E8DCCB]/55">Controla a visibilidade pública e o acesso operacional de cada barbearia.</p>
+          <div className="border-b border-[#D8C3A5]/70 p-6">
+            <h3 className="text-xl font-semibold text-[#2B2118]">Barbearias</h3>
+            <p className="mt-1 text-sm text-[#5B4F3A]/75">Controla a visibilidade pública e o acesso operacional de cada barbearia.</p>
           </div>
           <div className="divide-y divide-white/10">
             {(adminPlatform?.barbershops ?? []).map((adminBarbershop) => (
               <div key={adminBarbershop.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.9fr_0.6fr_auto] lg:items-center">
                 <div>
-                  <p className="font-semibold text-[#E8DCCB]">{adminBarbershop.name}</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">/book/{adminBarbershop.slug}</p>
+                  <p className="font-semibold text-[#2B2118]">{adminBarbershop.name}</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">/book/{adminBarbershop.slug}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/40">Conta associada</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]">{adminBarbershop.owner?.email ?? "Sem conta"}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#2B2118]/40">Conta associada</p>
+                  <p className="mt-1 text-sm text-[#2B2118]">{adminBarbershop.owner?.email ?? "Sem conta"}</p>
                 </div>
                 <div>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${adminBarbershop.is_active ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
@@ -1641,7 +1639,7 @@ export function BackofficePanel() {
               </div>
             ))}
             {!isAdminLoading && (adminPlatform?.barbershops ?? []).length === 0 ? (
-              <div className="p-6 text-sm text-[#E8DCCB]/55">Ainda não existem barbearias criadas.</div>
+              <div className="p-6 text-sm text-[#5B4F3A]/75">Ainda não existem barbearias criadas.</div>
             ) : null}
           </div>
         </section>
@@ -1653,19 +1651,19 @@ export function BackofficePanel() {
     return (
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
-          <p className="text-sm text-[#E8DCCB]/55">Dados da conta</p>
-          <h2 className="mt-2 text-2xl font-semibold text-[#E8DCCB]">Atualiza o e-mail e o telemóvel</h2>
-          <p className="mt-2 text-sm text-[#E8DCCB]/55">
+          <p className="text-sm text-[#5B4F3A]/75">Dados da conta</p>
+          <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">Atualiza o e-mail e o telemóvel</h2>
+          <p className="mt-2 text-sm text-[#5B4F3A]/75">
             Mantém os dados de acesso e contacto da tua conta sempre atualizados.
           </p>
 
           <form className="mt-6 grid gap-4" onSubmit={handleAccountProfileSubmit}>
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-[#E8DCCB]">Nome</span>
+              <span className="text-sm font-medium text-[#2B2118]">Nome</span>
               <input className={inputClass} value={user?.name ?? ""} disabled />
             </label>
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-[#E8DCCB]">E-mail</span>
+              <span className="text-sm font-medium text-[#2B2118]">E-mail</span>
               <input
                 className={inputClass}
                 type="email"
@@ -1675,7 +1673,7 @@ export function BackofficePanel() {
               />
             </label>
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-[#E8DCCB]">Telemóvel</span>
+              <span className="text-sm font-medium text-[#2B2118]">Telemóvel</span>
               <input
                 className={inputClass}
                 value={accountProfileForm.phone}
@@ -1691,15 +1689,15 @@ export function BackofficePanel() {
 
         <div className="space-y-6">
           <article className={`${whiteCardClass} rounded-2xl p-8`}>
-            <p className="text-sm text-[#E8DCCB]/55">Segurança</p>
-            <h2 className="mt-2 text-2xl font-semibold text-[#E8DCCB]">Alterar palavra-passe</h2>
-            <p className="mt-2 text-sm text-[#E8DCCB]/55">
+            <p className="text-sm text-[#5B4F3A]/75">Segurança</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">Alterar palavra-passe</h2>
+            <p className="mt-2 text-sm text-[#5B4F3A]/75">
               Para proteger a conta, pedimos sempre a palavra-passe atual antes da alteração.
             </p>
 
             <form className="mt-6 grid gap-4" onSubmit={handleAccountPasswordSubmit}>
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-[#E8DCCB]">Palavra-passe atual</span>
+                <span className="text-sm font-medium text-[#2B2118]">Palavra-passe atual</span>
                 <input
                   className={inputClass}
                   type="password"
@@ -1709,7 +1707,7 @@ export function BackofficePanel() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-[#E8DCCB]">Nova palavra-passe</span>
+                <span className="text-sm font-medium text-[#2B2118]">Nova palavra-passe</span>
                 <input
                   className={inputClass}
                   type="password"
@@ -1719,7 +1717,7 @@ export function BackofficePanel() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-[#E8DCCB]">Confirmação</span>
+                <span className="text-sm font-medium text-[#2B2118]">Confirmação</span>
                 <input
                   className={inputClass}
                   type="password"
@@ -1735,15 +1733,15 @@ export function BackofficePanel() {
           </article>
 
           <article className={`${whiteCardClass} rounded-2xl p-8`}>
-            <p className="text-sm text-[#E8DCCB]/55">Estado da conta</p>
+            <p className="text-sm text-[#5B4F3A]/75">Estado da conta</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl bg-[#131313] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Email atual</p>
-                <p className="mt-2 text-base font-medium text-[#E8DCCB]">{user?.email ?? "Sem e-mail"}</p>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">E-mail atual</p>
+                <p className="mt-2 text-base font-medium text-[#2B2118]">{user?.email ?? "Sem e-mail"}</p>
               </div>
-              <div className="rounded-2xl bg-[#131313] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/55">Telemóvel atual</p>
-                <p className="mt-2 text-base font-medium text-[#E8DCCB]">{user?.phone ?? "Sem telemóvel"}</p>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/75">Telemóvel atual</p>
+                <p className="mt-2 text-base font-medium text-[#2B2118]">{user?.phone ?? "Sem telemóvel"}</p>
               </div>
             </div>
           </article>
@@ -1776,20 +1774,20 @@ export function BackofficePanel() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0B0B0B] text-[#E8DCCB]">
+    <main className="min-h-screen bg-[#F4EADB] text-[#2B2118]">
       <div className="flex min-h-screen">
-        <aside className={`fixed inset-y-0 left-0 z-40 w-72 transform border-r border-white/10 bg-[#090909] px-5 py-6 text-[#E8DCCB] transition-all duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside className={`fixed inset-y-0 left-0 z-40 w-72 transform border-r border-[#D8C3A5]/70 bg-[#EAD8BF] px-5 py-6 text-[#2B2118] transition-all duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1A1A1A] text-[#A63A3A] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFF7EC] text-[#A86840] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <IconSpark />
             </div>
             <div>
-              <p className="text-lg font-semibold tracking-tight text-white">BarberPro</p>
-              <p className="text-sm text-[#E8DCCB]/45">Painel de gestao urban</p>
+              <p className="text-lg font-semibold tracking-tight text-[#2B2118]">BarberBook</p>
+              <p className="text-sm text-[#5B4F3A]/70">Painel de gestão</p>
             </div>
           </div>
 
-          <nav className="mt-8 space-y-2 border-t border-white/10 pt-6">
+          <nav className="mt-8 space-y-2 border-t border-[#D8C3A5]/70 pt-6">
             {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1800,24 +1798,24 @@ export function BackofficePanel() {
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? "bg-[#1A1A1A] text-[#A63A3A] shadow-sm ring-1 ring-white/10"
-                    : "text-[#E8DCCB]/72 hover:bg-[#1A1A1A] hover:text-[#F5F1EA]"
+                    ? "bg-[#FFF7EC] text-[#A86840] shadow-sm ring-1 ring-white/10"
+                    : "text-[#5B4F3A]/85 hover:bg-[#FFF7EC] hover:text-[#FFF7EC]"
                 }`}
               >
-                <span className={activeTab === tab.id ? "text-white" : "text-[#E8DCCB]/55"}>{getTabIcon(tab.id)}</span>
+                <span className={activeTab === tab.id ? "text-[#2B2118]" : "text-[#5B4F3A]/75"}>{getTabIcon(tab.id)}</span>
                 {tab.label}
               </button>
             ))}
           </nav>
 
-          <div className="mt-8 space-y-3 rounded-2xl border border-white/10 bg-[#1A1A1A]/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="mt-8 space-y-3 rounded-2xl border border-[#D8C3A5]/70 bg-[#FFF7EC]/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-[#E8DCCB]/55">Utilizador</p>
-              <p className="mt-2 text-sm font-medium text-white">{user?.name ?? "Sem sessão ativa"}</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-[#5B4F3A]/75">Utilizador</p>
+              <p className="mt-2 text-sm font-medium text-[#2B2118]">{user?.name ?? "Sem sessão ativa"}</p>
             </div>
-            <div className="border-t border-white/10 pt-3">
-              <p className="text-xs uppercase tracking-[0.22em] text-[#E8DCCB]/55">Barbearia</p>
-              <p className="mt-2 text-sm font-medium text-white">{barbershop?.name ?? "Ainda sem barbearia"}</p>
+            <div className="border-t border-[#D8C3A5]/70 pt-3">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#5B4F3A]/75">Barbearia</p>
+              <p className="mt-2 text-sm font-medium text-[#2B2118]">{barbershop?.name ?? "Ainda sem barbearia"}</p>
             </div>
           </div>
         </aside>
@@ -1834,24 +1832,24 @@ export function BackofficePanel() {
                   <IconMenu />
                 </button>
                 <div>
-                  <p className="text-sm font-medium text-[#E8DCCB]/55">Backoffice principal</p>
-                  <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#E8DCCB]">{barbershop?.name ?? "BarberPro"}</h1>
-                  <p className="mt-2 text-sm text-[#E8DCCB]/55">
+                  <p className="text-sm font-medium text-[#5B4F3A]/75">Backoffice principal</p>
+                  <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#2B2118]">{barbershop?.name ?? "BarberBook"}</h1>
+                  <p className="mt-2 text-sm text-[#5B4F3A]/75">
                     {visibleTabs.find((tab) => tab.id === activeTab)?.label} · Hoje, {todayLabel}
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-                <div className="rounded-2xl bg-[#131313] px-4 py-3 text-left sm:text-right">
-                  <p className="text-sm font-medium text-[#E8DCCB]">{user?.name ?? "Sem sessão ativa"}</p>
-                  <p className="mt-1 text-sm text-[#E8DCCB]/55">{formatDateLabel(selectedDate, timezone)}</p>
+                <div className="rounded-2xl bg-[#F8E8D3] px-4 py-3 text-left sm:text-right">
+                  <p className="text-sm font-medium text-[#2B2118]">{user?.name ?? "Sem sessão ativa"}</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">{formatDateLabel(selectedDate, timezone)}</p>
                 </div>
                 <Link href="/dashboard-day" className={ghostButtonClass}>
-                  Pagina tecnica
+                  Página tecnica
                 </Link>
                 <button type="button" onClick={() => void handleLogout()} disabled={isLoggingOut} className={ghostButtonClass}>
-                  {isLoggingOut ? "A terminar..." : "Logout"}
+                  {isLoggingOut ? "A terminar..." : "Terminar sessão"}
                 </button>
               </div>
             </header>
@@ -1859,13 +1857,13 @@ export function BackofficePanel() {
             {!token ? (
               <section className={`${whiteCardClass} p-8`}>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100 text-[#E8DCCB]/70">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100 text-[#5B4F3A]/85">
                     <IconEmpty />
                   </div>
                   <div>
-                    <p className="text-2xl font-semibold text-[#E8DCCB]">Início de sessão necessário</p>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#E8DCCB]/55">
-                      Faz login em <code>/auth-test</code> para abrir o painel principal de gestao.
+                    <p className="text-2xl font-semibold text-[#2B2118]">Início de sessão necessário</p>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5B4F3A]/75">
+                      Faz login em <code>/auth-test</code> para abrir o painel principal de gestão.
                     </p>
                   </div>
                 </div>
@@ -1878,7 +1876,7 @@ export function BackofficePanel() {
                       ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                       : status.kind === "error"
                         ? "border-rose-200 bg-rose-50 text-rose-700"
-                        : "border-white/10 bg-[#131313] text-[#E8DCCB]/70"
+                        : "border-[#D8C3A5]/70 bg-[#F8E8D3] text-[#5B4F3A]/85"
                   }`}>
                     <p className="font-semibold">{status.title}</p>
                     <p className="mt-2 leading-6">{status.body}</p>
@@ -1887,9 +1885,9 @@ export function BackofficePanel() {
                 </section>
                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   {topMetrics.map((metric) => (
-                    <article key={metric.label} className="rounded-2xl bg-[#1A1A1A] p-4 shadow-sm">
-                      <p className="text-xs text-[#E8DCCB]/55">{metric.label}</p>
-                      <p className="mt-2 text-2xl font-semibold text-[#E8DCCB]">{metric.value}</p>
+                    <article key={metric.label} className="rounded-2xl bg-[#FFF7EC] p-4 shadow-sm">
+                      <p className="text-xs text-[#5B4F3A]/75">{metric.label}</p>
+                      <p className="mt-2 text-2xl font-semibold text-[#2B2118]">{metric.value}</p>
                     </article>
                   ))}
                 </section>
@@ -1898,8 +1896,8 @@ export function BackofficePanel() {
                     <div className="flex items-start gap-4">
                       <div className="h-11 w-11 animate-pulse rounded-2xl bg-neutral-100" />
                       <div>
-                        <p className="text-2xl font-semibold text-[#E8DCCB]">A carregar o painel</p>
-                        <p className="mt-2 text-sm leading-6 text-[#E8DCCB]/55">
+                        <p className="text-2xl font-semibold text-[#2B2118]">A carregar o painel</p>
+                        <p className="mt-2 text-sm leading-6 text-[#5B4F3A]/75">
                           Estamos a preparar a tua agenda, os barbeiros, os serviços e a configuração da barbearia.
                         </p>
                       </div>

@@ -1,4 +1,4 @@
-export type Service = {
+﻿export type Service = {
   id: string;
   name: string;
   duration: string;
@@ -49,7 +49,7 @@ export type OrganizationProfile = {
 
 export const metrics = [
   { label: "Faturamento mensal", value: "R$ 18.400", note: "+14% vs. mes passado" },
-  { label: "Agendamentos hoje", value: "27", note: "5 horarios livres" },
+  { label: "Agendamentos hoje", value: "27", note: "5 horários livres" },
   { label: "Clientes ativos", value: "312", note: "43 recorrentes VIP" },
   { label: "No-show", value: "3.2%", note: "Lembretes reduziram faltas" },
 ];
@@ -102,7 +102,7 @@ export const plans = [
   {
     name: "Start",
     price: "R$ 79",
-    description: "Para barbearias iniciando a operacao digital.",
+    description: "Para barbearias iniciando a operação digital.",
     features: ["1 unidade", "ate 3 barbeiros", "agenda online", "relatorios basicos"],
   },
   {
@@ -114,7 +114,7 @@ export const plans = [
   {
     name: "Scale",
     price: "R$ 249",
-    description: "Para redes com varias unidades e operacao centralizada.",
+    description: "Para redes com varias unidades e operação centralizada.",
     features: ["multiplas unidades", "permissoes por equipe", "assinaturas", "suporte prioritario"],
   },
 ];
@@ -122,7 +122,7 @@ export const plans = [
 export const steps = [
   {
     title: "Crie sua barbearia",
-    description: "Cadastre marca, horarios, servicos e a identidade visual da unidade.",
+    description: "Cadastre marca, horários, serviços e a identidade visual da unidade.",
   },
   {
     title: "Monte a equipe",
@@ -140,7 +140,7 @@ export const organizationProfile: OrganizationProfile = {
   city: "Sao Paulo",
   neighborhood: "Centro",
   tagline: "Cortes precisos, experiencia premium e agendamento sem friccao.",
-  bookingFeeNote: "Confirmacao rapida por WhatsApp apos o pedido.",
+  bookingFeeNote: "Confirmação rápida por WhatsApp apos o pedido.",
   averageRating: "4.9",
   reviewCount: 248,
 };
@@ -161,7 +161,7 @@ export const publicBookingBarbers: PublicBookingBarber[] = [
   {
     id: "diego",
     name: "Diego Martins",
-    specialty: "Fade, degradê e acabamento preciso",
+    specialty: "Fade, degradÃª e acabamento preciso",
     rating: "4.8",
     nextOpenSlot: "Hoje, 16:30",
     days: [

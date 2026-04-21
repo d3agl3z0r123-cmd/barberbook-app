@@ -32,7 +32,7 @@ class ManagementServiceController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Servico criado com sucesso.',
+            'message' => 'Serviço criado com sucesso.',
             'service' => $this->formatService($service),
         ], 201);
     }
@@ -49,7 +49,7 @@ class ManagementServiceController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Servico atualizado com sucesso.',
+            'message' => 'Serviço atualizado com sucesso.',
             'service' => $this->formatService($service->fresh()),
         ]);
     }
@@ -62,14 +62,14 @@ class ManagementServiceController extends Controller
         $service->delete();
 
         return response()->json([
-            'message' => 'Servico removido com sucesso.',
+            'message' => 'Serviço removido com sucesso.',
         ]);
     }
 
     private function resolveBarbershop(Request $request): Barbershop
     {
         return $request->user()?->barbershop
-            ?? abort(404, 'Barbearia ainda nao criada.');
+            ?? abort(404, 'Barbearia ainda não criada.');
     }
 
     private function formatService(Service $service): array

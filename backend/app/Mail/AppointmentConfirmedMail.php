@@ -21,7 +21,7 @@ class AppointmentConfirmedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Marcação confirmada no BarberPro',
+            subject: 'Marcação confirmada no BarberBook',
         );
     }
 

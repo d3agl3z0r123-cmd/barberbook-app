@@ -69,7 +69,7 @@ class ManagementBarberController extends Controller
     private function resolveBarbershop(Request $request): Barbershop
     {
         return $request->user()?->barbershop
-            ?? abort(404, 'Barbearia ainda nao criada.');
+            ?? abort(404, 'Barbearia ainda não criada.');
     }
 
     private function formatBarber(Barber $barber): array

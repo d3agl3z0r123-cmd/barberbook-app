@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getAvailabilityForDate } from "@/lib/api";
 
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const availability = await getAvailabilityForDate(slug, serviceId, barberId, date);
 
   if (!availability) {
-    return NextResponse.json({ message: "Disponibilidade indisponivel." }, { status: 404 });
+    return NextResponse.json({ message: "Disponibilidade indisponível." }, { status: 404 });
   }
 
   return NextResponse.json(availability);

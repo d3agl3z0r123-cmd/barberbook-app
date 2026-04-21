@@ -79,7 +79,7 @@ class AuthController extends Controller
         $token = $user->createToken($payload['device_name'] ?? 'api')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login efetuado com sucesso.',
+            'message' => 'Entrar efetuado com sucesso.',
             'user' => $this->formatAuthUser($user),
             'is_super_admin' => $user->isSuperAdmin(),
             'token_type' => 'Bearer',
@@ -100,7 +100,7 @@ class AuthController extends Controller
         $request->user()?->currentAccessToken()?->delete();
 
         return response()->json([
-            'message' => 'Sessao terminada com sucesso.',
+            'message' => 'Sessão terminada com sucesso.',
         ]);
     }
 

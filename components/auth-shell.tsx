@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -39,9 +39,9 @@ export function AuthShell({
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-6 xl:px-8">
         <header className={`${luxuryMutedPanelClass} flex flex-col gap-5 p-6 md:flex-row md:items-end md:justify-between`}>
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#A63A3A]">BarberPro</p>
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#A86840]">BarberBook</p>
             <h1 className={`mt-3 text-3xl md:text-4xl ${luxuryHeadingClass}`}>{title}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#E8DCCB]/60">{subtitle}</p>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5B4F3A]/78">{subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/" className={luxuryGhostButtonClass}>
@@ -54,28 +54,28 @@ export function AuthShell({
         </header>
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className={`${luxuryPanelClass} relative flex flex-col justify-between overflow-hidden p-8 text-white`}>
+          <section className={`${luxuryPanelClass} relative flex flex-col justify-between overflow-hidden p-8 text-[#2B2118]`}>
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(166,58,58,0.24),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_48%)]" />
             <div className="relative">
-              <span className="inline-flex rounded-full border border-[#A63A3A]/25 bg-[#A63A3A]/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-[#E8DCCB]">
+              <span className="inline-flex rounded-full border border-[#A86840]/25 bg-[#A86840]/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-[#2B2118]">
                 Urban Barber Access
               </span>
               <h2 className={`mt-6 text-4xl md:text-5xl ${luxuryHeadingClass}`}>
                 Entra numa plataforma feita para barbearias com identidade forte e operação moderna.
               </h2>
-              <p className="mt-4 max-w-xl text-sm leading-7 text-[#E8DCCB]/70">
-                Entra no BarberPro para gerir agenda, clientes, equipa e o link público de marcações com uma presença mais urbana, jovem e profissional.
+              <p className="mt-4 max-w-xl text-sm leading-7 text-[#5B4F3A]/85">
+                Entra no BarberBook para gerir agenda, clientes, equipa e o link público de marcações com uma presença mais urbana, jovem e profissional.
               </p>
             </div>
 
             <div className="relative mt-8 grid gap-4 sm:grid-cols-3">
               {[
                 { label: "Agenda", value: "Sempre sob controlo" },
-                { label: "Clientes", value: "Experiencia premium" },
+                { label: "Clientes", value: "Experiência premium" },
                 { label: "Marcações", value: "Disponível 24/7" },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/45">{item.label}</p>
+                <div key={item.label} className="rounded-2xl border border-[#D8C3A5]/70 bg-white/55 p-4 backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/70">{item.label}</p>
                   <p className={`mt-3 text-lg ${luxuryHeadingClass}`}>{item.value}</p>
                 </div>
               ))}
@@ -108,8 +108,8 @@ export function SocialAuthButton({
       onClick={onClick}
       className={`inline-flex w-full items-center justify-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
         isGoogle
-          ? "border-white/10 bg-[#E8DCCB] text-[#0B0B0B] hover:border-[#A63A3A]/40 hover:bg-[#f0e5d7]"
-          : "border-[#A63A3A]/30 bg-[#0B0B0B] text-[#E8DCCB] hover:border-[#A63A3A] hover:bg-[#151515]"
+          ? "border-[#D8C3A5]/70 bg-[#2B2118] text-[#F4EADB] hover:border-[#A86840]/40 hover:bg-[#f0e5d7]"
+          : "border-[#A86840]/30 bg-[#F4EADB] text-[#2B2118] hover:border-[#A86840] hover:bg-[#F1DDC2]"
       }`}
     >
       {isGoogle ? <GoogleIcon /> : <AppleIcon />}
@@ -122,10 +122,10 @@ export function AuthDivider() {
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-white/10" />
+        <div className="w-full border-t border-[#D8C3A5]/70" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-[#1A1A1A] px-3 text-sm text-[#E8DCCB]/45">ou</span>
+        <span className="bg-[#FFF7EC] px-3 text-sm text-[#5B4F3A]/70">ou</span>
       </div>
     </div>
   );

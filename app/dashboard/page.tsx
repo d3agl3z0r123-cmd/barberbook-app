@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { getDashboardData } from "@/lib/api";
 
 function badgeClass(status: "Confirmado" | "Aguardando" | "Concluido") {
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
                     <tr>
                       <th className="px-4 py-3 font-medium">Hora</th>
                       <th className="px-4 py-3 font-medium">Cliente</th>
-                      <th className="px-4 py-3 font-medium">Servico</th>
+                      <th className="px-4 py-3 font-medium">Serviço</th>
                       <th className="px-4 py-3 font-medium">Barbeiro</th>
                       <th className="px-4 py-3 font-medium">Status</th>
                     </tr>
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
               </article>
 
               <article className="card p-6">
-                <p className="text-sm uppercase tracking-[0.24em] text-black/45">Servicos</p>
+                <p className="text-sm uppercase tracking-[0.24em] text-black/45">Serviços</p>
                 <h3 className="mt-2 text-3xl">Tabela ativa</h3>
                 <div className="mt-5 space-y-3">
                   {dashboard.services.map((service) => (

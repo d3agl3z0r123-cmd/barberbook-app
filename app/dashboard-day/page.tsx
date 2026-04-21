@@ -217,13 +217,13 @@ export default function DashboardDayPage() {
         if (barbershopResponse.status === 404 || agendaResponse.status === 404) {
           setPayload(null);
           setHasNoBarbershop(true);
-          setError(parsedAgenda?.message ?? parsedBarbershop?.message ?? "Ainda nao tens nenhuma barbearia criada.");
+          setError(parsedAgenda?.message ?? parsedBarbershop?.message ?? "Ainda não tens nenhuma barbearia criada.");
           return;
         }
 
         if (!agendaResponse.ok) {
           setPayload(null);
-          setError(parsedAgenda?.message ?? "Nao foi possivel carregar a agenda deste dia.");
+          setError(parsedAgenda?.message ?? "Não foi possível carregar a agenda deste dia.");
           return;
         }
 
@@ -234,7 +234,7 @@ export default function DashboardDayPage() {
         }
 
         setPayload(null);
-        setError("Nao foi possivel contactar o backend Laravel.");
+        setError("Não foi possível contactar o backend Laravel.");
       } finally {
         if (active) {
           setIsLoading(false);
@@ -261,9 +261,9 @@ export default function DashboardDayPage() {
   return (
     <InternalShell
       currentPath="/dashboard-day"
-      title="Agenda diaria"
-      subtitle="Vista operacional do dia com resumo, proximas marcacoes e agenda visual em slots de 30 minutos."
-      userLabel={authUser?.name ?? (token ? "Sessao ativa" : "Sem sessao ativa")}
+      title="Agenda diária"
+      subtitle="Vista operacional do dia com resumo, próximas marcações e agenda visual em slots de 30 minutos."
+      userLabel={authUser?.name ?? (token ? "Sessão ativa" : "Sem sessão ativa")}
       shopLabel={barbershopName || "Ainda sem barbearia"}
     >
       <div className="space-y-6">
@@ -286,10 +286,10 @@ export default function DashboardDayPage() {
         >
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
-              { label: "Total de hoje", value: payload?.summary.total ?? 0, note: "Marcacoes do dia selecionado" },
+              { label: "Total de hoje", value: payload?.summary.total ?? 0, note: "Marcações do dia selecionado" },
               { label: "Booked", value: payload?.summary.booked ?? 0, note: "Prontas para atendimento" },
               { label: "Concluidas", value: payload?.summary.completed ?? 0, note: "Finalizadas com sucesso" },
-              { label: "Canceladas", value: payload?.summary.cancelled ?? 0, note: "Nao entram na producao" },
+              { label: "Canceladas", value: payload?.summary.cancelled ?? 0, note: "Não entram na produção" },
             ].map((metric) => (
               <article key={metric.label} className={`${whiteCardClass} p-5`}>
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">{metric.label}</p>
@@ -301,8 +301,8 @@ export default function DashboardDayPage() {
         </SectionCard>
 
         {!token ? (
-          <SectionCard title="Login necessario">
-            <EmptyState title="Autenticacao em falta" body="Faz login em /auth-test para abrir a agenda diaria do teu backoffice." />
+          <SectionCard title="Entrar necessário">
+            <EmptyState title="Autenticação em falta" body="Faz login em /auth-test para abrir a agenda diária do teu backoffice." />
           </SectionCard>
         ) : null}
 
@@ -311,7 +311,7 @@ export default function DashboardDayPage() {
             <StatusNotice
               kind="idle"
               title="A preparar o dia"
-              body="Estamos a carregar marcacoes, contadores e a agenda visual para a data selecionada."
+              body="Estamos a carregar marcações, contadores e a agenda visual para a data selecionada."
             />
           </SectionCard>
         ) : null}
@@ -320,8 +320,8 @@ export default function DashboardDayPage() {
           <SectionCard title="Barbearia em falta">
             <StatusNotice
               kind="idle"
-              title="Ainda nao tens nenhuma barbearia criada."
-              body="Cria primeiro a tua unidade para comecares a usar a agenda diaria."
+              title="Ainda não tens nenhuma barbearia criada."
+              body="Cria primeiro a tua unidade para começares a usar a agenda diária."
             />
             <div className="mt-4">
               <Link href="/barbershop-test" className={ghostButtonClass}>
@@ -339,9 +339,9 @@ export default function DashboardDayPage() {
 
         {token && !isLoading && !error && !hasNoBarbershop && payload ? (
           <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <SectionCard title="Agenda visual" subtitle={`${appointments.length} marcacoes distribuidas por slots de 30 minutos.`}>
+            <SectionCard title="Agenda visual" subtitle={`${appointments.length} marcações distribuidas por slots de 30 minutos.`}>
               {appointments.length === 0 ? (
-                <EmptyState title="Sem agendamentos neste dia" body="Quando entrarem novas marcacoes, vais ve-las organizadas por slot." />
+                <EmptyState title="Sem agendamentos neste dia" body="Quando entrarem novas marcações, vais ve-las organizadas por slot." />
               ) : (
                 <div className="space-y-3">
                   {DAY_SLOTS.map((slot) => {
@@ -356,7 +356,7 @@ export default function DashboardDayPage() {
                               <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-500">{slot}</p>
                               <p className="mt-2 text-lg font-semibold text-neutral-950">{appointmentAtSlot.client_name}</p>
                               <p className="mt-1 text-sm text-neutral-500">
-                                {appointmentAtSlot.service?.name ?? "Servico"} com {appointmentAtSlot.barber?.name ?? "Barbeiro"}
+                                {appointmentAtSlot.service?.name ?? "Serviço"} com {appointmentAtSlot.barber?.name ?? "Barbeiro"}
                               </p>
                               <p className="mt-1 text-sm text-neutral-500">{appointmentAtSlot.client_phone}</p>
                             </div>
@@ -372,7 +372,7 @@ export default function DashboardDayPage() {
                       return (
                         <div key={slot} className="rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-4 text-sm text-neutral-500">
                           <p className="font-semibold text-neutral-800">{slot}</p>
-                          <p className="mt-1">Slot ocupado pela marcacao de {coveredByAppointment.client_name}.</p>
+                          <p className="mt-1">Slot ocupado pela marcação de {coveredByAppointment.client_name}.</p>
                         </div>
                       );
                     }
@@ -393,9 +393,9 @@ export default function DashboardDayPage() {
             </SectionCard>
 
             <div className="space-y-6">
-              <SectionCard title="Proximas marcacoes" subtitle="Linha de atendimento para este dia.">
+              <SectionCard title="Próximas marcações" subtitle="Linha de atendimento para este dia.">
                 {nextAppointments.length === 0 ? (
-                  <EmptyState title="Sem proximas marcacoes" body="Nao ha agendamentos futuros para esta data." />
+                  <EmptyState title="Sem próximas marcações" body="Não há agendamentos futuros para esta data." />
                 ) : (
                   <div className="space-y-3">
                     {nextAppointments.map((appointment) => (
@@ -404,7 +404,7 @@ export default function DashboardDayPage() {
                           <div>
                             <p className="font-semibold text-neutral-950">{appointment.client_name}</p>
                             <p className="text-sm text-neutral-500">
-                              {appointment.starts_at.slice(11, 16)} · {appointment.service?.name ?? "Servico"}
+                              {appointment.starts_at.slice(11, 16)} · {appointment.service?.name ?? "Serviço"}
                             </p>
                           </div>
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadge(appointment.status)}`}>
@@ -418,9 +418,9 @@ export default function DashboardDayPage() {
                 )}
               </SectionCard>
 
-              <SectionCard title="Lista por hora" subtitle="Resumo rapido da ordem do dia.">
+              <SectionCard title="Lista por hora" subtitle="Resumo rápido da ordem do dia.">
                 {appointments.length === 0 ? (
-                  <EmptyState title="Sem agendamentos neste dia" body="Escolhe outra data ou cria novas marcacoes para preencher esta agenda." />
+                  <EmptyState title="Sem agendamentos neste dia" body="Escolhe outra data ou cria novas marcações para preencher esta agenda." />
                 ) : (
                   <div className="space-y-3">
                     {appointments.map((appointment) => (
@@ -428,7 +428,7 @@ export default function DashboardDayPage() {
                         <div>
                           <p className="font-semibold text-neutral-950">{appointment.starts_at.slice(11, 16)} · {appointment.client_name}</p>
                           <p className="text-sm text-neutral-500">
-                            {appointment.service?.name ?? "Servico"} · {appointment.barber?.name ?? "Barbeiro"}
+                            {appointment.service?.name ?? "Serviço"} · {appointment.barber?.name ?? "Barbeiro"}
                           </p>
                         </div>
                         <span className={`rounded-full px-3 py-2 text-xs font-semibold ${statusBadge(appointment.status)}`}>

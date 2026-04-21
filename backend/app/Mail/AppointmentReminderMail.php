@@ -21,7 +21,7 @@ class AppointmentReminderMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Lembrete da tua marcação de hoje - BarberPro',
+            subject: 'Lembrete da tua marcação de hoje - BarberBook',
         );
     }
 

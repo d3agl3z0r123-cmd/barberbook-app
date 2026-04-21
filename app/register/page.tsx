@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -177,7 +177,7 @@ export default function RegisterPage() {
             type="password"
             value={form.password}
             onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-            placeholder="Password123!"
+            placeholder="Palavra-passe123!"
           />
         </label>
 
@@ -188,7 +188,7 @@ export default function RegisterPage() {
             type="password"
             value={form.passwordConfirmation}
             onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
-            placeholder="Password123!"
+            placeholder="Palavra-passe123!"
           />
         </label>
 

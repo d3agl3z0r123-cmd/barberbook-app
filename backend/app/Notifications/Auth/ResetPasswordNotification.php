@@ -31,10 +31,10 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
         );
 
         return (new MailMessage())
-            ->subject('Redefine a tua password BarberPro')
-            ->greeting('Ola!')
-            ->line('Recebemos um pedido para redefinir a password da tua conta BarberPro.')
-            ->action('Redefinir password', $resetUrl)
-            ->line('Se nao pediste esta recuperacao, podes ignorar este email.');
+            ->subject('Redefine a tua palavra-passe BarberBook')
+            ->greeting('Olá!')
+            ->line('Recebemos um pedido para redefinir a palavra-passe da tua conta BarberBook.')
+            ->action('Redefinir palavra-passe', $resetUrl)
+            ->line('Se não pediste esta recuperação, podes ignorar este e-mail.');
     }
 }

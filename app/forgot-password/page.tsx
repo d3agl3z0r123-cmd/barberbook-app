@@ -74,14 +74,14 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      title="Recuperar Palavra-passe"
-      subtitle="Enviamos um link para redefinires a palavra-passe da tua conta BarberPro."
+      title="Recuperar palavra-passe"
+      subtitle="Enviamos um link para redefinires a palavra-passe da tua conta BarberBook."
       alternateHref="/login"
       alternateLabel="Voltar ao login"
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <label className="grid gap-2">
-          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#E8D6B0]/70">E-mail</span>
+          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#5B4F3A]">E-mail</span>
           <input
             className={luxuryInputClass}
             type="email"
@@ -100,9 +100,9 @@ export default function ForgotPasswordPage() {
         <StatusNotice kind={status.kind} title={status.title} body={status.body} />
       </div>
 
-      <p className="mt-6 text-sm text-white/55">
+      <p className="mt-6 text-sm text-[#5B4F3A]">
         Já recuperaste o acesso?{" "}
-        <Link href="/login" className="font-medium text-[#E8D6B0] underline underline-offset-4">
+        <Link href="/login" className="font-medium text-[#A86840] underline underline-offset-4">
           Entrar
         </Link>
       </p>

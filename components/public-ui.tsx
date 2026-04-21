@@ -1,23 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Manrope } from "next/font/google";
 import { ReactNode } from "react";
 
-const publicFont = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-export const publicPageClass = `${publicFont.className} min-h-screen bg-[#f5f3ef] text-neutral-950`;
+export const publicPageClass = "min-h-screen bg-[#F4EADB] text-[#2B2118]";
 export const publicCardClass =
-  "rounded-[32px] border border-neutral-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]";
+  "rounded-[32px] border border-[#D8C3A5]/80 bg-[#FFF7EC] shadow-[0_18px_50px_rgba(43,33,24,0.10)]";
 export const publicInputClass =
-  "w-full rounded-2xl border border-neutral-300 bg-white px-4 py-4 text-base text-neutral-950 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-2 focus:ring-neutral-950/8";
+  "w-full rounded-2xl border border-[#D8C3A5] bg-white px-4 py-4 text-base text-[#2B2118] outline-none transition-all placeholder:text-[#8B735B]/55 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
 export const publicPrimaryButtonClass =
-  "inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-6 py-4 text-base font-semibold text-white transition-all hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300";
+  "inline-flex items-center justify-center rounded-2xl bg-[#A86840] px-6 py-4 text-base font-bold text-[#FFF7EC] transition-all hover:bg-[#8A5433] disabled:cursor-not-allowed disabled:bg-[#D8C3A5]";
 export const publicSecondaryButtonClass =
-  "inline-flex items-center justify-center rounded-2xl border border-neutral-300 bg-white px-5 py-4 text-base font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center rounded-2xl border border-[#D8C3A5] bg-white px-5 py-4 text-base font-bold text-[#5B4F3A] transition-all hover:border-[#A86840] hover:bg-[#F8E8D3] disabled:cursor-not-allowed disabled:opacity-50";
 
 export function PublicPageShell({
   children,
@@ -30,8 +24,8 @@ export function PublicPageShell({
     <main className={publicPageClass}>
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 md:px-6">
         <div className="mb-6 flex items-center justify-between">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-neutral-950">
-            BarberPro
+          <Link href="/" className="text-lg font-extrabold tracking-tight text-[#2B2118]">
+            BarberBook
           </Link>
           {topLink}
         </div>
@@ -59,7 +53,7 @@ export function MinimalAuthCard({
   return (
     <PublicPageShell
       topLink={
-        <Link href="/" className="text-sm font-medium text-neutral-500 transition-all hover:text-neutral-900">
+        <Link href="/" className="text-sm font-bold text-[#5B4F3A] transition-all hover:text-[#2B2118]">
           Voltar ao site
         </Link>
       }
@@ -67,14 +61,14 @@ export function MinimalAuthCard({
       <div className="mx-auto flex w-full max-w-xl flex-1 items-center justify-center py-8">
         <section className={`${publicCardClass} w-full p-7 md:p-9`}>
           <div className="mb-8">
-            <p className="text-sm font-semibold tracking-tight text-neutral-500">BarberPro</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-neutral-950 md:text-[2rem]">{title}</h1>
-            <p className="mt-3 text-[15px] leading-7 text-neutral-500">{subtitle}</p>
+            <p className="text-sm font-bold tracking-tight text-[#8B735B]">BarberBook</p>
+            <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.03em] text-[#2B2118] md:text-[2rem]">{title}</h1>
+            <p className="mt-3 text-[15px] leading-7 text-[#5B4F3A]">{subtitle}</p>
           </div>
           {children}
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-sm text-[#5B4F3A]">
             {alternateText}{" "}
-            <Link href={alternateHref} className="font-semibold text-neutral-950 transition-all hover:text-neutral-700">
+            <Link href={alternateHref} className="font-extrabold text-[#A86840] transition-all hover:text-[#8A5433]">
               {alternateLabel}
             </Link>
           </p>
@@ -96,7 +90,7 @@ export function MinimalSocialButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-neutral-300 bg-white px-4 py-3.5 text-sm font-semibold text-neutral-900 transition-all hover:bg-neutral-50"
+      className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-[#D8C3A5] bg-white px-4 py-3.5 text-sm font-bold text-[#2B2118] transition-all hover:bg-[#F8E8D3]"
     >
       <GoogleIcon />
       <span>{label}</span>
@@ -108,10 +102,10 @@ export function MinimalDivider() {
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-neutral-200" />
+        <div className="w-full border-t border-[#D8C3A5]" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-white px-3 text-sm text-neutral-400">ou</span>
+        <span className="bg-[#FFF7EC] px-3 text-sm text-[#8B735B]">ou</span>
       </div>
     </div>
   );
@@ -129,18 +123,18 @@ export function BookingHeader({
   avatarLabel: string;
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border border-neutral-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-      <div className="relative h-52 bg-[linear-gradient(135deg,#d6d0c8_0%,#c8c1b6_28%,#9f978b_56%,#8f887d_100%)] md:h-64">
+    <section className="overflow-hidden rounded-[28px] border border-[#D8C3A5]/80 bg-[#FFF7EC] shadow-[0_18px_50px_rgba(43,33,24,0.10)]">
+      <div className="relative h-52 bg-[linear-gradient(135deg,#EAD8BF_0%,#D8C3A5_38%,#A86840_100%)] md:h-64">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_42%),linear-gradient(180deg,rgba(17,24,39,0.08),rgba(17,24,39,0.24))]" />
       </div>
       <div className="relative space-y-5 p-6 pt-0 text-center md:p-10 md:pt-0">
-        <div className="mx-auto -mt-14 flex h-28 w-28 items-center justify-center rounded-full border-4 border-white bg-neutral-950 text-3xl font-extrabold text-white shadow-sm">
+        <div className="mx-auto -mt-14 flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-3xl font-extrabold text-[#FFF7EC] shadow-sm">
           {avatarLabel}
         </div>
         <div>
-          <p className="text-sm font-semibold tracking-[0.14em] text-neutral-500">NOVA MARCAÇÃO</p>
-          <h1 className="mt-3 text-[2rem] font-bold tracking-[-0.04em] text-neutral-950 md:text-[3.5rem]">{name}</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-8 text-neutral-500 md:text-base">{subtitle}</p>
+          <p className="text-sm font-bold tracking-[0.14em] text-[#8B735B]">NOVA MARCAÇÃO</p>
+          <h1 className="mt-3 text-[2rem] font-extrabold tracking-[-0.04em] text-[#2B2118] md:text-[3.5rem]">{name}</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-8 text-[#5B4F3A] md:text-base">{subtitle}</p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           {badges.map((badge) => (
@@ -287,7 +281,7 @@ export function SelectionTile({
         disabled
           ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
           : active
-            ? "border-neutral-950 bg-neutral-950 text-white"
+            ? "border-neutral-950 bg-neutral-950 text-[#2B2118]"
             : "border-neutral-200 bg-white hover:border-neutral-400 hover:bg-neutral-50"
       }`}
     >
@@ -297,7 +291,7 @@ export function SelectionTile({
           <div>
             <p className="text-lg font-semibold tracking-[-0.02em]">{title}</p>
             {subtitle ? (
-              <p className={`mt-1 text-base leading-6 ${active ? "text-white/75" : "text-neutral-500"}`}>{subtitle}</p>
+              <p className={`mt-1 text-base leading-6 ${active ? "text-[#2B2118]/75" : "text-neutral-500"}`}>{subtitle}</p>
             ) : null}
           </div>
         </div>

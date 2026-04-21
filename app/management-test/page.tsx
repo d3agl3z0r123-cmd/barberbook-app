@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import {
@@ -61,7 +61,7 @@ export default function ManagementTestPage() {
   const [status, setStatus] = useState<StatusState>({
     kind: "idle",
     title: "Pronto para gerir",
-    body: "Usa esta pagina para criar, editar e apagar barbeiros e servicos.",
+    body: "Usa esta página para criar, editar e apagar barbeiros e serviços.",
   });
   const [responsePayload, setResponsePayload] = useState("Ainda sem resposta.");
   const [isLoading, setIsLoading] = useState(false);
@@ -123,8 +123,8 @@ export default function ManagementTestPage() {
       if (!barbersResponse.ok || !servicesResponse.ok) {
         setStatus({
           kind: "error",
-          title: "Erro ao carregar gestao",
-          body: "Verifica se ja criaste a tua barbearia antes de gerir barbeiros e servicos.",
+          title: "Erro ao carregar gestão",
+          body: "Verifica se já criaste a tua barbearia antes de gerir barbeiros e serviços.",
         });
         setResponsePayload(
           JSON.stringify(
@@ -140,8 +140,8 @@ export default function ManagementTestPage() {
       setServices(servicesPayload.services ?? []);
       setStatus({
         kind: "success",
-        title: "Gestao carregada",
-        body: "Barbeiros e servicos da tua barbearia foram carregados com sucesso.",
+        title: "Gestão carregada",
+        body: "Barbeiros e serviços da tua barbearia foram carregados com sucesso.",
       });
       setResponsePayload(
         JSON.stringify(
@@ -154,7 +154,7 @@ export default function ManagementTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -168,7 +168,7 @@ export default function ManagementTestPage() {
     if (!token) {
       setStatus({
         kind: "error",
-        title: "Login necessario",
+        title: "Entrar necessário",
         body: "Faz primeiro login em /auth-test.",
       });
       return;
@@ -214,7 +214,7 @@ export default function ManagementTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -228,7 +228,7 @@ export default function ManagementTestPage() {
     if (!token) {
       setStatus({
         kind: "error",
-        title: "Login necessario",
+        title: "Entrar necessário",
         body: "Faz primeiro login em /auth-test.",
       });
       return;
@@ -255,8 +255,8 @@ export default function ManagementTestPage() {
       if (!response.ok) {
         setStatus({
           kind: "error",
-          title: "Erro ao guardar servico",
-          body: "O backend devolveu um erro ao criar ou atualizar o servico.",
+          title: "Erro ao guardar serviço",
+          body: "O backend devolveu um erro ao criar ou atualizar o serviço.",
         });
         setResponsePayload(JSON.stringify(payload, null, 2));
         return;
@@ -265,8 +265,8 @@ export default function ManagementTestPage() {
       setServiceForm({ id: "", name: "", price: "", duration_minutes: "" });
       setStatus({
         kind: "success",
-        title: serviceForm.id ? "Servico atualizado" : "Servico criado",
-        body: "Os dados do servico foram guardados com sucesso.",
+        title: serviceForm.id ? "Serviço atualizado" : "Serviço criado",
+        body: "Os dados do serviço foram guardados com sucesso.",
       });
       setResponsePayload(JSON.stringify(payload, null, 2));
       await loadManagement(token);
@@ -274,7 +274,7 @@ export default function ManagementTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -314,8 +314,8 @@ export default function ManagementTestPage() {
     if (!response.ok) {
       setStatus({
         kind: "error",
-        title: "Erro ao apagar servico",
-        body: "O backend devolveu um erro ao remover o servico.",
+        title: "Erro ao apagar serviço",
+        body: "O backend devolveu um erro ao remover o serviço.",
       });
       setResponsePayload(JSON.stringify(payload, null, 2));
       return;
@@ -323,8 +323,8 @@ export default function ManagementTestPage() {
 
     setStatus({
       kind: "success",
-      title: "Servico removido",
-      body: "O servico foi removido com sucesso.",
+      title: "Serviço removido",
+      body: "O serviço foi removido com sucesso.",
     });
     setResponsePayload(JSON.stringify(payload, null, 2));
     await loadManagement(token);
@@ -333,17 +333,17 @@ export default function ManagementTestPage() {
   return (
     <InternalShell
       currentPath="/management-test"
-      title="Barbeiros e servicos"
-      subtitle="Gestao operacional da equipa e do catalogo de servicos da barbearia."
-      userLabel={token ? "Sessao ativa" : "Sem sessao ativa"}
+      title="Barbeiros e serviços"
+      subtitle="Gestão operacional da equipa e do catálogo de serviços da barbearia."
+      userLabel={token ? "Sessão ativa" : "Sem sessão ativa"}
     >
       {!token ? (
-        <SectionCard title="Login necessario">
-          <EmptyState title="Autenticacao em falta" body="Primeiro faz login em /auth-test e cria a tua barbearia em /barbershop-test." />
+        <SectionCard title="Entrar necessário">
+          <EmptyState title="Autenticação em falta" body="Primeiro faz login em /auth-test e cria a tua barbearia em /barbershop-test." />
         </SectionCard>
       ) : (
         <div className="space-y-6">
-          <SectionCard title="Estado da gestao">
+          <SectionCard title="Estado da gestão">
             <StatusNotice kind={status.kind} title={status.title} body={status.body} meta={isLoading ? "A carregar..." : "Pronto."} />
           </SectionCard>
 
@@ -359,7 +359,7 @@ export default function ManagementTestPage() {
                   />
                   <input
                     className={inputClass}
-                    placeholder="Email"
+                    placeholder="E-mail"
                     value={barberForm.email}
                     onChange={(event) => setBarberForm((current) => ({ ...current, email: event.target.value }))}
                   />
@@ -440,11 +440,11 @@ export default function ManagementTestPage() {
             </div>
 
             <div className="space-y-6">
-              <SectionCard title={serviceForm.id ? "Editar servico" : "Criar servico"}>
+              <SectionCard title={serviceForm.id ? "Editar serviço" : "Criar serviço"}>
                 <form className="grid gap-4" onSubmit={handleServiceSubmit}>
                   <input
                     className={inputClass}
-                    placeholder="Nome do servico"
+                    placeholder="Nome do serviço"
                     value={serviceForm.name}
                     onChange={(event) => setServiceForm((current) => ({ ...current, name: event.target.value }))}
                   />
@@ -468,7 +468,7 @@ export default function ManagementTestPage() {
                     disabled={isSubmittingService}
                     className={primaryButtonClass}
                   >
-                    {isSubmittingService ? "A guardar..." : serviceForm.id ? "Atualizar servico" : "Criar servico"}
+                    {isSubmittingService ? "A guardar..." : serviceForm.id ? "Atualizar serviço" : "Criar serviço"}
                   </button>
                   {serviceForm.id ? (
                     <button
@@ -483,10 +483,10 @@ export default function ManagementTestPage() {
                 </form>
               </SectionCard>
 
-              <SectionCard title="Servicos">
+              <SectionCard title="Serviços">
                 <div className="space-y-3">
                   {services.length === 0 ? (
-                    <EmptyState title="Ainda sem servicos" body="Cria o primeiro servico para abrires marcacoes." />
+                    <EmptyState title="Ainda sem serviços" body="Cria o primeiro serviço para abrires marcações." />
                   ) : (
                     services.map((service) => (
                       <div key={service.id} className="rounded-2xl border border-neutral-200 p-4 transition-all hover:border-neutral-300 hover:shadow-sm">

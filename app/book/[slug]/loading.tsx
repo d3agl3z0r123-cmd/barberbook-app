@@ -1,4 +1,4 @@
-export default function BookingPageLoading() {
+﻿export default function BookingPageLoading() {
   return (
     <main className="section-shell py-8">
       <section className="card p-8 md:p-10">

@@ -12,18 +12,19 @@ html {
 
 body {
   min-height: 100vh;
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-app), sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(196, 106, 47, 0.18), transparent 32%),
-    radial-gradient(circle at right center, rgba(38, 65, 60, 0.14), transparent 28%),
-    #f5efe6;
+    radial-gradient(circle at top left, rgba(168, 104, 64, 0.16), transparent 32%),
+    radial-gradient(circle at right center, rgba(91, 79, 58, 0.12), transparent 28%),
+    #f4eadb;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display), serif;
+  font-family: var(--font-app), sans-serif;
+  letter-spacing: -0.035em;
 }
 
 .noise-panel {
@@ -54,4 +55,3 @@ h4 {
 .eyebrow {
   @apply inline-flex items-center rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-black/70;
 }
-

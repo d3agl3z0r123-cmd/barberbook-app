@@ -16,14 +16,14 @@ Artisan::command('appointments:send-daily-reminders', function (AppointmentNotif
     $count = $notifications->dispatchDailyReminders();
 
     $this->info("Lembretes preparados: {$count}");
-})->purpose('Enviar lembretes diarios das marcacoes do dia');
+})->purpose('Enviar lembretes diários das marcações do dia');
 
 Artisan::command('app:ensure-admin', function (): int {
     $email = trim((string) env('ADMIN_EMAIL', ''));
     $password = (string) env('ADMIN_PASSWORD', '');
 
     if ($email === '' || $password === '') {
-        $this->warn('ADMIN_EMAIL ou ADMIN_PASSWORD nao definidos. Admin nao foi alterado.');
+        $this->warn('ADMIN_EMAIL ou ADMIN_PASSWORD não definidos. Admin não foi alterado.');
 
         return self::SUCCESS;
     }

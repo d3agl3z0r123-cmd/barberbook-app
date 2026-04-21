@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import {
@@ -150,7 +150,7 @@ export default function AppointmentsTestPage() {
         setStatus({
           kind: "error",
           title: "Erro ao carregar agendamentos",
-          body: "Verifica se ja criaste a barbearia, barbeiros e servicos antes de agendar.",
+          body: "Verifica se já criaste a barbearia, barbeiros e serviços antes de agendar.",
         });
         setResponsePayload(JSON.stringify({
           barbers: barbersPayload,
@@ -166,7 +166,7 @@ export default function AppointmentsTestPage() {
       setStatus({
         kind: "success",
         title: "Dados carregados",
-        body: "Barbeiros, servicos e agendamentos foram carregados com sucesso.",
+        body: "Barbeiros, serviços e agendamentos foram carregados com sucesso.",
       });
       setResponsePayload(JSON.stringify({
         barbers: barbersPayload.barbers ?? [],
@@ -177,7 +177,7 @@ export default function AppointmentsTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -191,7 +191,7 @@ export default function AppointmentsTestPage() {
     if (!token) {
       setStatus({
         kind: "error",
-        title: "Login necessario",
+        title: "Entrar necessário",
         body: "Faz primeiro login em /auth-test.",
       });
       return;
@@ -258,7 +258,7 @@ export default function AppointmentsTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -294,12 +294,12 @@ export default function AppointmentsTestPage() {
     <InternalShell
       currentPath="/appointments-test"
       title="Agendamentos"
-      subtitle="Gestao interna da agenda com barbeiro, servico, cliente e horario."
-      userLabel={token ? "Sessao ativa" : "Sem sessao ativa"}
+      subtitle="Gestão interna da agenda com barbeiro, serviço, cliente e horário."
+      userLabel={token ? "Sessão ativa" : "Sem sessão ativa"}
     >
       {!token ? (
-        <SectionCard title="Login necessario">
-          <EmptyState title="Autenticacao em falta" body="Faz login em /auth-test, cria a barbearia e configura barbeiros e servicos." />
+        <SectionCard title="Entrar necessário">
+          <EmptyState title="Autenticação em falta" body="Faz login em /auth-test, cria a barbearia e configura barbeiros e serviços." />
         </SectionCard>
       ) : (
         <div className="space-y-6">
@@ -314,8 +314,8 @@ export default function AppointmentsTestPage() {
           ) : null}
 
           {services.length === 0 ? (
-            <SectionCard title="Servicos em falta">
-              <EmptyState title="Sem servicos" body="Cria primeiro pelo menos um servico em /management-test." />
+            <SectionCard title="Serviços em falta">
+              <EmptyState title="Sem serviços" body="Cria primeiro pelo menos um serviço em /management-test." />
             </SectionCard>
           ) : null}
 
@@ -339,13 +339,13 @@ export default function AppointmentsTestPage() {
                 </label>
 
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-neutral-700">Servico</span>
+                  <span className="text-sm font-medium text-neutral-700">Serviço</span>
                   <select
                     className={inputClass}
                     value={form.service_id}
                     onChange={(event) => setForm((current) => ({ ...current, service_id: event.target.value }))}
                   >
-                    <option value="">Selecionar servico</option>
+                    <option value="">Selecionar serviço</option>
                     {services.map((service) => (
                       <option key={service.id} value={service.id}>
                         {service.name} ({service.duration_minutes} min)
@@ -375,10 +375,10 @@ export default function AppointmentsTestPage() {
                 </label>
 
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-neutral-700">Email do cliente</span>
+                  <span className="text-sm font-medium text-neutral-700">E-mail do cliente</span>
                   <input
                     className={inputClass}
-                    placeholder="Email do cliente"
+                    placeholder="E-mail do cliente"
                     value={form.client_email}
                     onChange={(event) => setForm((current) => ({ ...current, client_email: event.target.value }))}
                   />
@@ -469,7 +469,7 @@ export default function AppointmentsTestPage() {
             >
               <div className="space-y-3">
                 {appointments.length === 0 ? (
-                  <EmptyState title="Ainda sem agendamentos" body="Cria a primeira marcacao para preencher a agenda." />
+                  <EmptyState title="Ainda sem agendamentos" body="Cria a primeira marcação para preencher a agenda." />
                 ) : (
                   appointments.map((appointment) => (
                     <div key={appointment.id} className="rounded-2xl border border-neutral-200 p-4 transition-all hover:border-neutral-300 hover:shadow-sm">

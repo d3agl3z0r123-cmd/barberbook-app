@@ -29,7 +29,7 @@ class AppointmentController extends Controller
             ->where('barbershop_id', $barbershop->id)
             ->with(['barbershop', 'client', 'barber', 'service'])
             ->latest('starts_at')
-            ->paginate();
+            ->páginate();
 
         return response()->json(AppointmentResource::collection($appointments));
     }
@@ -44,7 +44,7 @@ class AppointmentController extends Controller
         $endsAtUtc = $startsAtUtc->addMinutes($service->duration_minutes);
 
         if ($this->conflicts->hasConflict($payload['barber_id'], $startsAtUtc, $endsAtUtc)) {
-            throw new SchedulingConflictException('Ja existe uma marcacao neste intervalo.');
+            throw new SchedulingConflictException('Já existe uma marcação neste intervalo.');
         }
 
         $appointment = Appointment::query()->create([

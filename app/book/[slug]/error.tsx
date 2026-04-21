@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 type BookingErrorPageProps = {
   error: Error & { digest?: string };

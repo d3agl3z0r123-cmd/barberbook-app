@@ -24,7 +24,7 @@ class UserBarbershopController extends Controller
 
         if (! $barbershop) {
             return response()->json([
-                'message' => 'Barbearia ainda nao criada.',
+                'message' => 'Barbearia ainda não criada.',
             ], 404);
         }
 
@@ -71,7 +71,7 @@ class UserBarbershopController extends Controller
 
         if (! $barbershop) {
             return response()->json([
-                'message' => 'Barbearia ainda nao criada.',
+                'message' => 'Barbearia ainda não criada.',
             ], 404);
         }
 

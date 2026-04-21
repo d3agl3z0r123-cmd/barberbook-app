@@ -28,7 +28,7 @@ class BookingController extends Controller
             ->whereHas('client', fn ($query) => $query->where('user_id', $request->user()->id))
             ->with(['barbershop', 'client', 'barber', 'service'])
             ->latest('starts_at')
-            ->paginate();
+            ->páginate();
 
         return response()->json(AppointmentResource::collection($appointments));
     }
@@ -47,7 +47,7 @@ class BookingController extends Controller
         $endsAtUtc = $startsAtUtc->addMinutes($service->duration_minutes);
 
         if ($this->conflicts->hasConflict($payload['barber_id'], $startsAtUtc, $endsAtUtc)) {
-            throw new SchedulingConflictException('O slot selecionado ja nao esta disponivel.');
+            throw new SchedulingConflictException('O slot selecionado já não esta disponível.');
         }
 
         $appointment = Appointment::query()->create([

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
@@ -40,7 +40,7 @@ function getRedirectPath(role?: string) {
   return "/dashboard-day";
 }
 
-export default function LoginPage() {
+export default function EntrarPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     email: "",
@@ -49,7 +49,7 @@ export default function LoginPage() {
   const [status, setStatus] = useState<StatusState>({
     kind: "idle",
     title: "Entra com a tua conta",
-    body: "Usa o teu e-mail e a tua palavra-passe para aceder ao BarberPro.",
+    body: "Usa o teu e-mail e a tua palavra-passe para aceder ao BarberBook.",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStartingGoogle, setIsStartingGoogle] = useState(false);
@@ -128,7 +128,7 @@ export default function LoginPage() {
   return (
     <MinimalAuthCard
       title="Entrar"
-      subtitle="Acede ao teu painel BarberPro de forma simples e direta."
+      subtitle="Acede ao teu painel BarberBook de forma simples e direta."
       alternateText="Ainda não tens conta?"
       alternateHref="/register"
       alternateLabel="Criar conta"
@@ -160,7 +160,7 @@ export default function LoginPage() {
             type="password"
             value={form.password}
             onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-            placeholder="Password123!"
+            placeholder="Palavra-passe123!"
           />
         </label>
 

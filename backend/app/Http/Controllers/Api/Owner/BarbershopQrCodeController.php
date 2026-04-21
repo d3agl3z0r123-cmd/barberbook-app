@@ -70,7 +70,7 @@ class BarbershopQrCodeController extends Controller
 
         return response()->streamDownload(
             fn () => print($svg),
-            "barberpro-qr-{$barbershop->slug}.svg",
+            "barberbook-qr-{$barbershop->slug}.svg",
             ['Content-Type' => 'image/svg+xml']
         );
     }

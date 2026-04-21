@@ -15,7 +15,7 @@
         <tr>
             <td style="padding-bottom:16px; text-align:center;">
                 <span style="display:inline-block; padding:8px 14px; border-radius:999px; background:#171717; color:#ffffff; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">
-                    BarberPro
+                    BarberBook
                 </span>
             </td>
         </tr>
@@ -76,7 +76,7 @@
         </tr>
         <tr>
             <td style="padding-top:16px; text-align:center; font-size:12px; line-height:1.7; color:#737373;">
-                E-mail enviado automaticamente pelo BarberPro.
+                E-mail enviado automaticamente pelo BarberBook.
             </td>
         </tr>
     </table>

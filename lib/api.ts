@@ -1,4 +1,4 @@
-import {
+﻿import {
   appointments as mockAppointments,
   metrics as mockMetrics,
   organizationProfile,
@@ -268,7 +268,7 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
     city: extractCity(apiShop.address),
     neighborhood: extractNeighborhood(apiShop.address),
     tagline: apiShop.description ?? "Agendamento moderno e sem atrito para clientes recorrentes.",
-    bookingFeeNote: "Horario confirmado no painel e pronto para lembretes automatizados.",
+    bookingFeeNote: "Horário confirmado no painel e pronto para lembretes automatizados.",
     averageRating: "4.9",
     reviewCount: 0,
     timezone: safeTimezone,
@@ -281,7 +281,7 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
     barbers: safeBarbers.map((barber) => ({
       id: String(barber.id),
       name: barber.name,
-      specialty: "Disponivel para agendamento online",
+      specialty: "Disponível para agendamento online",
       rating: "4.8",
       nextOpenSlot: "Consulte a disponibilidade abaixo",
     })),
@@ -451,7 +451,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       minute: "2-digit",
     }).format(new Date(appointment.starts_at_local)),
     client: appointment.client.name ?? "Cliente",
-    service: appointment.service.name ?? "Servico",
+    service: appointment.service.name ?? "Serviço",
     barber: appointment.barber.name ?? "Barbeiro",
     status: mapStatus(appointment.status),
   }));

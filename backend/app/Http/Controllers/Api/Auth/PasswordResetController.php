@@ -28,7 +28,7 @@ class PasswordResetController extends Controller
         }
 
         return response()->json([
-            'message' => 'Enviamos o link de recuperacao para o teu email.',
+            'message' => 'Enviámos o link de recuperação para o teu e-mail.',
         ]);
     }
 
@@ -53,7 +53,7 @@ class PasswordResetController extends Controller
         }
 
         return response()->json([
-            'message' => 'Password redefinida com sucesso.',
+            'message' => 'Palavra-passe redefinida com sucesso.',
         ]);
     }
 }

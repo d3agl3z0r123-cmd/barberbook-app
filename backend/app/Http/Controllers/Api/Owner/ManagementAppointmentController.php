@@ -172,7 +172,7 @@ class ManagementAppointmentController extends Controller
 
         throw new HttpResponseException(
             response()->json([
-                'message' => 'Ainda nao tens nenhuma barbearia criada.',
+                'message' => 'Ainda não tens nenhuma barbearia criada.',
             ], 404)
         );
     }

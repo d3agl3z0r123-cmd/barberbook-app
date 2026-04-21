@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
@@ -133,7 +133,7 @@ export default function AuthTestPage() {
       setToken(payload?.token ?? "");
       setStatus({
         kind: "success",
-        title: "Registo concluido",
+        title: "Registo concluído",
         body: "O utilizador foi criado com sucesso no Laravel.",
       });
       setResponsePayload(JSON.stringify(payload, null, 2));
@@ -141,7 +141,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -194,7 +194,7 @@ export default function AuthTestPage() {
       setToken(localStorageToken);
       setStatus({
         kind: "success",
-        title: "Login concluido",
+        title: "Entrar concluído",
         body: "Recebeste um token Bearer valido do Laravel.",
       });
       setResponsePayload(JSON.stringify(payload, null, 2));
@@ -202,7 +202,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -236,7 +236,7 @@ export default function AuthTestPage() {
         setStatus({
           kind: "error",
           title: "Erro ao ler utilizador",
-          body: "O backend nao conseguiu devolver o utilizador autenticado.",
+          body: "O backend não conseguiu devolver o utilizador autenticado.",
         });
         setResponsePayload(JSON.stringify(payload, null, 2));
         return;
@@ -252,7 +252,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -265,7 +265,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Sem token",
-        body: "Nao existe token para terminar sessao.",
+        body: "Não existe token para terminar sessão.",
       });
       return;
     }
@@ -287,7 +287,7 @@ export default function AuthTestPage() {
         setStatus({
           kind: "error",
           title: "Erro no logout",
-          body: "O backend devolveu um erro ao terminar a sessao.",
+          body: "O backend devolveu um erro ao terminar a sessão.",
         });
         setResponsePayload(JSON.stringify(payload, null, 2));
         return;
@@ -298,7 +298,7 @@ export default function AuthTestPage() {
       setStoredTokenType("");
       setStatus({
         kind: "success",
-        title: "Logout concluido",
+        title: "Terminar sessão concluído",
         body: "O token atual foi invalidado com sucesso.",
       });
       setResponsePayload(JSON.stringify(payload, null, 2));
@@ -306,7 +306,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel.",
+        body: "Não foi possível contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -317,9 +317,9 @@ export default function AuthTestPage() {
   return (
     <InternalShell
       currentPath="/auth-test"
-      title="Autenticacao"
+      title="Autenticação"
       subtitle="Ligacao Next.js + Laravel Auth API com Bearer token guardado em localStorage."
-      userLabel={storedToken ? "Sessao ativa" : "Sem sessao ativa"}
+      userLabel={storedToken ? "Sessão ativa" : "Sem sessão ativa"}
       shopLabel="Area tecnica"
     >
       <div className="grid gap-6 lg:grid-cols-2">
@@ -338,7 +338,7 @@ export default function AuthTestPage() {
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-neutral-700">Email</span>
+              <span className="text-sm font-medium text-neutral-700">E-mail</span>
               <input
                 className={inputClass}
                 type="email"
@@ -351,7 +351,7 @@ export default function AuthTestPage() {
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-neutral-700">Password</span>
+              <span className="text-sm font-medium text-neutral-700">Palavra-passe</span>
               <input
                 className={inputClass}
                 type="password"
@@ -359,12 +359,12 @@ export default function AuthTestPage() {
                 onChange={(event) =>
                   setRegisterForm((current) => ({ ...current, password: event.target.value }))
                 }
-                placeholder="Password123!"
+                placeholder="Palavra-passe123!"
               />
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-neutral-700">Confirmacao</span>
+              <span className="text-sm font-medium text-neutral-700">Confirmação</span>
               <input
                 className={inputClass}
                 type="password"
@@ -375,7 +375,7 @@ export default function AuthTestPage() {
                     passwordConfirmation: event.target.value,
                   }))
                 }
-                placeholder="Password123!"
+                placeholder="Palavra-passe123!"
               />
             </label>
             <button type="submit" disabled={isSubmittingRegister} className={primaryButtonClass}>
@@ -384,10 +384,10 @@ export default function AuthTestPage() {
           </form>
         </SectionCard>
 
-        <SectionCard title="Login" subtitle="Obtém um token Bearer válido para o resto da plataforma.">
+        <SectionCard title="Entrar" subtitle="Obtém um token Bearer válido para o resto da plataforma.">
           <form className="grid gap-4" onSubmit={handleLogin}>
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-neutral-700">Email</span>
+              <span className="text-sm font-medium text-neutral-700">E-mail</span>
               <input
                 className={inputClass}
                 type="email"
@@ -400,7 +400,7 @@ export default function AuthTestPage() {
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-neutral-700">Password</span>
+              <span className="text-sm font-medium text-neutral-700">Palavra-passe</span>
               <input
                 className={inputClass}
                 type="password"
@@ -408,7 +408,7 @@ export default function AuthTestPage() {
                 onChange={(event) =>
                   setLoginForm((current) => ({ ...current, password: event.target.value }))
                 }
-                placeholder="Password123!"
+                placeholder="Palavra-passe123!"
               />
             </label>
             <button type="submit" disabled={isSubmittingLogin} className={primaryButtonClass}>
@@ -419,7 +419,7 @@ export default function AuthTestPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <SectionCard title="Token atual" subtitle="Estado atual da sessao guardada localmente.">
+        <SectionCard title="Token atual" subtitle="Estado atual da sessão guardada localmente.">
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4 text-sm break-all text-neutral-700">
             {prettyToken}
           </div>
@@ -448,7 +448,7 @@ export default function AuthTestPage() {
         </SectionCard>
 
         <div className="space-y-6">
-          <SectionCard title="Estado da autenticacao">
+          <SectionCard title="Estado da autenticação">
             <StatusNotice kind={status.kind} title={status.title} body={status.body} />
           </SectionCard>
           <DataPreview title="Resposta do backend">
