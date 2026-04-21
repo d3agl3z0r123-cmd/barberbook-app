@@ -1,7 +1,23 @@
 const LOCAL_BACKEND_BASE_URL = "http://127.0.0.1:8000";
 
+function ensureAbsoluteUrl(value: string) {
+  const trimmedValue = value.trim();
+
+  if (/^https?:\/\//i.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  if (trimmedValue.startsWith("localhost") || trimmedValue.startsWith("127.0.0.1")) {
+    return `http://${trimmedValue}`;
+  }
+
+  return `https://${trimmedValue}`;
+}
+
 export function normalizeApiBaseUrl(value?: string | null) {
-  const rawValue = value?.trim() || `${LOCAL_BACKEND_BASE_URL}/api`;
+  const rawValue = value?.trim()
+    ? ensureAbsoluteUrl(value)
+    : `${LOCAL_BACKEND_BASE_URL}/api`;
   const withoutTrailingSlash = rawValue.replace(/\/+$/, "");
 
   return withoutTrailingSlash.endsWith("/api")
@@ -10,7 +26,7 @@ export function normalizeApiBaseUrl(value?: string | null) {
 }
 
 export function normalizeBackendBaseUrl(value: string) {
-  return value.trim().replace(/\/+$/, "").replace(/\/api$/, "");
+  return ensureAbsoluteUrl(value).replace(/\/+$/, "").replace(/\/api$/, "");
 }
 
 export const API_BASE_URL = normalizeApiBaseUrl(
