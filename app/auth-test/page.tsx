@@ -12,8 +12,8 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/components/app-ui";
+import { apiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 const TOKEN_TYPE_STORAGE_KEY = "token_type";
 
@@ -94,7 +94,7 @@ export default function AuthTestPage() {
     setIsSubmittingRegister(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
+      const response = await fetch(apiUrl("/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +141,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel em http://127.0.0.1:8000.",
+        body: "Nao foi possivel contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -154,7 +154,7 @@ export default function AuthTestPage() {
     setIsSubmittingLogin(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await fetch(apiUrl("/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -202,7 +202,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel em http://127.0.0.1:8000.",
+        body: "Nao foi possivel contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -223,7 +223,7 @@ export default function AuthTestPage() {
     setIsLoadingUser(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/user`, {
+      const response = await fetch(apiUrl("/user"), {
         headers: {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
@@ -252,7 +252,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel em http://127.0.0.1:8000.",
+        body: "Nao foi possivel contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -273,7 +273,7 @@ export default function AuthTestPage() {
     setIsSubmittingLogout(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/logout`, {
+      const response = await fetch(apiUrl("/logout"), {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -306,7 +306,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Nao foi possivel contactar o backend Laravel em http://127.0.0.1:8000.",
+        body: "Nao foi possivel contactar o backend Laravel.",
       });
       setResponsePayload(String(error));
     } finally {

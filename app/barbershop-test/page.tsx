@@ -11,8 +11,8 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/components/app-ui";
+import { apiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 
 type BarbershopPayload = {
@@ -82,7 +82,7 @@ export default function BarbershopTestPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/barbershop`, {
+      const response = await fetch(apiUrl("/barbershop"), {
         headers: {
           Accept: "application/json",
           Authorization: `Bearer ${currentToken}`,
@@ -154,7 +154,7 @@ export default function BarbershopTestPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/barbershop`, {
+      const response = await fetch(apiUrl("/barbershop"), {
         method: barbershop ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",

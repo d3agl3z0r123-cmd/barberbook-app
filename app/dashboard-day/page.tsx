@@ -11,8 +11,8 @@ import {
   inputClass,
   whiteCardClass,
 } from "@/components/app-ui";
+import { apiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 const DAY_SLOTS = [
   "09:00",
@@ -195,9 +195,9 @@ export default function DashboardDayPage() {
         };
 
         const [userResponse, barbershopResponse, agendaResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/user`, { headers }),
-          fetch(`${API_BASE_URL}/barbershop`, { headers }),
-          fetch(`${API_BASE_URL}/appointments/day?date=${selectedDate}`, { headers }),
+          fetch(apiUrl("/user"), { headers }),
+          fetch(apiUrl("/barbershop"), { headers }),
+          fetch(apiUrl(`/appointments/day?date=${selectedDate}`), { headers }),
         ]);
 
         const userText = await userResponse.text();

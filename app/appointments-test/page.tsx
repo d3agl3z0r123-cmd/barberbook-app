@@ -12,8 +12,8 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/components/app-ui";
+import { apiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 
 type Barber = {
@@ -112,7 +112,7 @@ export default function AppointmentsTestPage() {
   }, [token]);
 
   async function apiRequest(path: string, init?: RequestInit) {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(apiUrl(path), {
       ...init,
       headers: {
         Accept: "application/json",
@@ -131,13 +131,13 @@ export default function AppointmentsTestPage() {
 
     try {
       const [barbersResponse, servicesResponse, appointmentsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/barbers`, {
+        fetch(apiUrl("/barbers"), {
           headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
         }),
-        fetch(`${API_BASE_URL}/services`, {
+        fetch(apiUrl("/services"), {
           headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
         }),
-        fetch(`${API_BASE_URL}/appointments`, {
+        fetch(apiUrl("/appointments"), {
           headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
         }),
       ]);
