@@ -55,43 +55,20 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStartingGoogle, setIsStartingGoogle] = useState(false);
 
-  async function handleGoogleLogin() {
-    setIsStartingGoogle(true);
+  function handleGoogleLogin() {
+    const redirectUrl = googleRedirectUrl();
 
-    try {
-      const response = await fetch(apiUrl("/auth/social/providers"), {
-        headers: {
-          Accept: "application/json",
-        },
-      });
-      const payload = await parseApiResponse(response);
-      const missingGoogleConfig = payload?.providers?.google?.missing_configuration;
-
-      if (!response.ok) {
-        throw new Error("Google providers endpoint unavailable");
-      }
-
-      if (missingGoogleConfig) {
-        setStatus({
-          kind: "error",
-          title: "Google OAuth não configurado",
-          body: Array.isArray(missingGoogleConfig)
-            ? `Faltam variáveis no backend: ${missingGoogleConfig.join(", ")}.`
-            : "Confirma as credenciais Google no backend.",
-        });
-        return;
-      }
-
-      window.location.assign(googleRedirectUrl());
-    } catch {
+    if (!redirectUrl) {
       setStatus({
         kind: "error",
-        title: "Backend indisponível",
-        body: "Não foi possível contactar o backend para criar conta com Google.",
+        title: "Configuração em falta",
+        body: "Define NEXT_PUBLIC_API_URL no frontend para ativar o registo com Google.",
       });
-    } finally {
-      setIsStartingGoogle(false);
+      return;
     }
+
+    setIsStartingGoogle(true);
+    window.location.assign(redirectUrl);
   }
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
