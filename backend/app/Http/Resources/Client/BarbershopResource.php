@@ -17,6 +17,9 @@ class BarbershopResource extends JsonResource
             'phone' => $this->phone,
             'description' => $this->description,
             'timezone' => $this->timezone,
+            'image_url' => $this->image_url,
+            'instagram_url' => $this->instagram_url,
+            'facebook_url' => $this->facebook_url,
             'services' => $this->whenLoaded('services', fn () => $this->services->map(fn ($service) => [
                 'id' => $service->id,
                 'name' => $service->name,

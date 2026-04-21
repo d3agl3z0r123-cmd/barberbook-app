@@ -15,7 +15,7 @@ class DiscoveryController extends Controller
             ->where('is_active', true)
             ->whereHas('user', fn ($query) => $query->where('is_active', true))
             ->with(['services' => fn ($query) => $query->where('is_active', true), 'barbers' => fn ($query) => $query->where('is_active', true)])
-            ->páginate();
+            ->paginate();
 
         return response()->json(BarbershopResource::collection($shops));
     }

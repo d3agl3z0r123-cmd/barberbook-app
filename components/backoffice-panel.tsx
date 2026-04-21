@@ -56,6 +56,10 @@ type Barbershop = {
   email: string | null;
   address: string | null;
   timezone: string;
+  image_path?: string | null;
+  image_url?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
 };
 
 type BarbershopQrCode = {
@@ -388,6 +392,8 @@ export function BackofficePanel() {
   const [isQrLoading, setIsQrLoading] = useState(false);
   const [isQrDownloading, setIsQrDownloading] = useState(false);
   const [isQrRegenerating, setIsQrRegenerating] = useState(false);
+  const [isBrandingSaving, setIsBrandingSaving] = useState(false);
+  const [isExportingAgenda, setIsExportingAgenda] = useState(false);
   const [qrActionFeedback, setQrActionFeedback] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [status, setStatus] = useState<StatusState>({
@@ -403,6 +409,11 @@ export function BackofficePanel() {
     email: "",
     address: "",
     timezone: "Atlantic/Azores",
+  });
+  const [brandingForm, setBrandingForm] = useState({
+    instagram_url: "",
+    facebook_url: "",
+    image: null as File | null,
   });
   const [barberForm, setBarberForm] = useState({ id: "", name: "", email: "", phone: "" });
   const [serviceForm, setServiceForm] = useState({ id: "", name: "", price: "", duration_minutes: "" });
@@ -562,6 +573,11 @@ export function BackofficePanel() {
         email: currentBarbershop?.email ?? "",
         address: currentBarbershop?.address ?? "",
         timezone: currentBarbershop?.timezone ?? "Atlantic/Azores",
+      });
+      setBrandingForm({
+        instagram_url: currentBarbershop?.instagram_url ?? "",
+        facebook_url: currentBarbershop?.facebook_url ?? "",
+        image: null,
       });
       setStatus({ kind: "success", title: "Painel carregado", body: "Os dados principais da tua barbearia já estão prontos." });
     } catch {
@@ -738,7 +754,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao atualizar a conta",
-      body: payload?.message ?? payload?.errors?.email?.[0] ?? "Não foi possível atualizar o e-mail e o telemóvel.",
+        body: payload?.message ?? payload?.errors?.email?.[0] ?? "Não foi possível atualizar o e-mail e o telemóvel.",
       });
       return;
     }
@@ -818,8 +834,85 @@ export function BackofficePanel() {
       address: payload.barbershop.address ?? "",
       timezone: payload.barbershop.timezone ?? "Atlantic/Azores",
     });
+    setBrandingForm({
+      instagram_url: payload.barbershop.instagram_url ?? "",
+      facebook_url: payload.barbershop.facebook_url ?? "",
+      image: null,
+    });
     await loadQrCode();
     setStatus({ kind: "success", title: "Barbearia guardada", body: "Os dados da barbearia foram atualizados com sucesso." });
+  }
+
+  async function handleBrandingSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!barbershop) {
+      setStatus({ kind: "error", title: "Barbearia em falta", body: "Cria primeiro a barbearia antes de personalizar a página pública." });
+      return;
+    }
+
+    setIsBrandingSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append("instagram_url", brandingForm.instagram_url);
+      formData.append("facebook_url", brandingForm.facebook_url);
+
+      if (brandingForm.image) {
+        formData.append("image", brandingForm.image);
+      }
+
+      const { response, payload } = await apiRequest("/barbershop/branding", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setStatus({
+          kind: "error",
+          title: "Erro ao guardar personalização",
+          body: payload?.message ?? payload?.errors?.image?.[0] ?? payload?.errors?.instagram_url?.[0] ?? payload?.errors?.facebook_url?.[0] ?? "Não foi possível guardar a personalização.",
+        });
+        return;
+      }
+
+      setBarbershop(payload.barbershop);
+      setBrandingForm({
+        instagram_url: payload.barbershop.instagram_url ?? "",
+        facebook_url: payload.barbershop.facebook_url ?? "",
+        image: null,
+      });
+      setStatus({ kind: "success", title: "Personalização guardada", body: "A página pública já reflete a imagem e as redes sociais da barbearia." });
+    } finally {
+      setIsBrandingSaving(false);
+    }
+  }
+
+  async function handleExportAgenda() {
+    if (!token) return;
+
+    setIsExportingAgenda(true);
+    try {
+      const response = await fetch(apiUrl(`/appointments/export?date=${selectedDate}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const payload = parseApiResponse(await response.text());
+        setStatus({ kind: "error", title: "Erro ao exportar agenda", body: payload?.message ?? "Não foi possível exportar a agenda." });
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `barberbook-agenda-${barbershop?.slug ?? "barbearia"}-${selectedDate}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus({ kind: "success", title: "Agenda exportada", body: "O ficheiro Excel foi descarregado com sucesso." });
+    } finally {
+      setIsExportingAgenda(false);
+    }
   }
 
   async function handleRegenerateQrCode() {
@@ -1162,6 +1255,65 @@ export function BackofficePanel() {
             </div>
           </div>
         </article>
+
+        <form className={`${whiteCardClass} rounded-2xl p-8 xl:col-span-2`} onSubmit={handleBrandingSubmit}>
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <p className="text-sm text-[#5B4F3A]/75">Personalização pública</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">Imagem e redes sociais</h2>
+              <p className="mt-2 text-sm leading-6 text-[#5B4F3A]/75">
+                Esta informação aparece automaticamente no link público de marcação da tua barbearia.
+              </p>
+
+              <div className="mt-5 overflow-hidden rounded-2xl border border-[#D8C3A5]/70 bg-[#F8E8D3]">
+                {barbershop?.image_url ? (
+                  <img src={barbershop.image_url} alt="Imagem atual da barbearia" className="h-56 w-full object-cover" />
+                ) : (
+                  <div className="flex h-56 items-center justify-center px-6 text-center text-sm text-[#5B4F3A]/75">
+                    Ainda sem imagem pública. Carrega uma fotografia da fachada, interior ou equipa.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid content-start gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-[#2B2118]">Foto da barbearia</span>
+                <input
+                  className={inputClass}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => setBrandingForm((current) => ({ ...current, image: event.target.files?.[0] ?? null }))}
+                />
+                <span className="text-xs text-[#5B4F3A]/70">Formatos aceites: JPG, PNG ou WebP até 4 MB.</span>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-[#2B2118]">Instagram</span>
+                <input
+                  className={inputClass}
+                  placeholder="https://instagram.com/a_tua_barbearia"
+                  value={brandingForm.instagram_url}
+                  onChange={(event) => setBrandingForm((current) => ({ ...current, instagram_url: event.target.value }))}
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-[#2B2118]">Facebook</span>
+                <input
+                  className={inputClass}
+                  placeholder="https://facebook.com/a_tua_barbearia"
+                  value={brandingForm.facebook_url}
+                  onChange={(event) => setBrandingForm((current) => ({ ...current, facebook_url: event.target.value }))}
+                />
+              </label>
+
+              <button type="submit" disabled={!barbershop || isBrandingSaving} className={primaryButtonClass}>
+                {isBrandingSaving ? "A guardar..." : "Guardar personalização"}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     );
   }
@@ -1281,6 +1433,9 @@ export function BackofficePanel() {
               <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className={inputClass} />
               <button type="button" onClick={() => void loadDayAgenda(token, selectedDate)} className={secondaryButtonClass}>
                 Atualizar agenda
+              </button>
+              <button type="button" onClick={handleExportAgenda} disabled={isExportingAgenda} className={primaryButtonClass}>
+                {isExportingAgenda ? "A exportar..." : "Exportar agenda"}
               </button>
             </div>
           </div>

@@ -21,6 +21,8 @@ class StoreUserBarbershopRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:160'],
             'address' => ['nullable', 'string', 'max:255'],
             'timezone' => ['nullable', 'timezone'],
+            'instagram_url' => ['nullable', 'url', 'max:255'],
+            'facebook_url' => ['nullable', 'url', 'max:255'],
         ];
     }
 }

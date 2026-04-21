@@ -9,6 +9,7 @@ use App\Models\Barbershop;
 use App\Services\BarbershopQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -55,6 +56,8 @@ class UserBarbershopController extends Controller
             'email' => $payload['email'] ?? null,
             'address' => $payload['address'] ?? null,
             'timezone' => $payload['timezone'] ?? 'Atlantic/Azores',
+            'instagram_url' => $payload['instagram_url'] ?? null,
+            'facebook_url' => $payload['facebook_url'] ?? null,
             'is_active' => true,
         ]);
         $barbershop = $this->qrCodes->ensure($barbershop);
@@ -92,6 +95,8 @@ class UserBarbershopController extends Controller
             'email' => $payload['email'] ?? $barbershop->email,
             'address' => $payload['address'] ?? $barbershop->address,
             'timezone' => $payload['timezone'] ?? $barbershop->timezone,
+            'instagram_url' => array_key_exists('instagram_url', $payload) ? $payload['instagram_url'] : $barbershop->instagram_url,
+            'facebook_url' => array_key_exists('facebook_url', $payload) ? $payload['facebook_url'] : $barbershop->facebook_url,
         ]);
         $barbershop->save();
         $barbershop = $barbershop->fresh();
@@ -103,6 +108,76 @@ class UserBarbershopController extends Controller
             'message' => 'Barbearia atualizada com sucesso.',
             'barbershop' => $this->formatBarbershop($barbershop),
         ]);
+    }
+
+    public function branding(Request $request): JsonResponse
+    {
+        $barbershop = $request->user()?->barbershop;
+
+        if (! $barbershop) {
+            return response()->json([
+                'message' => 'Barbearia ainda não criada.',
+            ], 404);
+        }
+
+        $payload = $request->validate([
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'instagram_url' => ['nullable', 'url', 'max:255'],
+            'facebook_url' => ['nullable', 'url', 'max:255'],
+        ]);
+
+        if ($request->hasFile('image')) {
+            $barbershop->image_path = $this->storeBrandImage($request, $barbershop);
+            $barbershop->image_url = $this->publicAssetUrl($barbershop->image_path);
+        }
+
+        $barbershop->instagram_url = $payload['instagram_url'] ?? null;
+        $barbershop->facebook_url = $payload['facebook_url'] ?? null;
+        $barbershop->save();
+
+        return response()->json([
+            'message' => 'Personalização atualizada com sucesso.',
+            'barbershop' => $this->formatBarbershop($barbershop->fresh()),
+        ]);
+    }
+
+    private function storeBrandImage(Request $request, Barbershop $barbershop): string
+    {
+        $file = $request->file('image');
+        $extension = $file?->getClientOriginalExtension() ?: 'jpg';
+        $directory = public_path('uploads/barbershops');
+
+        File::ensureDirectoryExists($directory);
+
+        if ($barbershop->image_path) {
+            $previousPath = public_path($barbershop->image_path);
+
+            if (File::exists($previousPath)) {
+                File::delete($previousPath);
+            }
+        }
+
+        $filename = sprintf('%s-%s.%s', $barbershop->slug, Str::random(12), strtolower($extension));
+        $relativePath = 'uploads/barbershops/'.$filename;
+
+        $file?->move($directory, $filename);
+
+        return $relativePath;
+    }
+
+    private function publicAssetUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $baseUrl = rtrim((string) config('app.url'), '/');
+
+        if (! str_starts_with($baseUrl, 'http://') && ! str_starts_with($baseUrl, 'https://')) {
+            $baseUrl = 'https://'.$baseUrl;
+        }
+
+        return $baseUrl.'/'.ltrim($path, '/');
     }
 
     private function resolveSlug(string $name, ?string $slug = null, ?int $ignoreId = null): string
@@ -136,6 +211,10 @@ class UserBarbershopController extends Controller
             'email' => $barbershop->email,
             'address' => $barbershop->address,
             'timezone' => $barbershop->timezone,
+            'image_path' => $barbershop->image_path,
+            'image_url' => $barbershop->image_url,
+            'instagram_url' => $barbershop->instagram_url,
+            'facebook_url' => $barbershop->facebook_url,
             'qr_path' => $barbershop->qr_path,
             'qr_url' => $barbershop->qr_url,
             'qr_generated_at' => $barbershop->qr_generated_at,

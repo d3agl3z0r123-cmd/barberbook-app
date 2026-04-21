@@ -38,6 +38,7 @@ Route::middleware(['auth:sanctum', 'active.account'])->group(function (): void {
     Route::get('barbershop', [UserBarbershopController::class, 'show']);
     Route::post('barbershop', [UserBarbershopController::class, 'store']);
     Route::put('barbershop', [UserBarbershopController::class, 'update']);
+    Route::post('barbershop/branding', [UserBarbershopController::class, 'branding']);
 
     Route::middleware('active.barbershop')->group(function (): void {
         Route::get('barbershop/qr-code', [BarbershopQrCodeController::class, 'show']);
@@ -57,6 +58,7 @@ Route::middleware(['auth:sanctum', 'active.account'])->group(function (): void {
 
         Route::get('appointments', [ManagementAppointmentController::class, 'index']);
         Route::get('appointments/day', [ManagementAppointmentController::class, 'day']);
+        Route::get('appointments/export', [ManagementAppointmentController::class, 'export']);
         Route::post('appointments', [ManagementAppointmentController::class, 'store']);
         Route::put('appointments/{id}', [ManagementAppointmentController::class, 'update']);
         Route::delete('appointments/{id}', [ManagementAppointmentController::class, 'destroy']);

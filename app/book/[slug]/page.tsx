@@ -16,7 +16,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join("")
-      .slice(0, 2) || "BP";
+      .slice(0, 2) || "BB";
 
   if (!bookingSummary) {
     return (
@@ -52,6 +52,9 @@ export default async function BookingPage({ params }: BookingPageProps) {
           name={bookingSummary.name}
           subtitle={bookingSummary.tagline}
           avatarLabel={avatarLabel}
+          imageUrl={bookingSummary.imageUrl}
+          instagramUrl={bookingSummary.instagramUrl}
+          facebookUrl={bookingSummary.facebookUrl}
           badges={[
             `${bookingSummary.city} · ${bookingSummary.neighborhood}`,
             `${bookingSummary.averageRating} estrelas`,

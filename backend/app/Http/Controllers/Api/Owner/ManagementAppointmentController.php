@@ -9,17 +9,22 @@ use App\Models\Barber;
 use App\Models\Barbershop;
 use App\Models\Service;
 use App\Services\AppointmentConflictService;
+use App\Services\AppointmentExcelExportService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Validation\ValidationException;
 
 class ManagementAppointmentController extends Controller
 {
-    public function __construct(private readonly AppointmentConflictService $conflicts)
+    public function __construct(
+        private readonly AppointmentConflictService $conflicts,
+        private readonly AppointmentExcelExportService $excelExport,
+    )
     {
     }
 
@@ -73,6 +78,38 @@ class ManagementAppointmentController extends Controller
             'summary' => $summary,
             'appointments' => $formattedAppointments,
         ]);
+    }
+
+    public function export(Request $request): BinaryFileResponse
+    {
+        $payload = $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $barbershop = $this->resolveBarbershop($request);
+        $timezone = $barbershop->timezone ?: 'Atlantic/Azores';
+        $appointmentsQuery = $barbershop->appointments()
+            ->with(['barber', 'service'])
+            ->orderBy('starts_at');
+
+        if (isset($payload['date'])) {
+            $day = CarbonImmutable::createFromFormat('Y-m-d', $payload['date'], $timezone)->startOfDay();
+
+            $appointmentsQuery->whereBetween('starts_at', [
+                $day->utc(),
+                $day->endOfDay()->utc(),
+            ]);
+        }
+
+        $path = $this->excelExport->export($barbershop, $appointmentsQuery->get());
+        $dateSuffix = $payload['date'] ?? now($timezone)->format('Y-m-d');
+        $filename = sprintf('barberbook-agenda-%s-%s.xlsx', $barbershop->slug, $dateSuffix);
+
+        return response()->download(
+            $path,
+            $filename,
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        )->deleteFileAfterSend();
     }
 
     public function store(ManageAppointmentRequest $request): JsonResponse

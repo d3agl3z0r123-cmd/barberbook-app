@@ -116,24 +116,35 @@ export function BookingHeader({
   subtitle,
   badges,
   avatarLabel,
+  imageUrl,
+  instagramUrl,
+  facebookUrl,
 }: {
   name: string;
   subtitle: string;
   badges: string[];
   avatarLabel: string;
+  imageUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
 }) {
   return (
     <section className="overflow-hidden rounded-[28px] border border-[#D8C3A5]/80 bg-[#FFF7EC] shadow-[0_18px_50px_rgba(43,33,24,0.10)]">
-      <div className="relative h-52 bg-[linear-gradient(135deg,#EAD8BF_0%,#D8C3A5_38%,#A86840_100%)] md:h-64">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.26),transparent_42%),linear-gradient(180deg,rgba(17,24,39,0.08),rgba(17,24,39,0.24))]" />
+      <div className="relative flex h-56 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#EAD8BF_0%,#D8C3A5_38%,#A86840_100%)] px-6 text-center md:h-72">
+        {imageUrl ? (
+          <img src={imageUrl} alt={`Imagem da barbearia ${name}`} className="absolute inset-0 h-full w-full scale-105 object-cover blur-[2px]" />
+        ) : null}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(43,33,24,0.16),rgba(43,33,24,0.58))]" />
+        <div className="relative z-10 mx-auto max-w-3xl text-[#FFF7EC]">
+          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#FFF7EC]/80">Nova marcação</p>
+          <h1 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] md:text-6xl">{name}</h1>
+        </div>
       </div>
       <div className="relative space-y-5 p-6 pt-0 text-center md:p-10 md:pt-0">
         <div className="mx-auto -mt-14 flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-3xl font-extrabold text-[#FFF7EC] shadow-sm">
           {avatarLabel}
         </div>
         <div>
-          <p className="text-sm font-bold tracking-[0.14em] text-[#8B735B]">NOVA MARCAÇÃO</p>
-          <h1 className="mt-3 text-[2rem] font-extrabold tracking-[-0.04em] text-[#2B2118] md:text-[3.5rem]">{name}</h1>
           <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-8 text-[#5B4F3A] md:text-base">{subtitle}</p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
@@ -146,8 +157,40 @@ export function BookingHeader({
             </span>
           ))}
         </div>
+        {(instagramUrl || facebookUrl) ? (
+          <div className="flex justify-center gap-3">
+            {instagramUrl ? (
+              <a href={instagramUrl} target="_blank" rel="noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D8C3A5] bg-white text-[#A86840] transition-all hover:border-[#A86840] hover:bg-[#F8E8D3]" aria-label="Abrir Instagram">
+                <InstagramIcon />
+              </a>
+            ) : null}
+            {facebookUrl ? (
+              <a href={facebookUrl} target="_blank" rel="noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D8C3A5] bg-white text-[#A86840] transition-all hover:border-[#A86840] hover:bg-[#F8E8D3]" aria-label="Abrir Facebook">
+                <FacebookIcon />
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
+      <rect x="5" y="5" width="14" height="14" rx="4" />
+      <path d="M9.5 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Z" />
+      <path d="M16.5 7.8h.01" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+      <path d="M14.2 8.2h1.7V5.3a21.6 21.6 0 0 0-2.5-.1c-2.5 0-4.1 1.5-4.1 4.3V12H6.6v3.3h2.7V23h3.4v-7.7h2.7l.4-3.3h-3.1V9.8c0-1 .3-1.6 1.5-1.6Z" />
+    </svg>
   );
 }
 
@@ -281,7 +324,7 @@ export function SelectionTile({
         disabled
           ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
           : active
-            ? "border-neutral-950 bg-neutral-950 text-[#2B2118]"
+            ? "border-neutral-950 bg-neutral-950 text-white"
             : "border-neutral-200 bg-white hover:border-neutral-400 hover:bg-neutral-50"
       }`}
     >
@@ -291,7 +334,7 @@ export function SelectionTile({
           <div>
             <p className="text-lg font-semibold tracking-[-0.02em]">{title}</p>
             {subtitle ? (
-              <p className={`mt-1 text-base leading-6 ${active ? "text-[#2B2118]/75" : "text-neutral-500"}`}>{subtitle}</p>
+              <p className={`mt-1 text-base leading-6 ${active ? "text-white/75" : "text-neutral-500"}`}>{subtitle}</p>
             ) : null}
           </div>
         </div>

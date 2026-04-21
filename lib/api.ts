@@ -1,4 +1,4 @@
-﻿import {
+import {
   appointments as mockAppointments,
   metrics as mockMetrics,
   organizationProfile,
@@ -33,6 +33,9 @@ export type BookingSummary = {
   id?: number;
   slug: string;
   name: string;
+  imageUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
   city: string;
   neighborhood: string;
   tagline: string;
@@ -114,6 +117,9 @@ type ApiBarbershop = {
   id: number;
   name: string;
   slug: string;
+  image_url?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
   address: string | null;
   phone: string | null;
   description: string | null;
@@ -244,6 +250,9 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
     return {
       ...organizationProfile,
       slug: organizationProfile.slug,
+      imageUrl: null,
+      instagramUrl: null,
+      facebookUrl: null,
       timezone: "Atlantic/Azores",
       services: mockServices,
       barbers: publicBookingBarbers.map((barber) => ({
@@ -265,6 +274,9 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
     id: apiShop.id,
     slug: apiShop.slug,
     name: apiShop.name,
+    imageUrl: apiShop.image_url ?? null,
+    instagramUrl: apiShop.instagram_url ?? null,
+    facebookUrl: apiShop.facebook_url ?? null,
     city: extractCity(apiShop.address),
     neighborhood: extractNeighborhood(apiShop.address),
     tagline: apiShop.description ?? "Agendamento moderno e sem atrito para clientes recorrentes.",
