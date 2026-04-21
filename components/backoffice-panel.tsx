@@ -29,7 +29,7 @@ const DAY_SLOTS = [
   "18:30",
 ];
 
-type TabId = "overview" | "agenda" | "barbershop" | "barbers" | "services" | "public-link" | "account";
+type TabId = "overview" | "agenda" | "barbershop" | "barbers" | "services" | "public-link" | "account" | "admin";
 
 type StatusState = {
   kind: "idle" | "success" | "error";
@@ -43,6 +43,8 @@ type AuthUser = {
   email: string;
   phone: string | null;
   role?: string;
+  is_active?: boolean;
+  is_super_admin?: boolean;
 };
 
 type Barbershop = {
@@ -113,6 +115,54 @@ type DayPayload = {
     upcoming: number;
   };
   appointments: Appointment[];
+};
+
+type AdminUser = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  is_active: boolean;
+  is_super_admin: boolean;
+  disabled_at: string | null;
+  created_at: string;
+  barbershop: {
+    id: number;
+    name: string;
+    slug: string;
+    is_active: boolean;
+    created_at: string;
+  } | null;
+};
+
+type AdminBarbershop = {
+  id: number;
+  name: string;
+  slug: string;
+  email: string | null;
+  phone: string | null;
+  is_active: boolean;
+  created_at: string;
+  owner: {
+    id: number;
+    name: string;
+    email: string;
+    is_active: boolean;
+  } | null;
+};
+
+type AdminPlatformPayload = {
+  summary: {
+    users_total: number;
+    users_active: number;
+    users_inactive: number;
+    barbershops_total: number;
+    barbershops_active: number;
+    barbershops_inactive: number;
+  };
+  users: AdminUser[];
+  barbershops: AdminBarbershop[];
 };
 
 const tabs: Array<{ id: TabId; label: string }> = [
@@ -230,6 +280,7 @@ function getTabIcon(tabId: TabId) {
   if (tabId === "barbers") return <IconUsers />;
   if (tabId === "services") return <IconScissors />;
   if (tabId === "public-link") return <IconLink />;
+  if (tabId === "admin") return <IconSpark />;
   return <IconSettings />;
 }
 
@@ -330,6 +381,8 @@ export function BackofficePanel() {
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [dayAgenda, setDayAgenda] = useState<DayPayload | null>(null);
+  const [adminPlatform, setAdminPlatform] = useState<AdminPlatformPayload | null>(null);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
   const [isQrLoading, setIsQrLoading] = useState(false);
@@ -377,6 +430,11 @@ export function BackofficePanel() {
 
   const timezone = dayAgenda?.timezone ?? barbershop?.timezone ?? "Atlantic/Azores";
   const todayLabel = formatDateLabel(getTodayInAzores(), timezone);
+  const isSuperAdmin = Boolean(user?.is_super_admin);
+  const visibleTabs = useMemo(
+    () => (isSuperAdmin ? [...tabs, { id: "admin" as TabId, label: "Admin global" }] : tabs),
+    [isSuperAdmin]
+  );
 
   const upcomingAppointments = useMemo(() => {
     const now = new Date();
@@ -391,6 +449,7 @@ export function BackofficePanel() {
       setBarbers([]);
       setServices([]);
       setDayAgenda(null);
+      setAdminPlatform(null);
       return;
     }
 
@@ -404,6 +463,12 @@ export function BackofficePanel() {
 
     void loadDayAgenda(token, selectedDate);
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (isSuperAdmin && !barbershop && activeTab === "overview") {
+      setActiveTab("admin");
+    }
+  }, [isSuperAdmin, barbershop, activeTab]);
 
   async function apiRequest(path: string, init?: RequestInit) {
     const response = await fetch(apiUrl(path), {
@@ -445,11 +510,25 @@ export function BackofficePanel() {
         return;
       }
 
-      setUser(userPayload?.user ?? null);
+      const currentUser = userPayload?.user
+        ? {
+            ...userPayload.user,
+            is_super_admin: Boolean(userPayload?.is_super_admin ?? userPayload.user?.is_super_admin),
+            is_active: userPayload.user?.is_active ?? true,
+          }
+        : null;
+
+      setUser(currentUser);
       setAccountProfileForm({
         email: userPayload?.user?.email ?? "",
         phone: userPayload?.user?.phone ?? "",
       });
+
+      if (currentUser?.is_super_admin) {
+        await loadAdminPlatform(currentToken);
+      } else {
+        setAdminPlatform(null);
+      }
 
       if (barbershopResponse.status === 404 || agendaResponse.status === 404) {
         setBarbershop(null);
@@ -525,6 +604,81 @@ export function BackofficePanel() {
     }
   }
 
+  async function loadAdminPlatform(currentToken = token) {
+    if (!currentToken) return null;
+
+    setIsAdminLoading(true);
+    try {
+      const response = await fetch(apiUrl("/admin/platform"), {
+        headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
+      });
+      const payload = parseApiResponse(await response.text());
+
+      if (!response.ok) {
+        setAdminPlatform(null);
+        setStatus({
+          kind: "error",
+          title: "Erro no painel admin",
+          body: payload?.message ?? "Não foi possível carregar a administração global.",
+        });
+        return null;
+      }
+
+      setAdminPlatform(payload);
+      return payload;
+    } finally {
+      setIsAdminLoading(false);
+    }
+  }
+
+  async function handleToggleUserStatus(adminUser: AdminUser) {
+    const { response, payload } = await apiRequest(`/admin/users/${adminUser.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: !adminUser.is_active }),
+    });
+
+    if (!response.ok) {
+      setStatus({
+        kind: "error",
+        title: "Erro ao atualizar conta",
+        body: payload?.errors?.is_active?.[0] ?? payload?.message ?? "Não foi possível alterar o estado da conta.",
+      });
+      return;
+    }
+
+    await loadAdminPlatform();
+    setStatus({
+      kind: "success",
+      title: adminUser.is_active ? "Conta desativada" : "Conta ativada",
+      body: payload?.message ?? "O estado da conta foi atualizado com sucesso.",
+    });
+  }
+
+  async function handleToggleBarbershopStatus(adminBarbershop: AdminBarbershop) {
+    const { response, payload } = await apiRequest(`/admin/barbershops/${adminBarbershop.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: !adminBarbershop.is_active }),
+    });
+
+    if (!response.ok) {
+      setStatus({
+        kind: "error",
+        title: "Erro ao atualizar barbearia",
+        body: payload?.message ?? "Não foi possível alterar o estado da barbearia.",
+      });
+      return;
+    }
+
+    await loadAdminPlatform();
+    setStatus({
+      kind: "success",
+      title: adminBarbershop.is_active ? "Barbearia desativada" : "Barbearia ativada",
+      body: payload?.message ?? "O estado da barbearia foi atualizado com sucesso.",
+    });
+  }
+
   function showQrFeedback(message: string) {
     setQrActionFeedback(message);
     window.setTimeout(() => setQrActionFeedback(""), 3200);
@@ -589,7 +743,7 @@ export function BackofficePanel() {
       return;
     }
 
-    setUser(payload?.user ?? null);
+    setUser(payload?.user ? { ...payload.user, is_super_admin: user?.is_super_admin ?? false } : null);
     setAccountProfileForm({
       email: payload?.user?.email ?? "",
       phone: payload?.user?.phone ?? "",
@@ -1374,6 +1528,127 @@ export function BackofficePanel() {
     );
   }
 
+  function renderAdminPanel() {
+    if (!isSuperAdmin) {
+      return (
+        <article className={`${whiteCardClass} p-8`}>
+          <h2 className="text-2xl font-semibold text-[#E8DCCB]">Acesso reservado</h2>
+          <p className="mt-2 text-sm text-[#E8DCCB]/55">Apenas o super admin principal pode abrir esta área.</p>
+        </article>
+      );
+    }
+
+    const summary = adminPlatform?.summary;
+    const metricCards = [
+      { label: "Contas totais", value: summary?.users_total ?? 0 },
+      { label: "Contas ativas", value: summary?.users_active ?? 0 },
+      { label: "Barbearias totais", value: summary?.barbershops_total ?? 0 },
+      { label: "Barbearias ativas", value: summary?.barbershops_active ?? 0 },
+    ];
+
+    return (
+      <div className="space-y-6">
+        <article className={`${whiteCardClass} p-8`}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm text-[#E8DCCB]/55">Administração global</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[#E8DCCB]">Controlo da plataforma BarberBook</h2>
+              <p className="mt-2 text-sm text-[#E8DCCB]/55">
+                Gere contas, barbearias e acesso ativo sem interferir no fluxo normal dos barbeiros.
+              </p>
+            </div>
+            <button type="button" onClick={() => void loadAdminPlatform()} className={secondaryButtonClass} disabled={isAdminLoading}>
+              {isAdminLoading ? "A atualizar..." : "Atualizar dados"}
+            </button>
+          </div>
+        </article>
+
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {metricCards.map((metric) => (
+            <article key={metric.label} className={`${whiteCardClass} p-5`}>
+              <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/45">{metric.label}</p>
+              <p className="mt-3 text-3xl font-semibold text-[#E8DCCB]">{metric.value}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className={`${whiteCardClass} overflow-hidden`}>
+          <div className="border-b border-white/10 p-6">
+            <h3 className="text-xl font-semibold text-[#E8DCCB]">Contas de utilizador</h3>
+            <p className="mt-1 text-sm text-[#E8DCCB]/55">Ativa ou desativa acessos à plataforma.</p>
+          </div>
+          <div className="divide-y divide-white/10">
+            {(adminPlatform?.users ?? []).map((adminUser) => (
+              <div key={adminUser.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr_0.6fr_auto] lg:items-center">
+                <div>
+                  <p className="font-semibold text-[#E8DCCB]">{adminUser.name}</p>
+                  <p className="mt-1 text-sm text-[#E8DCCB]/55">{adminUser.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/40">Barbearia</p>
+                  <p className="mt-1 text-sm text-[#E8DCCB]">{adminUser.barbershop?.name ?? "Sem barbearia"}</p>
+                </div>
+                <div>
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${adminUser.is_active ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+                    {adminUser.is_active ? "Ativa" : "Desativada"}
+                  </span>
+                  {adminUser.is_super_admin ? <span className="ml-2 inline-flex rounded-full bg-[#A63A3A]/20 px-3 py-1 text-xs font-semibold text-[#F5F1EA]">Super admin</span> : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleToggleUserStatus(adminUser)}
+                  className={adminUser.is_active ? secondaryButtonClass : primaryButtonClass}
+                  disabled={adminUser.is_super_admin && adminUser.email === user?.email}
+                >
+                  {adminUser.is_active ? "Desativar" : "Ativar"}
+                </button>
+              </div>
+            ))}
+            {!isAdminLoading && (adminPlatform?.users ?? []).length === 0 ? (
+              <div className="p-6 text-sm text-[#E8DCCB]/55">Ainda não existem contas registadas.</div>
+            ) : null}
+          </div>
+        </section>
+
+        <section className={`${whiteCardClass} overflow-hidden`}>
+          <div className="border-b border-white/10 p-6">
+            <h3 className="text-xl font-semibold text-[#E8DCCB]">Barbearias</h3>
+            <p className="mt-1 text-sm text-[#E8DCCB]/55">Controla a visibilidade pública e o acesso operacional de cada barbearia.</p>
+          </div>
+          <div className="divide-y divide-white/10">
+            {(adminPlatform?.barbershops ?? []).map((adminBarbershop) => (
+              <div key={adminBarbershop.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.9fr_0.6fr_auto] lg:items-center">
+                <div>
+                  <p className="font-semibold text-[#E8DCCB]">{adminBarbershop.name}</p>
+                  <p className="mt-1 text-sm text-[#E8DCCB]/55">/book/{adminBarbershop.slug}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#E8DCCB]/40">Conta associada</p>
+                  <p className="mt-1 text-sm text-[#E8DCCB]">{adminBarbershop.owner?.email ?? "Sem conta"}</p>
+                </div>
+                <div>
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${adminBarbershop.is_active ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+                    {adminBarbershop.is_active ? "Ativa" : "Desativada"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleToggleBarbershopStatus(adminBarbershop)}
+                  className={adminBarbershop.is_active ? secondaryButtonClass : primaryButtonClass}
+                >
+                  {adminBarbershop.is_active ? "Desativar" : "Ativar"}
+                </button>
+              </div>
+            ))}
+            {!isAdminLoading && (adminPlatform?.barbershops ?? []).length === 0 ? (
+              <div className="p-6 text-sm text-[#E8DCCB]/55">Ainda não existem barbearias criadas.</div>
+            ) : null}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   function renderAccountSettings() {
     return (
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -1493,6 +1768,8 @@ export function BackofficePanel() {
         return renderPublicLink();
       case "account":
         return renderAccountSettings();
+      case "admin":
+        return renderAdminPanel();
       default:
         return null;
     }
@@ -1513,7 +1790,7 @@ export function BackofficePanel() {
           </div>
 
           <nav className="mt-8 space-y-2 border-t border-white/10 pt-6">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
@@ -1560,7 +1837,7 @@ export function BackofficePanel() {
                   <p className="text-sm font-medium text-[#E8DCCB]/55">Backoffice principal</p>
                   <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#E8DCCB]">{barbershop?.name ?? "BarberPro"}</h1>
                   <p className="mt-2 text-sm text-[#E8DCCB]/55">
-                    {tabs.find((tab) => tab.id === activeTab)?.label} · Hoje, {todayLabel}
+                    {visibleTabs.find((tab) => tab.id === activeTab)?.label} · Hoje, {todayLabel}
                   </p>
                 </div>
               </div>

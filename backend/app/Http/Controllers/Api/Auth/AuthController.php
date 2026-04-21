@@ -52,7 +52,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Utilizador registado com sucesso.',
-            'user' => $user->loadMissing('barbershop', 'memberships'),
+            'user' => $this->formatAuthUser($user),
             'role' => $role,
             'token_type' => 'Bearer',
             'token' => $token,
@@ -66,7 +66,13 @@ class AuthController extends Controller
 
         if (! $user || ! Hash::check($payload['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Credenciais invalidas.'],
+                'email' => ['Credenciais inválidas.'],
+            ]);
+        }
+
+        if (! $user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['Esta conta está desativada. Contacta o suporte BarberBook.'],
             ]);
         }
 
@@ -74,7 +80,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login efetuado com sucesso.',
-            'user' => $user->loadMissing('barbershop', 'memberships'),
+            'user' => $this->formatAuthUser($user),
+            'is_super_admin' => $user->isSuperAdmin(),
             'token_type' => 'Bearer',
             'token' => $token,
         ]);
@@ -83,7 +90,8 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => $request->user()?->load('barbershop', 'memberships'),
+            'user' => $request->user() ? $this->formatAuthUser($request->user()) : null,
+            'is_super_admin' => $request->user()?->isSuperAdmin() ?? false,
         ]);
     }
 
@@ -93,6 +101,16 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Sessao terminada com sucesso.',
+        ]);
+    }
+
+    private function formatAuthUser(User $user): array
+    {
+        $user->loadMissing('barbershop', 'memberships');
+
+        return array_merge($user->toArray(), [
+            'is_active' => (bool) $user->is_active,
+            'is_super_admin' => $user->isSuperAdmin(),
         ]);
     }
 }

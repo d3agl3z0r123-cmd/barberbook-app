@@ -33,6 +33,9 @@ Artisan::command('app:ensure-admin', function (): int {
     $admin->password = Hash::make($password);
     $admin->role = UserRole::Admin;
     $admin->timezone = 'Atlantic/Azores';
+    $admin->is_active = true;
+    $admin->is_super_admin = true;
+    $admin->disabled_at = null;
     $admin->email_verified_at ??= now();
     $admin->save();
 

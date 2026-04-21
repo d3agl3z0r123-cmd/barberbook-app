@@ -60,6 +60,11 @@ class SocialAuthController extends Controller
             $googleUser = Socialite::driver('google')->stateless()->user();
             $result = $this->findOrCreateGoogleUser($googleUser);
             $user = $result['user'];
+
+            if (! $user->is_active) {
+                return $this->redirectWithError('Esta conta está desativada. Contacta o suporte BarberBook.');
+            }
+
             $token = $user->createToken('google-oauth')->plainTextToken;
 
             Log::info('Google OAuth login completed.', [

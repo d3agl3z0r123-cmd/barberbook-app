@@ -25,7 +25,11 @@ class AvailabilityController extends Controller
             'date' => ['required', 'date_format:Y-m-d'],
         ]);
 
-        $barbershop = Barbershop::query()->where('slug', $slug)->firstOrFail();
+        $barbershop = Barbershop::query()
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->whereHas('user', fn ($query) => $query->where('is_active', true))
+            ->firstOrFail();
         $service = Service::query()->where('barbershop_id', $barbershop->id)->findOrFail($payload['service_id']);
         $barber = Barber::query()->where('barbershop_id', $barbershop->id)->findOrFail($payload['barber_id']);
         $slots = $this->availability->forDay($barbershop, $barber, $service, CarbonImmutable::parse($payload['date'], $barbershop->timezone));

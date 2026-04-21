@@ -26,6 +26,9 @@ class User extends Authenticatable
         'role',
         'timezone',
         'email_verified_at',
+        'is_active',
+        'is_super_admin',
+        'disabled_at',
     ];
 
     protected $hidden = [
@@ -39,7 +42,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'is_active' => 'boolean',
+            'is_super_admin' => 'boolean',
+            'disabled_at' => 'datetime',
         ];
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        $configuredEmail = (string) config('saas.super_admin_email');
+        $role = $this->role instanceof UserRole ? $this->role : UserRole::tryFrom((string) $this->role);
+
+        return (bool) $this->is_super_admin
+            || ($configuredEmail !== '' && strcasecmp($this->email, $configuredEmail) === 0)
+            || $role === UserRole::Admin;
     }
 
     public function barbershop(): HasOne

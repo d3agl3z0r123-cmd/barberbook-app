@@ -57,6 +57,9 @@ class PublicAppointmentController extends Controller
 
         $barber = Barber::query()->with('barbershop')->findOrFail($payload['barber_id']);
         $barbershop = $barber->barbershop;
+
+        abort_if(! $barbershop?->is_active || ! $barbershop->user?->is_active, 404);
+
         $day = CarbonImmutable::createFromFormat('Y-m-d', $payload['date'], $barbershop->timezone)->startOfDay();
         $startsAtUtc = $day->utc();
         $endsAtUtc = $day->endOfDay()->utc();
@@ -94,6 +97,7 @@ class PublicAppointmentController extends Controller
         $barbershop = Barbershop::query()
             ->where('slug', $payload['slug'])
             ->where('is_active', true)
+            ->whereHas('user', fn ($query) => $query->where('is_active', true))
             ->firstOrFail();
 
         $barber = $barbershop->barbers()

@@ -13,6 +13,7 @@ class DiscoveryController extends Controller
     {
         $shops = Barbershop::query()
             ->where('is_active', true)
+            ->whereHas('user', fn ($query) => $query->where('is_active', true))
             ->with(['services' => fn ($query) => $query->where('is_active', true), 'barbers' => fn ($query) => $query->where('is_active', true)])
             ->paginate();
 
@@ -24,6 +25,7 @@ class DiscoveryController extends Controller
         $shop = Barbershop::query()
             ->where('slug', $slug)
             ->where('is_active', true)
+            ->whereHas('user', fn ($query) => $query->where('is_active', true))
             ->with(['services' => fn ($query) => $query->where('is_active', true), 'barbers' => fn ($query) => $query->where('is_active', true)])
             ->firstOrFail();
 
