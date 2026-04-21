@@ -58,6 +58,10 @@ type Barbershop = {
   timezone: string;
   image_path?: string | null;
   image_url?: string | null;
+  background_image_path?: string | null;
+  background_image_url?: string | null;
+  logo_path?: string | null;
+  logo_url?: string | null;
   instagram_url?: string | null;
   facebook_url?: string | null;
 };
@@ -413,7 +417,8 @@ export function BackofficePanel() {
   const [brandingForm, setBrandingForm] = useState({
     instagram_url: "",
     facebook_url: "",
-    image: null as File | null,
+    background_image: null as File | null,
+    logo: null as File | null,
   });
   const [barberForm, setBarberForm] = useState({ id: "", name: "", email: "", phone: "" });
   const [serviceForm, setServiceForm] = useState({ id: "", name: "", price: "", duration_minutes: "" });
@@ -577,7 +582,8 @@ export function BackofficePanel() {
       setBrandingForm({
         instagram_url: currentBarbershop?.instagram_url ?? "",
         facebook_url: currentBarbershop?.facebook_url ?? "",
-        image: null,
+        background_image: null,
+        logo: null,
       });
       setStatus({ kind: "success", title: "Painel carregado", body: "Os dados principais da tua barbearia já estão prontos." });
     } catch {
@@ -837,7 +843,8 @@ export function BackofficePanel() {
     setBrandingForm({
       instagram_url: payload.barbershop.instagram_url ?? "",
       facebook_url: payload.barbershop.facebook_url ?? "",
-      image: null,
+      background_image: null,
+      logo: null,
     });
     await loadQrCode();
     setStatus({ kind: "success", title: "Barbearia guardada", body: "Os dados da barbearia foram atualizados com sucesso." });
@@ -857,8 +864,12 @@ export function BackofficePanel() {
       formData.append("instagram_url", brandingForm.instagram_url);
       formData.append("facebook_url", brandingForm.facebook_url);
 
-      if (brandingForm.image) {
-        formData.append("image", brandingForm.image);
+      if (brandingForm.background_image) {
+        formData.append("background_image", brandingForm.background_image);
+      }
+
+      if (brandingForm.logo) {
+        formData.append("logo", brandingForm.logo);
       }
 
       const { response, payload } = await apiRequest("/barbershop/branding", {
@@ -870,7 +881,7 @@ export function BackofficePanel() {
         setStatus({
           kind: "error",
           title: "Erro ao guardar personalização",
-          body: payload?.message ?? payload?.errors?.image?.[0] ?? payload?.errors?.instagram_url?.[0] ?? payload?.errors?.facebook_url?.[0] ?? "Não foi possível guardar a personalização.",
+          body: payload?.message ?? payload?.errors?.background_image?.[0] ?? payload?.errors?.logo?.[0] ?? payload?.errors?.instagram_url?.[0] ?? payload?.errors?.facebook_url?.[0] ?? "Não foi possível guardar a personalização.",
         });
         return;
       }
@@ -879,7 +890,8 @@ export function BackofficePanel() {
       setBrandingForm({
         instagram_url: payload.barbershop.instagram_url ?? "",
         facebook_url: payload.barbershop.facebook_url ?? "",
-        image: null,
+        background_image: null,
+        logo: null,
       });
       setStatus({ kind: "success", title: "Personalização guardada", body: "A página pública já reflete a imagem e as redes sociais da barbearia." });
     } finally {
@@ -1260,32 +1272,59 @@ export function BackofficePanel() {
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <p className="text-sm text-[#5B4F3A]/75">Personalização pública</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">Imagem e redes sociais</h2>
+              <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">Imagem, logo e redes sociais</h2>
               <p className="mt-2 text-sm leading-6 text-[#5B4F3A]/75">
                 Esta informação aparece automaticamente no link público de marcação da tua barbearia.
               </p>
 
               <div className="mt-5 overflow-hidden rounded-2xl border border-[#D8C3A5]/70 bg-[#F8E8D3]">
-                {barbershop?.image_url ? (
-                  <img src={barbershop.image_url} alt="Imagem atual da barbearia" className="h-56 w-full object-cover" />
+                {barbershop?.background_image_url || barbershop?.image_url ? (
+                  <img src={barbershop.background_image_url ?? barbershop.image_url ?? ""} alt="Imagem de fundo atual da barbearia" className="h-56 w-full object-cover" />
                 ) : (
                   <div className="flex h-56 items-center justify-center px-6 text-center text-sm text-[#5B4F3A]/75">
-                    Ainda sem imagem pública. Carrega uma fotografia da fachada, interior ou equipa.
+                    Ainda sem imagem de fundo. Carrega uma fotografia da fachada, interior ou equipa.
                   </div>
                 )}
+              </div>
+
+              <div className="mt-4 flex items-center gap-4 rounded-2xl border border-[#D8C3A5]/70 bg-[#F8E8D3] p-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-lg font-bold text-[#FFF7EC]">
+                  {barbershop?.logo_url ? (
+                    <img src={barbershop.logo_url} alt="Logo atual da barbearia" className="h-full w-full object-cover" />
+                  ) : (
+                    <span>{(barbershop?.name ?? "BB").slice(0, 2).toUpperCase()}</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#2B2118]">Logo da barbearia</p>
+                  <p className="mt-1 text-sm leading-6 text-[#5B4F3A]/75">
+                    Este logo aparece no círculo da página pública. Se não existir, mostramos as iniciais da barbearia.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="grid content-start gap-4">
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-[#2B2118]">Foto da barbearia</span>
+                <span className="text-sm font-medium text-[#2B2118]">Imagem de fundo da barbearia</span>
                 <input
                   className={inputClass}
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
-                  onChange={(event) => setBrandingForm((current) => ({ ...current, image: event.target.files?.[0] ?? null }))}
+                  onChange={(event) => setBrandingForm((current) => ({ ...current, background_image: event.target.files?.[0] ?? null }))}
                 />
                 <span className="text-xs text-[#5B4F3A]/70">Formatos aceites: JPG, PNG ou WebP até 4 MB.</span>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-[#2B2118]">Logo da barbearia</span>
+                <input
+                  className={inputClass}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => setBrandingForm((current) => ({ ...current, logo: event.target.files?.[0] ?? null }))}
+                />
+                <span className="text-xs text-[#5B4F3A]/70">Formatos aceites: JPG, PNG ou WebP até 2 MB.</span>
               </label>
 
               <label className="grid gap-2">

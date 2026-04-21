@@ -117,6 +117,7 @@ export function BookingHeader({
   badges,
   avatarLabel,
   imageUrl,
+  logoUrl,
   instagramUrl,
   facebookUrl,
 }: {
@@ -125,6 +126,7 @@ export function BookingHeader({
   badges: string[];
   avatarLabel: string;
   imageUrl?: string | null;
+  logoUrl?: string | null;
   instagramUrl?: string | null;
   facebookUrl?: string | null;
 }) {
@@ -141,8 +143,12 @@ export function BookingHeader({
         </div>
       </div>
       <div className="relative space-y-5 p-6 pt-0 text-center md:p-10 md:pt-0">
-        <div className="mx-auto -mt-14 flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-3xl font-extrabold text-[#FFF7EC] shadow-sm">
-          {avatarLabel}
+        <div className="mx-auto -mt-16 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-3xl font-extrabold text-[#FFF7EC] shadow-sm md:h-36 md:w-36">
+          {logoUrl ? (
+            <img src={logoUrl} alt={`Logo da barbearia ${name}`} className="h-full w-full object-cover" />
+          ) : (
+            <span>{avatarLabel}</span>
+          )}
         </div>
         <div>
           <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-8 text-[#5B4F3A] md:text-base">{subtitle}</p>

@@ -34,6 +34,8 @@ export type BookingSummary = {
   slug: string;
   name: string;
   imageUrl?: string | null;
+  backgroundImageUrl?: string | null;
+  logoUrl?: string | null;
   instagramUrl?: string | null;
   facebookUrl?: string | null;
   city: string;
@@ -118,6 +120,8 @@ type ApiBarbershop = {
   name: string;
   slug: string;
   image_url?: string | null;
+  background_image_url?: string | null;
+  logo_url?: string | null;
   instagram_url?: string | null;
   facebook_url?: string | null;
   address: string | null;
@@ -251,6 +255,8 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
       ...organizationProfile,
       slug: organizationProfile.slug,
       imageUrl: null,
+      backgroundImageUrl: null,
+      logoUrl: null,
       instagramUrl: null,
       facebookUrl: null,
       timezone: "Atlantic/Azores",
@@ -275,6 +281,8 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
     slug: apiShop.slug,
     name: apiShop.name,
     imageUrl: apiShop.image_url ?? null,
+    backgroundImageUrl: apiShop.background_image_url ?? apiShop.image_url ?? null,
+    logoUrl: apiShop.logo_url ?? null,
     instagramUrl: apiShop.instagram_url ?? null,
     facebookUrl: apiShop.facebook_url ?? null,
     city: extractCity(apiShop.address),

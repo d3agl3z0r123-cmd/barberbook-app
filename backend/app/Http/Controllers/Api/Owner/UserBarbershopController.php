@@ -122,13 +122,23 @@ class UserBarbershopController extends Controller
 
         $payload = $request->validate([
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'background_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'instagram_url' => ['nullable', 'url', 'max:255'],
             'facebook_url' => ['nullable', 'url', 'max:255'],
         ]);
 
-        if ($request->hasFile('image')) {
-            $barbershop->image_path = $this->storeBrandImage($request, $barbershop);
-            $barbershop->image_url = $this->publicAssetUrl($barbershop->image_path);
+        if ($request->hasFile('background_image') || $request->hasFile('image')) {
+            $field = $request->hasFile('background_image') ? 'background_image' : 'image';
+            $barbershop->background_image_path = $this->storeBrandImage($request, $barbershop, $field, 'backgrounds', $barbershop->background_image_path ?? $barbershop->image_path);
+            $barbershop->background_image_url = $this->publicAssetUrl($barbershop->background_image_path);
+            $barbershop->image_path = $barbershop->background_image_path;
+            $barbershop->image_url = $barbershop->background_image_url;
+        }
+
+        if ($request->hasFile('logo')) {
+            $barbershop->logo_path = $this->storeBrandImage($request, $barbershop, 'logo', 'logos', $barbershop->logo_path);
+            $barbershop->logo_url = $this->publicAssetUrl($barbershop->logo_path);
         }
 
         $barbershop->instagram_url = $payload['instagram_url'] ?? null;
@@ -141,24 +151,24 @@ class UserBarbershopController extends Controller
         ]);
     }
 
-    private function storeBrandImage(Request $request, Barbershop $barbershop): string
+    private function storeBrandImage(Request $request, Barbershop $barbershop, string $field, string $folder, ?string $currentPath = null): string
     {
-        $file = $request->file('image');
+        $file = $request->file($field);
         $extension = $file?->getClientOriginalExtension() ?: 'jpg';
-        $directory = public_path('uploads/barbershops');
+        $directory = public_path('uploads/barbershops/'.$folder);
 
         File::ensureDirectoryExists($directory);
 
-        if ($barbershop->image_path) {
-            $previousPath = public_path($barbershop->image_path);
+        if ($currentPath) {
+            $previousPath = public_path($currentPath);
 
             if (File::exists($previousPath)) {
                 File::delete($previousPath);
             }
         }
 
-        $filename = sprintf('%s-%s.%s', $barbershop->slug, Str::random(12), strtolower($extension));
-        $relativePath = 'uploads/barbershops/'.$filename;
+        $filename = sprintf('%s-%s-%s.%s', $barbershop->slug, $folder, Str::random(12), strtolower($extension));
+        $relativePath = 'uploads/barbershops/'.$folder.'/'.$filename;
 
         $file?->move($directory, $filename);
 
@@ -213,6 +223,10 @@ class UserBarbershopController extends Controller
             'timezone' => $barbershop->timezone,
             'image_path' => $barbershop->image_path,
             'image_url' => $barbershop->image_url,
+            'background_image_path' => $barbershop->background_image_path ?? $barbershop->image_path,
+            'background_image_url' => $barbershop->background_image_url ?? $barbershop->image_url,
+            'logo_path' => $barbershop->logo_path,
+            'logo_url' => $barbershop->logo_url,
             'instagram_url' => $barbershop->instagram_url,
             'facebook_url' => $barbershop->facebook_url,
             'qr_path' => $barbershop->qr_path,

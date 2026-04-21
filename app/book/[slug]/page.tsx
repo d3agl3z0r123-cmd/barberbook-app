@@ -52,7 +52,8 @@ export default async function BookingPage({ params }: BookingPageProps) {
           name={bookingSummary.name}
           subtitle={bookingSummary.tagline}
           avatarLabel={avatarLabel}
-          imageUrl={bookingSummary.imageUrl}
+          imageUrl={bookingSummary.backgroundImageUrl ?? bookingSummary.imageUrl}
+          logoUrl={bookingSummary.logoUrl}
           instagramUrl={bookingSummary.instagramUrl}
           facebookUrl={bookingSummary.facebookUrl}
           badges={[
