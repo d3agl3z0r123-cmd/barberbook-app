@@ -5,8 +5,7 @@ import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthShell, luxuryInputClass, luxuryPrimaryButtonClass } from "@/components/auth-shell";
 import { StatusNotice } from "@/components/app-ui";
-
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+import { apiUrl } from "@/lib/api-url";
 
 type StatusState = {
   kind: "idle" | "success" | "error";
@@ -59,7 +58,7 @@ function ResetPasswordContent() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/reset-password`, {
+      const response = await fetch(apiUrl("/reset-password"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

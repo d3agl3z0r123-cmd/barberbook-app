@@ -4,8 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { AuthShell, luxuryInputClass, luxuryPrimaryButtonClass } from "@/components/auth-shell";
 import { StatusNotice } from "@/components/app-ui";
-
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+import { apiUrl } from "@/lib/api-url";
 
 type StatusState = {
   kind: "idle" | "success" | "error";
@@ -37,7 +36,7 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+      const response = await fetch(apiUrl("/forgot-password"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
