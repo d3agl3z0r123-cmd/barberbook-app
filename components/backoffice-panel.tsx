@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
 const TOKEN_STORAGE_KEY = "token";
 const TOKEN_TYPE_STORAGE_KEY = "token_type";
 const DAY_SLOTS = [
@@ -406,7 +406,7 @@ export function BackofficePanel() {
   }, [selectedDate]);
 
   async function apiRequest(path: string, init?: RequestInit) {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(apiUrl(path), {
       ...init,
       headers: {
         Accept: "application/json",
@@ -425,12 +425,12 @@ export function BackofficePanel() {
     try {
       const headers = { Accept: "application/json", Authorization: `Bearer ${currentToken}` };
       const [userResponse, barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/user`, { headers }),
-        fetch(`${API_BASE_URL}/barbershop`, { headers }),
-        fetch(`${API_BASE_URL}/barbershop/qr-code`, { headers }),
-        fetch(`${API_BASE_URL}/barbers`, { headers }),
-        fetch(`${API_BASE_URL}/services`, { headers }),
-        fetch(`${API_BASE_URL}/appointments/day?date=${currentDate}`, { headers }),
+        fetch(apiUrl("/user"), { headers }),
+        fetch(apiUrl("/barbershop"), { headers }),
+        fetch(apiUrl("/barbershop/qr-code"), { headers }),
+        fetch(apiUrl("/barbers"), { headers }),
+        fetch(apiUrl("/services"), { headers }),
+        fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
       ]);
 
       const userPayload = parseApiResponse(await userResponse.text());
@@ -493,7 +493,7 @@ export function BackofficePanel() {
   }
 
   async function loadDayAgenda(currentToken: string, currentDate: string) {
-    const response = await fetch(`${API_BASE_URL}/appointments/day?date=${currentDate}`, {
+    const response = await fetch(apiUrl(`/appointments/day?date=${currentDate}`), {
       headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
     });
     const payload = parseApiResponse(await response.text());
@@ -508,7 +508,7 @@ export function BackofficePanel() {
 
     setIsQrLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/barbershop/qr-code`, {
+      const response = await fetch(apiUrl("/barbershop/qr-code"), {
         headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
       });
       const payload = parseApiResponse(await response.text());
@@ -531,7 +531,7 @@ export function BackofficePanel() {
   }
 
   async function refreshBarbers() {
-    const response = await fetch(`${API_BASE_URL}/barbers`, {
+    const response = await fetch(apiUrl("/barbers"), {
       headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     });
     const payload = parseApiResponse(await response.text());
@@ -541,7 +541,7 @@ export function BackofficePanel() {
   }
 
   async function refreshServices() {
-    const response = await fetch(`${API_BASE_URL}/services`, {
+    const response = await fetch(apiUrl("/services"), {
       headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     });
     const payload = parseApiResponse(await response.text());
@@ -555,7 +555,7 @@ export function BackofficePanel() {
 
     setIsLoggingOut(true);
     try {
-      await fetch(`${API_BASE_URL}/logout`, {
+      await fetch(apiUrl("/logout"), {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
