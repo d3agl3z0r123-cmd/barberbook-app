@@ -6,168 +6,95 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
-use Firebase\JWT\JWK;
-use Firebase\JWT\JWT;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
-use RuntimeException;
 use Throwable;
 
 class SocialAuthController extends Controller
 {
-    private const PROVIDERS = ['google', 'apple'];
-
-    public function redirect(string $provider): RedirectResponse
+    public function redirectToGoogle(): RedirectResponse
     {
-        if (! $this->isSupportedProvider($provider)) {
-            return $this->redirectWithError('Provider de autenticação inválido.');
-        }
+        if ($missing = $this->missingGoogleConfiguration()) {
+            Log::warning('Google OAuth configuration missing.', ['missing' => $missing]);
 
-        if ($missing = $this->missingConfiguration($provider)) {
-            return $this->redirectWithError($missing);
+            return $this->redirectWithError('Faltam variáveis de ambiente OAuth: '.implode(', ', $missing).'.');
         }
 
         try {
-            if ($provider === 'apple') {
-                return redirect()->away($this->appleAuthorizationUrl());
-            }
-
-            return Socialite::driver($provider)
+            return Socialite::driver('google')
                 ->stateless()
                 ->redirect();
-        } catch (Throwable) {
-            return $this->redirectWithError('Não foi possível iniciar o login social. Verifica a configuração OAuth.');
+        } catch (Throwable $exception) {
+            Log::error('Failed to start Google OAuth redirect.', [
+                'message' => $exception->getMessage(),
+            ]);
+
+            return $this->redirectWithError('Não foi possível iniciar o login com Google.');
         }
     }
 
-    public function callback(Request $request, string $provider): RedirectResponse
+    public function handleGoogleCallback(Request $request): RedirectResponse
     {
-        if (! $this->isSupportedProvider($provider)) {
-            return $this->redirectWithError('Provider de autenticação inválido.');
-        }
-
-        if ($missing = $this->missingConfiguration($provider)) {
-            return $this->redirectWithError($missing);
-        }
-
         if ($request->has('error')) {
-            return $this->redirectWithError('O login social foi cancelado ou recusado pelo provider.');
+            Log::warning('Google OAuth cancelled or rejected.', [
+                'error' => $request->query('error'),
+                'description' => $request->query('error_description'),
+            ]);
+
+            return $this->redirectWithError('O login com Google foi cancelado ou recusado.');
+        }
+
+        if ($missing = $this->missingGoogleConfiguration()) {
+            Log::warning('Google OAuth callback configuration missing.', ['missing' => $missing]);
+
+            return $this->redirectWithError('Faltam variáveis de ambiente OAuth: '.implode(', ', $missing).'.');
         }
 
         try {
-            $profile = $provider === 'apple'
-                ? $this->appleProfileFromCallback($request)
-                : $this->profileFromSocialite($provider);
-
-            $result = $this->findOrCreateUser($profile);
+            $googleUser = Socialite::driver('google')->stateless()->user();
+            $result = $this->findOrCreateGoogleUser($googleUser);
             $user = $result['user'];
-            $token = $user->createToken("{$provider}-oauth")->plainTextToken;
+            $token = $user->createToken('google-oauth')->plainTextToken;
+
+            Log::info('Google OAuth login completed.', [
+                'user_id' => $user->id,
+                'is_new_user' => $result['is_new_user'],
+            ]);
 
             return redirect()->away($this->frontendCallbackUrl([
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'role' => $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
-                'provider' => $provider,
+                'provider' => 'google',
                 'is_new_user' => $result['is_new_user'] ? '1' : '0',
             ]));
         } catch (Throwable $exception) {
-            return $this->redirectWithError($exception->getMessage() ?: 'Não foi possível concluir o login social. Confirma as credenciais OAuth e o callback URL.');
+            Log::error('Google OAuth callback failed.', [
+                'message' => $exception->getMessage(),
+            ]);
+
+            return $this->redirectWithError('Não foi possível concluir o login com Google. Confirma as credenciais OAuth e o callback URL.');
         }
     }
 
     public function providers(): array
     {
+        $missing = $this->missingGoogleConfiguration();
+
         return [
             'providers' => [
                 'google' => [
-                    'enabled' => $this->missingConfiguration('google') === null,
-                    'missing_configuration' => $this->missingConfiguration('google'),
+                    'enabled' => $missing === [],
+                    'missing_configuration' => $missing === [] ? null : 'Faltam variáveis de ambiente OAuth: '.implode(', ', $missing).'.',
                     'redirect_url' => url('/api/auth/google/redirect'),
                     'callback_url' => config('services.google.redirect'),
                 ],
-                'apple' => [
-                    'enabled' => $this->missingConfiguration('apple') === null,
-                    'missing_configuration' => $this->missingConfiguration('apple'),
-                    'requires' => null,
-                    'redirect_url' => url('/api/auth/apple/redirect'),
-                    'callback_url' => config('services.apple.redirect'),
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @return array{provider: string, provider_id: string, email: ?string, name: ?string, avatar: ?string, raw: array<string, mixed>}
-     */
-    private function profileFromSocialite(string $provider): array
-    {
-        $socialUser = Socialite::driver($provider)->stateless()->user();
-
-        return [
-            'provider' => $provider,
-            'provider_id' => (string) $socialUser->getId(),
-            'email' => $socialUser->getEmail(),
-            'name' => $socialUser->getName() ?: $socialUser->getNickname(),
-            'avatar' => $socialUser->getAvatar(),
-            'raw' => [
-                'nickname' => $socialUser->getNickname(),
-                'user' => $socialUser->user,
-            ],
-        ];
-    }
-
-    /**
-     * @return array{provider: string, provider_id: string, email: ?string, name: ?string, avatar: ?string, raw: array<string, mixed>}
-     */
-    private function appleProfileFromCallback(Request $request): array
-    {
-        $code = $request->string('code')->toString();
-
-        if ($code === '') {
-            throw new RuntimeException('A Apple não devolveu um código de autorização válido.');
-        }
-
-        $tokenResponse = Http::asForm()->post('https://appleid.apple.com/auth/token', [
-            'client_id' => config('services.apple.client_id'),
-            'client_secret' => $this->appleClientSecret(),
-            'code' => $code,
-            'grant_type' => 'authorization_code',
-            'redirect_uri' => config('services.apple.redirect'),
-        ]);
-
-        if (! $tokenResponse->successful()) {
-            throw new RuntimeException('Não foi possível validar a resposta da Apple. Confirma as credenciais e o callback URL.');
-        }
-
-        $tokenPayload = $tokenResponse->json();
-        $idToken = $tokenPayload['id_token'] ?? null;
-
-        if (! is_string($idToken) || $idToken === '') {
-            throw new RuntimeException('A Apple não devolveu um token de identidade válido.');
-        }
-
-        $claims = $this->verifiedAppleClaims($idToken);
-        $providerId = (string) ($claims['sub'] ?? '');
-
-        if ($providerId === '') {
-            throw new RuntimeException('A Apple não devolveu um identificador de utilizador válido.');
-        }
-
-        return [
-            'provider' => 'apple',
-            'provider_id' => $providerId,
-            'email' => isset($claims['email']) ? (string) $claims['email'] : null,
-            'name' => $this->appleNameFromRequest($request),
-            'avatar' => null,
-            'raw' => [
-                'claims' => $claims,
-                'apple_user' => $this->appleUserPayload($request),
             ],
         ];
     }
@@ -175,34 +102,32 @@ class SocialAuthController extends Controller
     /**
      * @return array{user: User, is_new_user: bool}
      */
-    private function findOrCreateUser(array $profile): array
+    private function findOrCreateGoogleUser(SocialiteUser $googleUser): array
     {
-        return DB::transaction(function () use ($profile): array {
-            $provider = (string) $profile['provider'];
-            $providerId = (string) $profile['provider_id'];
-            $email = $profile['email'] ? (string) $profile['email'] : null;
-            $name = $profile['name'] ? (string) $profile['name'] : null;
+        return DB::transaction(function () use ($googleUser): array {
+            $providerId = (string) $googleUser->getId();
+            $email = $googleUser->getEmail();
 
             if ($providerId === '') {
-                throw new RuntimeException('O provider não devolveu um identificador válido.');
+                throw new \RuntimeException('O Google não devolveu um identificador válido.');
+            }
+
+            if (! $email) {
+                throw new \RuntimeException('O Google não devolveu um e-mail válido.');
             }
 
             $account = SocialAccount::query()
-                ->where('provider', $provider)
+                ->where('provider', 'google')
                 ->where('provider_id', $providerId)
                 ->first();
 
             if ($account) {
-                $this->updateSocialAccount($account, $profile);
+                $this->updateGoogleAccount($account, $googleUser);
 
                 return [
                     'user' => $account->user,
                     'is_new_user' => false,
                 ];
-            }
-
-            if (! $email) {
-                throw new RuntimeException('A Apple não devolveu e-mail neste pedido. Usa o mesmo Apple ID já associado ou repete o registo autorizando a partilha do e-mail.');
             }
 
             $user = User::query()->where('email', $email)->first();
@@ -211,25 +136,26 @@ class SocialAuthController extends Controller
             if (! $user) {
                 $isNewUser = true;
                 $user = User::query()->create([
-                    'name' => $this->resolveSocialName($name, $email),
+                    'name' => $this->resolveName($googleUser, $email),
                     'email' => $email,
                     'password' => Hash::make(Str::random(48)),
                     'role' => UserRole::Client->value,
-                    'timezone' => config('saas.default_timezone'),
+                    'timezone' => config('saas.default_timezone', 'Atlantic/Azores'),
                     'email_verified_at' => now(),
                 ]);
             }
 
             $account = SocialAccount::query()->create([
                 'user_id' => $user->id,
-                'provider' => $provider,
+                'provider' => 'google',
                 'provider_id' => $providerId,
                 'email' => $email,
-                'name' => $name ?: $user->name,
-                'avatar' => $profile['avatar'] ?? null,
+                'name' => $googleUser->getName() ?: $user->name,
+                'avatar' => $googleUser->getAvatar(),
                 'metadata' => [
-                    'authenticated_with' => $provider,
-                    'raw' => $profile['raw'] ?? [],
+                    'authenticated_with' => 'google',
+                    'nickname' => $googleUser->getNickname(),
+                    'raw' => $googleUser->user,
                 ],
             ]);
 
@@ -240,139 +166,40 @@ class SocialAuthController extends Controller
         });
     }
 
-    private function updateSocialAccount(SocialAccount $account, array $profile): void
+    private function updateGoogleAccount(SocialAccount $account, SocialiteUser $googleUser): void
     {
         $account->forceFill([
-            'email' => $profile['email'] ?: $account->email,
-            'name' => $profile['name'] ?: $account->name,
-            'avatar' => $profile['avatar'] ?: $account->avatar,
+            'email' => $googleUser->getEmail() ?: $account->email,
+            'name' => $googleUser->getName() ?: $account->name,
+            'avatar' => $googleUser->getAvatar() ?: $account->avatar,
             'metadata' => [
-                'authenticated_with' => $account->provider,
-                'raw' => $profile['raw'] ?? [],
+                'authenticated_with' => 'google',
+                'nickname' => $googleUser->getNickname(),
+                'raw' => $googleUser->user,
             ],
         ])->save();
     }
 
-    private function appleAuthorizationUrl(): string
+    private function resolveName(SocialiteUser $googleUser, string $email): string
     {
-        return 'https://appleid.apple.com/auth/authorize?'.http_build_query([
-            'client_id' => config('services.apple.client_id'),
-            'redirect_uri' => config('services.apple.redirect'),
-            'response_type' => 'code',
-            'response_mode' => 'form_post',
-            'scope' => 'name email',
-        ]);
-    }
-
-    private function appleClientSecret(): string
-    {
-        $configuredSecret = config('services.apple.client_secret');
-
-        if (filled($configuredSecret)) {
-            return (string) $configuredSecret;
-        }
-
-        $privateKey = str_replace('\n', "\n", (string) config('services.apple.private_key'));
-
-        return JWT::encode([
-            'iss' => config('services.apple.team_id'),
-            'iat' => now()->timestamp,
-            'exp' => now()->addMonths(5)->timestamp,
-            'aud' => 'https://appleid.apple.com',
-            'sub' => config('services.apple.client_id'),
-        ], $privateKey, 'ES256', (string) config('services.apple.key_id'));
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function verifiedAppleClaims(string $idToken): array
-    {
-        $jwks = Http::get('https://appleid.apple.com/auth/keys')->throw()->json();
-        $claims = (array) JWT::decode($idToken, JWK::parseKeySet($jwks));
-
-        if (($claims['iss'] ?? null) !== 'https://appleid.apple.com') {
-            throw new RuntimeException('O token devolvido pela Apple tem um emissor inválido.');
-        }
-
-        if (($claims['aud'] ?? null) !== config('services.apple.client_id')) {
-            throw new RuntimeException('O token devolvido pela Apple não pertence a esta aplicação.');
-        }
-
-        return $claims;
-    }
-
-    private function appleNameFromRequest(Request $request): ?string
-    {
-        $payload = $this->appleUserPayload($request);
-        $name = $payload['name'] ?? null;
-
-        if (! is_array($name)) {
-            return null;
-        }
-
-        $parts = array_filter([
-            $name['firstName'] ?? null,
-            $name['lastName'] ?? null,
-        ]);
-
-        return $parts === [] ? null : implode(' ', $parts);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function appleUserPayload(Request $request): array
-    {
-        $user = $request->input('user');
-
-        if (! is_string($user) || $user === '') {
-            return [];
-        }
-
-        $decoded = json_decode($user, true);
-
-        return is_array($decoded) ? $decoded : [];
-    }
-
-    private function resolveSocialName(?string $name, string $email): string
-    {
-        return $name
+        return $googleUser->getName()
+            ?: $googleUser->getNickname()
             ?: Str::headline(Str::before($email, '@'))
             ?: 'Cliente BarberBook';
     }
 
-    private function isSupportedProvider(string $provider): bool
+    /**
+     * @return array<int, string>
+     */
+    private function missingGoogleConfiguration(): array
     {
-        return in_array($provider, self::PROVIDERS, true);
-    }
+        $required = [
+            'GOOGLE_CLIENT_ID' => config('services.google.client_id'),
+            'GOOGLE_CLIENT_SECRET' => config('services.google.client_secret'),
+            'GOOGLE_REDIRECT_URI' => config('services.google.redirect'),
+        ];
 
-    private function missingConfiguration(string $provider): ?string
-    {
-        $required = match ($provider) {
-            'google' => [
-                'GOOGLE_CLIENT_ID' => config('services.google.client_id'),
-                'GOOGLE_CLIENT_SECRET' => config('services.google.client_secret'),
-                'GOOGLE_REDIRECT_URI' => config('services.google.redirect'),
-            ],
-            'apple' => [
-                'APPLE_CLIENT_ID' => config('services.apple.client_id'),
-                'APPLE_REDIRECT_URI' => config('services.apple.redirect'),
-            ] + (filled(config('services.apple.client_secret')) ? [] : [
-                'APPLE_TEAM_ID' => config('services.apple.team_id'),
-                'APPLE_KEY_ID' => config('services.apple.key_id'),
-                'APPLE_PRIVATE_KEY' => config('services.apple.private_key'),
-            ]),
-            default => [],
-        };
-
-        $missing = array_keys(array_filter($required, fn ($value) => blank($value)));
-
-        if ($missing === []) {
-            return null;
-        }
-
-        return 'Faltam variáveis de ambiente OAuth: '.implode(', ', $missing).'.';
+        return array_keys(array_filter($required, fn ($value) => blank($value)));
     }
 
     private function redirectWithError(string $message): RedirectResponse

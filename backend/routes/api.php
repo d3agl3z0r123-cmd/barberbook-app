@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Client\AvailabilityController;
 use App\Http\Controllers\Api\Client\BookingController;
 use App\Http\Controllers\Api\Client\DiscoveryController;
 use App\Http\Controllers\Api\Client\PublicAppointmentController;
+use App\Http\Controllers\Api\Auth\SocialAuthController;
 use App\Http\Controllers\Api\Owner\AppointmentController as OwnerAppointmentController;
 use App\Http\Controllers\Api\Owner\BarberController;
 use App\Http\Controllers\Api\Owner\BarbershopQrCodeController;
@@ -18,6 +19,10 @@ use App\Http\Controllers\Api\Owner\UserBarbershopController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
+
+Route::get('auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle'])->name('google.redirect');
+Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('google.callback');
+Route::get('auth/social/providers', [SocialAuthController::class, 'providers'])->name('social.providers');
 
 Route::prefix('public')->group(function (): void {
     Route::get('barbershops', [DiscoveryController::class, 'index']);
