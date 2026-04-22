@@ -8,6 +8,8 @@ use App\Models\Barbershop;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 
 class ManagementServiceController extends Controller
 {
@@ -23,11 +25,14 @@ class ManagementServiceController extends Controller
     public function store(ManageServiceRequest $request): JsonResponse
     {
         $barbershop = $this->resolveBarbershop($request);
+        $payload = $request->validated();
+
+        $this->ensureNotRecentDuplicate($request, 'service', $payload);
 
         $service = $barbershop->services()->create([
-            'name' => $request->validated('name'),
-            'price' => $request->validated('price'),
-            'duration_minutes' => $request->validated('duration_minutes'),
+            'name' => $payload['name'],
+            'price' => $payload['price'],
+            'duration_minutes' => $payload['duration_minutes'],
             'is_active' => true,
         ]);
 
@@ -70,6 +75,21 @@ class ManagementServiceController extends Controller
     {
         return $request->user()?->barbershop
             ?? abort(404, 'Barbearia ainda não criada.');
+    }
+
+    private function ensureNotRecentDuplicate(Request $request, string $type, array $payload): void
+    {
+        ksort($payload);
+
+        $key = sprintf('recent-submit:%s:%s:%s', $type, $request->user()?->id ?? 'guest', sha1(json_encode($payload)));
+
+        if (Cache::add($key, true, now()->addSeconds(4))) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'request' => ['Este pedido já está a ser processado. Aguarda um instante.'],
+        ]);
     }
 
     private function formatService(Service $service): array

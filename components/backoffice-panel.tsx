@@ -623,6 +623,10 @@ export function BackofficePanel() {
   const [isQrDownloading, setIsQrDownloading] = useState(false);
   const [isQrRegenerating, setIsQrRegenerating] = useState(false);
   const [isBrandingSaving, setIsBrandingSaving] = useState(false);
+  const [isBarbershopSaving, setIsBarbershopSaving] = useState(false);
+  const [isBarberSaving, setIsBarberSaving] = useState(false);
+  const [isServiceSaving, setIsServiceSaving] = useState(false);
+  const [isAppointmentSaving, setIsAppointmentSaving] = useState(false);
   const [isExportingAgenda, setIsExportingAgenda] = useState(false);
   const [qrActionFeedback, setQrActionFeedback] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -632,6 +636,7 @@ export function BackofficePanel() {
     title: "Backoffice pronto",
     body: "Escolhe uma secção no menu para gerir a tua barbearia.",
   });
+  const [toast, setToast] = useState<StatusState | null>(null);
 
   const [barbershopForm, setBarbershopForm] = useState({
     name: "",
@@ -747,6 +752,29 @@ export function BackofficePanel() {
       void loadStatistics();
     }, 250);
   }
+
+  function showFeedback(nextStatus: StatusState) {
+    setStatus(nextStatus);
+
+    if (nextStatus.kind !== "idle") {
+      setToast(nextStatus);
+    }
+  }
+
+  useEffect(() => {
+    if (status.kind !== "idle") {
+      setToast(status);
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setToast(null), toast.kind === "success" ? 3200 : 5200);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
 
   useEffect(() => {
     if (!token) {
@@ -1222,6 +1250,8 @@ export function BackofficePanel() {
 
   async function handleBarbershopSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isBarbershopSaving) return;
+    setIsBarbershopSaving(true);
     const { response, payload } = await apiRequest("/barbershop", {
       method: barbershop ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -1236,6 +1266,7 @@ export function BackofficePanel() {
     });
 
     if (!response.ok) {
+      setIsBarbershopSaving(false);
       setStatus({ kind: "error", title: "Erro ao guardar a barbearia", body: friendlyApiError(payload, "Não foi possível guardar a barbearia.", ["name", "slug", "email", "phone", "address"]) });
       return;
     }
@@ -1256,6 +1287,7 @@ export function BackofficePanel() {
       logo: null,
     });
     await loadQrCode();
+    setIsBarbershopSaving(false);
     setStatus({ kind: "success", title: "Barbearia guardada", body: "Os dados da barbearia foram atualizados com sucesso." });
   }
 
@@ -1448,6 +1480,8 @@ export function BackofficePanel() {
 
   async function handleBarberSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isBarberSaving) return;
+    setIsBarberSaving(true);
     const { response, payload } = await apiRequest(barberForm.id ? `/barbers/${barberForm.id}` : "/barbers", {
       method: barberForm.id ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -1459,6 +1493,7 @@ export function BackofficePanel() {
     });
 
     if (!response.ok) {
+      setIsBarberSaving(false);
       setStatus({ kind: "error", title: "Erro ao guardar o barbeiro", body: friendlyApiError(payload, "Não foi possível guardar o barbeiro.", ["name", "email", "phone"]) });
       return;
     }
@@ -1480,6 +1515,7 @@ export function BackofficePanel() {
     }
 
     setBarberForm({ id: "", name: "", email: "", phone: "" });
+    setIsBarberSaving(false);
     setStatus({ kind: "success", title: "Barbeiro guardado", body: "Os dados do barbeiro foram atualizados com sucesso." });
   }
 
@@ -1517,6 +1553,8 @@ export function BackofficePanel() {
 
   async function handleServiceSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isServiceSaving) return;
+    setIsServiceSaving(true);
     const { response, payload } = await apiRequest(serviceForm.id ? `/services/${serviceForm.id}` : "/services", {
       method: serviceForm.id ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -1528,7 +1566,8 @@ export function BackofficePanel() {
     });
 
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao guardar o serviço", body: friendlyApiError(payload, "Não foi possível guardar o serviço.", ["name", "price", "duration_minutes"]) });
+      setIsServiceSaving(false);
+      showFeedback({ kind: "error", title: "Erro ao guardar o serviço", body: friendlyApiError(payload, "Não foi possível guardar o serviço.", ["name", "price", "duration_minutes"]) });
       return;
     }
 
@@ -1550,11 +1589,14 @@ export function BackofficePanel() {
     }
 
     setServiceForm({ id: "", name: "", price: "", duration_minutes: "" });
-      setStatus({ kind: "success", title: "Serviço guardado", body: "Os dados do serviço foram atualizados com sucesso." });
+    setIsServiceSaving(false);
+    showFeedback({ kind: "success", title: serviceForm.id ? "Serviço atualizado" : "Serviço criado", body: "Os dados do serviço foram guardados com sucesso." });
   }
 
   async function handleAppointmentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isAppointmentSaving) return;
+    setIsAppointmentSaving(true);
     const { response, payload } = await apiRequest(appointmentForm.id ? `/appointments/${appointmentForm.id}` : "/appointments", {
       method: appointmentForm.id ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -1575,6 +1617,7 @@ export function BackofficePanel() {
       payload?.message === "Este horário já não está disponível";
 
     if (!response.ok) {
+      setIsAppointmentSaving(false);
       setStatus({
         kind: "error",
         title: "Erro ao guardar agendamento",
@@ -1605,6 +1648,7 @@ export function BackofficePanel() {
       notes: "",
       status: "booked",
     });
+    setIsAppointmentSaving(false);
     setStatus({ kind: "success", title: "Agendamento guardado", body: "A agenda foi atualizada com sucesso." });
   }
 
@@ -1732,8 +1776,8 @@ export function BackofficePanel() {
             <input className={inputClass} placeholder="Morada" value={barbershopForm.address} onChange={(event) => setBarbershopForm((current) => ({ ...current, address: event.target.value }))} />
             <input className={inputClass} placeholder="Timezone" value={barbershopForm.timezone} onChange={(event) => setBarbershopForm((current) => ({ ...current, timezone: event.target.value }))} />
           </div>
-          <button type="submit" className={`mt-6 ${primaryButtonClass}`}>
-            {barbershop ? "Atualizar barbearia" : "Criar barbearia"}
+          <button type="submit" disabled={isBarbershopSaving} className={`mt-6 ${primaryButtonClass}`}>
+            {isBarbershopSaving ? "A guardar..." : barbershop ? "Atualizar barbearia" : "Criar barbearia"}
           </button>
         </form>
 
@@ -1871,8 +1915,8 @@ export function BackofficePanel() {
             <input className={inputClass} placeholder="Telefone" value={barberForm.phone} onChange={(event) => setBarberForm((current) => ({ ...current, phone: event.target.value }))} />
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button type="submit" className={primaryButtonClass}>
-              {barberForm.id ? "Atualizar barbeiro" : "Criar barbeiro"}
+            <button type="submit" disabled={isBarberSaving} className={primaryButtonClass}>
+              {isBarberSaving ? "A guardar..." : barberForm.id ? "Atualizar barbeiro" : "Criar barbeiro"}
             </button>
             {barberForm.id ? (
               <button type="button" onClick={() => setBarberForm({ id: "", name: "", email: "", phone: "" })} className={secondaryButtonClass}>
@@ -1943,8 +1987,8 @@ export function BackofficePanel() {
             <input className={inputClass} placeholder="Duração em minutos" value={serviceForm.duration_minutes} onChange={(event) => setServiceForm((current) => ({ ...current, duration_minutes: event.target.value }))} />
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button type="submit" className={primaryButtonClass}>
-              {serviceForm.id ? "Atualizar serviço" : "Criar serviço"}
+            <button type="submit" disabled={isServiceSaving} className={primaryButtonClass}>
+              {isServiceSaving ? "A guardar..." : serviceForm.id ? "Atualizar serviço" : "Criar serviço"}
             </button>
             {serviceForm.id ? (
               <button type="button" onClick={() => setServiceForm({ id: "", name: "", price: "", duration_minutes: "" })} className={secondaryButtonClass}>
@@ -2387,8 +2431,8 @@ export function BackofficePanel() {
               <textarea className={`${inputClass} min-h-24`} placeholder="Notas" value={appointmentForm.notes} onChange={(event) => setAppointmentForm((current) => ({ ...current, notes: event.target.value }))} />
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-              <button type="submit" className={primaryButtonClass}>
-                {appointmentForm.id ? "Atualizar agendamento" : "Criar agendamento"}
+              <button type="submit" disabled={isAppointmentSaving} className={primaryButtonClass}>
+                {isAppointmentSaving ? "A guardar..." : appointmentForm.id ? "Atualizar agendamento" : "Criar agendamento"}
               </button>
               {appointmentForm.id ? (
                 <button type="button" onClick={() => setAppointmentForm({ id: "", barber_id: "", service_id: "", client_name: "", client_phone: "", client_email: "", starts_at: "", notes: "", status: "booked" })} className={secondaryButtonClass}>
@@ -3123,6 +3167,27 @@ export function BackofficePanel() {
           </section>
         </div>
       </div>
+      {toast ? (
+        <div className="fixed right-4 top-4 z-[80] w-[calc(100vw-2rem)] max-w-sm sm:right-6 sm:top-6">
+          <div
+            className={`rounded-2xl border p-4 shadow-[0_18px_60px_rgba(43,33,24,0.22)] backdrop-blur ${
+              toast.kind === "success"
+                ? "border-emerald-200 bg-emerald-50/95 text-emerald-900"
+                : "border-rose-200 bg-rose-50/95 text-rose-900"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold">{toast.title}</p>
+                <p className="mt-1 text-sm leading-5 opacity-85">{toast.body}</p>
+              </div>
+              <button type="button" onClick={() => setToast(null)} className="rounded-full px-2 text-lg leading-none opacity-70 transition hover:opacity-100">
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {selectedAgendaAppointment ? (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[#2B2118]/45 p-4 backdrop-blur-sm sm:items-center">
           <div className="w-full max-w-xl rounded-[28px] border border-[#D8C3A5]/80 bg-[#FFF7EC] p-6 shadow-[0_24px_80px_rgba(43,33,24,0.28)]">

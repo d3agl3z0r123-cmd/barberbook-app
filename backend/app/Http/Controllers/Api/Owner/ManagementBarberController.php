@@ -8,8 +8,10 @@ use App\Models\Barber;
 use App\Models\Barbershop;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ManagementBarberController extends Controller
 {
@@ -25,11 +27,14 @@ class ManagementBarberController extends Controller
     public function store(ManageBarberRequest $request): JsonResponse
     {
         $barbershop = $this->resolveBarbershop($request);
+        $payload = $request->validated();
+
+        $this->ensureNotRecentDuplicate($request, 'barber', $payload);
 
         $barber = $barbershop->barbers()->create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'phone' => $request->validated('phone'),
+            'name' => $payload['name'],
+            'email' => $payload['email'],
+            'phone' => $payload['phone'],
             'is_active' => true,
         ]);
 
@@ -136,6 +141,21 @@ class ManagementBarberController extends Controller
         }
 
         return $baseUrl.'/'.ltrim($path, '/');
+    }
+
+    private function ensureNotRecentDuplicate(Request $request, string $type, array $payload): void
+    {
+        ksort($payload);
+
+        $key = sprintf('recent-submit:%s:%s:%s', $type, $request->user()?->id ?? 'guest', sha1(json_encode($payload)));
+
+        if (Cache::add($key, true, now()->addSeconds(4))) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'request' => ['Este pedido já está a ser processado. Aguarda um instante.'],
+        ]);
     }
 
     private function formatBarber(Barber $barber): array

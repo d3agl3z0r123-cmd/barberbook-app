@@ -9,6 +9,7 @@ use App\Models\Barbershop;
 use App\Services\BarbershopQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -45,6 +46,7 @@ class UserBarbershopController extends Controller
         }
 
         $payload = $request->validated();
+        $this->ensureNotRecentDuplicate($request, 'barbershop', $payload);
         $slug = $this->resolveSlug($payload['name'], $payload['slug'] ?? null);
 
         $barbershop = Barbershop::query()->create([
@@ -208,6 +210,21 @@ class UserBarbershopController extends Controller
         }
 
         return $candidate;
+    }
+
+    private function ensureNotRecentDuplicate(Request $request, string $type, array $payload): void
+    {
+        ksort($payload);
+
+        $key = sprintf('recent-submit:%s:%s:%s', $type, $request->user()?->id ?? 'guest', sha1(json_encode($payload)));
+
+        if (Cache::add($key, true, now()->addSeconds(4))) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'request' => ['Este pedido já está a ser processado. Aguarda um instante.'],
+        ]);
     }
 
     private function formatBarbershop(Barbershop $barbershop): array
