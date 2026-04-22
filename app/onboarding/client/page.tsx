@@ -23,7 +23,7 @@ export default function ClientOnboardingPage() {
         <Link href="/" className={publicPrimaryButtonClass}>
           Procurar barbearia
         </Link>
-        <Link href="/dashboard-day" className={publicSecondaryButtonClass}>
+        <Link href="/backoffice" className={publicSecondaryButtonClass}>
           Ir para a minha área
         </Link>
       </div>

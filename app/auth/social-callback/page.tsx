@@ -18,7 +18,7 @@ function getRedirectPath(role?: string | null, isNewUser?: boolean) {
     return "/backoffice";
   }
 
-  return "/dashboard-day";
+  return "/backoffice";
 }
 
 function SocialCallbackContent() {

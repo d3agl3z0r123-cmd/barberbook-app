@@ -37,7 +37,7 @@ function getRedirectPath(role?: string) {
     return "/backoffice";
   }
 
-  return "/dashboard-day";
+  return "/backoffice";
 }
 
 export default function EntrarPage() {

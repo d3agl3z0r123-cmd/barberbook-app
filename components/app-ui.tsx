@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { ReactNode } from "react";
 
 export const inputClass =
@@ -138,87 +137,5 @@ export function DataPreview({ title, children }: { title: string; children: Reac
         </div>
       )}
     </SectionCard>
-  );
-}
-
-type ShellNavItem = {
-  href: string;
-  label: string;
-};
-
-export function InternalShell({
-  currentPath,
-  title,
-  subtitle,
-  userLabel,
-  shopLabel,
-  children,
-}: {
-  currentPath: string;
-  title: string;
-  subtitle: string;
-  userLabel?: string;
-  shopLabel?: string;
-  children: ReactNode;
-}) {
-  const navItems: ShellNavItem[] = [
-    { href: "/backoffice", label: "Backoffice" },
-    { href: "/dashboard-day", label: "Agenda diária" },
-    { href: "/barbershop-test", label: "Barbearia" },
-    { href: "/management-test", label: "Barbeiros e serviços" },
-    { href: "/appointments-test", label: "Agendamentos" },
-  ];
-
-  return (
-    <main className="min-h-screen bg-[#F4EADB] text-[#2B2118]">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 border-r border-[#D8C3A5]/70 bg-[#EAD8BF] px-5 py-6 text-[#2B2118] lg:block">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFF7EC] text-[#A86840] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
-                <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-lg font-semibold tracking-tight text-[#2B2118]">BarberBook</p>
-              <p className="text-sm text-[#5B4F3A]/70">Sistema interno</p>
-            </div>
-          </div>
-
-          <nav className="mt-8 space-y-2 border-t border-[#D8C3A5]/70 pt-6">
-            {navItems.map((item) => {
-              const isActive = item.href === currentPath;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`block rounded-xl px-4 py-3 text-sm font-medium transition-all ${
-                    isActive ? "bg-[#A86840] text-[#FFF7EC] shadow-sm ring-1 ring-[#A86840]/30" : "text-[#5B4F3A]/85 hover:bg-[#FFF7EC] hover:text-[#2B2118]"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-8 space-y-3 rounded-2xl border border-[#D8C3A5]/70 bg-[#F8E8D3] p-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-[#2B2118]/35">Utilizador</p>
-              <p className="mt-2 text-sm font-medium text-[#2B2118]">{userLabel ?? "Sem sessão ativa"}</p>
-            </div>
-            <div className="border-t border-[#D8C3A5]/70 pt-3">
-              <p className="text-xs uppercase tracking-[0.22em] text-[#2B2118]/35">Barbearia</p>
-              <p className="mt-2 text-sm font-medium text-[#2B2118]">{shopLabel ?? "Ainda sem barbearia"}</p>
-            </div>
-          </div>
-        </aside>
-
-        <section className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col gap-6 p-4 md:p-6 xl:p-8">
-          <PageHeader eyebrow="BarberBook" title={title} subtitle={subtitle} />
-          {children}
-        </section>
-      </div>
-    </main>
   );
 }
