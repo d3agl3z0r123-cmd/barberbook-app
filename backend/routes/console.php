@@ -12,6 +12,38 @@ Artisan::command('app:timezone', function (): void {
     $this->info(config('app.timezone'));
 });
 
+Artisan::command('app:guard-production-database', function (): int {
+    if (! app()->environment('production')) {
+        $this->info('Ambiente local: SQLite permitido.');
+
+        return self::SUCCESS;
+    }
+
+    $connection = (string) config('database.default');
+    $host = (string) env('DB_HOST', '');
+    $database = (string) env('DB_DATABASE', '');
+    $username = (string) env('DB_USERNAME', '');
+    $password = (string) env('DB_PASSWORD', '');
+
+    if (
+        $connection !== 'pgsql'
+        || $host === ''
+        || $host === '127.0.0.1'
+        || $database === ''
+        || $username === ''
+        || $password === ''
+    ) {
+        $this->error('Configuração de produção insegura: a base de dados persistente PostgreSQL não está configurada.');
+        $this->error('Define DB_CONNECTION=pgsql, DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME e DB_PASSWORD na Railway.');
+
+        return self::FAILURE;
+    }
+
+    $this->info("Base de dados persistente confirmada: {$connection} ({$host}/{$database}).");
+
+    return self::SUCCESS;
+})->purpose('Impedir deploy em produção sem base de dados PostgreSQL persistente');
+
 Artisan::command('appointments:send-daily-reminders', function (AppointmentNotificationService $notifications): void {
     $count = $notifications->dispatchDailyReminders();
 

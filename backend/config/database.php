@@ -8,8 +8,10 @@ if (! Str::startsWith($sqliteDatabase, ['/','\\']) && ! preg_match('/^[A-Za-z]:[
     $sqliteDatabase = base_path($sqliteDatabase);
 }
 
+$defaultConnection = env('DB_CONNECTION', env('APP_ENV') === 'production' ? 'pgsql' : 'sqlite');
+
 return [
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => $defaultConnection,
 
     'connections' => [
         'sqlite' => [

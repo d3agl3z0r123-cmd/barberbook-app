@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production') && config('database.default') === 'sqlite') {
+            throw new \RuntimeException('Produção não pode arrancar com SQLite. Configura PostgreSQL persistente.');
+        }
+
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
