@@ -629,12 +629,10 @@ export function BackofficePanel() {
     };
 
     const intervalId = window.setInterval(refresh, 15000);
-    window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [token, selectedDate, isSuperAdmin]);
