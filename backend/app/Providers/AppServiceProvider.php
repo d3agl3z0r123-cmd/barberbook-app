@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     {
         if (app()->environment('production') && config('database.default') === 'sqlite') {
             throw new \RuntimeException('Produção não pode arrancar com SQLite. Configura PostgreSQL persistente.');
+        }
+
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
         }
 
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {

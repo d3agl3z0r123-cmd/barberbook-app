@@ -81,10 +81,12 @@ class SocialAuthController extends Controller
             ]));
         } catch (Throwable $exception) {
             Log::error('Google OAuth callback failed.', [
+                'class' => $exception::class,
                 'message' => $exception->getMessage(),
+                'google_redirect_uri' => config('services.google.redirect'),
             ]);
 
-            return $this->redirectWithError('Não foi possível concluir o login com Google. Confirma as credenciais OAuth e o callback URL.');
+            return $this->redirectWithError($this->googleOAuthErrorMessage($exception));
         }
     }
 
@@ -212,6 +214,26 @@ class SocialAuthController extends Controller
         return redirect()->away($this->frontendCallbackUrl([
             'error' => $message,
         ]));
+    }
+
+    private function googleOAuthErrorMessage(Throwable $exception): string
+    {
+        $message = Str::lower($exception->getMessage());
+        $redirectUri = (string) config('services.google.redirect');
+
+        if (Str::contains($message, 'redirect_uri_mismatch')) {
+            return "O callback URL do Google não está autorizado. Adiciona exatamente este URL no Google Cloud: {$redirectUri}";
+        }
+
+        if (Str::contains($message, 'invalid_client')) {
+            return 'As credenciais Google OAuth estão inválidas. Confirma GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET na Railway.';
+        }
+
+        if (Str::contains($message, 'invalid_grant')) {
+            return 'O código de autorização do Google expirou ou não corresponde ao callback configurado. Tenta novamente e confirma o GOOGLE_REDIRECT_URI.';
+        }
+
+        return "Não foi possível concluir o login com Google. Confirma as credenciais OAuth e este callback URL: {$redirectUri}";
     }
 
     private function frontendCallbackUrl(array $query): string
