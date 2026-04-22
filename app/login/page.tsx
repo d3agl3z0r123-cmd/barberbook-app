@@ -118,7 +118,7 @@ export default function EntrarPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligação",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento. Tenta novamente dentro de instantes.",
       });
     } finally {
       setIsSubmitting(false);

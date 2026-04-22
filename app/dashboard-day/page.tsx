@@ -234,7 +234,7 @@ export default function DashboardDayPage() {
         }
 
         setPayload(null);
-        setError("Não foi possível contactar o backend Laravel.");
+        setError("Não foi possível carregar a agenda neste momento. Tenta novamente dentro de instantes.");
       } finally {
         if (active) {
           setIsLoading(false);

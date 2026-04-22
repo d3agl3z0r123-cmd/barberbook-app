@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligação",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível enviar o pedido neste momento. Tenta novamente dentro de instantes.",
       });
     } finally {
       setIsSubmitting(false);

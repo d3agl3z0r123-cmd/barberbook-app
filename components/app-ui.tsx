@@ -125,9 +125,18 @@ export function StatusNotice({
 }
 
 export function DataPreview({ title, children }: { title: string; children: ReactNode }) {
+  const showDebug = process.env.NEXT_PUBLIC_SHOW_DEBUG === "true";
+  const displayTitle = title.toLowerCase().includes("backend") ? "Estado da operação" : title;
+
   return (
-    <SectionCard title={title}>
-      <div className="overflow-x-auto rounded-2xl bg-[#F4EADB] p-4 text-xs leading-6 text-[#2B2118]">{children}</div>
+    <SectionCard title={displayTitle}>
+      {showDebug ? (
+        <div className="overflow-x-auto rounded-2xl bg-[#F4EADB] p-4 text-xs leading-6 text-[#2B2118]">{children}</div>
+      ) : (
+        <div className="rounded-2xl border border-[#D8C3A5]/70 bg-[#F8E8D3] p-4 text-sm leading-6 text-[#5B4F3A]">
+          Os dados foram processados. As respostas técnicas ficam ocultas na versão online.
+        </div>
+      )}
     </SectionCard>
   );
 }
@@ -184,7 +193,7 @@ export function InternalShell({
                   key={item.href}
                   href={item.href}
                   className={`block rounded-xl px-4 py-3 text-sm font-medium transition-all ${
-                    isActive ? "bg-[#A86840] text-[#FFF7EC] shadow-sm ring-1 ring-[#A86840]/30" : "text-[#5B4F3A]/85 hover:bg-[#FFF7EC] hover:text-[#FFF7EC]"
+                    isActive ? "bg-[#A86840] text-[#FFF7EC] shadow-sm ring-1 ring-[#A86840]/30" : "text-[#5B4F3A]/85 hover:bg-[#FFF7EC] hover:text-[#2B2118]"
                   }`}
                 >
                   {item.label}

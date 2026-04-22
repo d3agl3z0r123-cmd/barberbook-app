@@ -414,6 +414,50 @@ function parseApiResponse(text: string) {
   }
 }
 
+function isTechnicalMessage(message: unknown) {
+  if (typeof message !== "string") return true;
+
+  const text = message.trim();
+
+  if (!text) return true;
+
+  return [
+    "SQLSTATE",
+    "Exception",
+    "TypeError",
+    "SyntaxError",
+    "Stack trace",
+    "vendor/",
+    "vendor\\",
+    "Illuminate\\",
+    "App\\",
+    "Laravel",
+    "backend",
+    "frontend",
+    "Failed to fetch",
+    "NetworkError",
+    "<!DOCTYPE",
+    "{",
+    "}",
+  ].some((pattern) => text.includes(pattern));
+}
+
+function firstValidationMessage(payload: any, fields: string[]) {
+  for (const field of fields) {
+    const message = payload?.errors?.[field]?.[0];
+
+    if (!isTechnicalMessage(message)) {
+      return message;
+    }
+  }
+
+  return null;
+}
+
+function friendlyApiError(payload: any, fallback: string, fields: string[] = []) {
+  return firstValidationMessage(payload, fields) ?? (!isTechnicalMessage(payload?.message) ? payload.message : fallback);
+}
+
 function slotIsCovered(appointment: Appointment, slot: string) {
   const slotDate = new Date(`${appointment.starts_at.slice(0, 10)}T${slot}:00`);
   const start = new Date(appointment.starts_at);
@@ -654,7 +698,7 @@ export function BackofficePanel() {
       });
       setStatus({ kind: "success", title: "Painel carregado", body: "Os dados principais da tua barbearia já estão prontos." });
     } catch {
-      setStatus({ kind: "error", title: "Falha de ligação", body: "Não foi possível contactar o backend Laravel." });
+      setStatus({ kind: "error", title: "Falha de ligação", body: "Não foi possível carregar os dados neste momento. Tenta novamente dentro de instantes." });
     } finally {
       setIsLoading(false);
     }
@@ -724,7 +768,7 @@ export function BackofficePanel() {
         setStatus({
           kind: "error",
           title: "Erro no painel admin",
-          body: payload?.message ?? "Não foi possível carregar a administração global.",
+          body: friendlyApiError(payload, "Não foi possível carregar a administração global."),
         });
         return null;
       }
@@ -747,7 +791,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao atualizar conta",
-        body: payload?.errors?.is_active?.[0] ?? payload?.message ?? "Não foi possível alterar o estado da conta.",
+        body: friendlyApiError(payload, "Não foi possível alterar o estado da conta.", ["is_active"]),
       });
       return;
     }
@@ -756,7 +800,7 @@ export function BackofficePanel() {
     setStatus({
       kind: "success",
       title: adminUser.is_active ? "Conta desativada" : "Conta ativada",
-      body: payload?.message ?? "O estado da conta foi atualizado com sucesso.",
+      body: "O estado da conta foi atualizado com sucesso.",
     });
   }
 
@@ -771,7 +815,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao atualizar barbearia",
-        body: payload?.message ?? "Não foi possível alterar o estado da barbearia.",
+        body: friendlyApiError(payload, "Não foi possível alterar o estado da barbearia."),
       });
       return;
     }
@@ -780,7 +824,7 @@ export function BackofficePanel() {
     setStatus({
       kind: "success",
       title: adminBarbershop.is_active ? "Barbearia desativada" : "Barbearia ativada",
-      body: payload?.message ?? "O estado da barbearia foi atualizado com sucesso.",
+      body: "O estado da barbearia foi atualizado com sucesso.",
     });
   }
 
@@ -844,7 +888,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao atualizar a conta",
-        body: payload?.message ?? payload?.errors?.email?.[0] ?? "Não foi possível atualizar o e-mail e o telemóvel.",
+        body: friendlyApiError(payload, "Não foi possível atualizar o e-mail e o telemóvel.", ["email", "phone"]),
       });
       return;
     }
@@ -874,11 +918,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao atualizar a palavra-passe",
-        body:
-          payload?.message ??
-          payload?.errors?.current_password?.[0] ??
-          payload?.errors?.password?.[0] ??
-          "Não foi possível atualizar a palavra-passe.",
+        body: friendlyApiError(payload, "Não foi possível atualizar a palavra-passe.", ["current_password", "password", "password_confirmation"]),
       });
       return;
     }
@@ -911,7 +951,7 @@ export function BackofficePanel() {
     });
 
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao guardar a barbearia", body: payload?.message ?? "Não foi possível guardar a barbearia." });
+      setStatus({ kind: "error", title: "Erro ao guardar a barbearia", body: friendlyApiError(payload, "Não foi possível guardar a barbearia.", ["name", "slug", "email", "phone", "address"]) });
       return;
     }
 
@@ -965,7 +1005,7 @@ export function BackofficePanel() {
         setStatus({
           kind: "error",
           title: "Erro ao guardar personalização",
-          body: payload?.message ?? payload?.errors?.background_image?.[0] ?? payload?.errors?.logo?.[0] ?? payload?.errors?.instagram_url?.[0] ?? payload?.errors?.facebook_url?.[0] ?? "Não foi possível guardar a personalização.",
+          body: friendlyApiError(payload, "Não foi possível guardar a personalização.", ["background_image", "logo", "instagram_url", "facebook_url"]),
         });
         return;
       }
@@ -994,7 +1034,7 @@ export function BackofficePanel() {
 
       if (!response.ok) {
         const payload = parseApiResponse(await response.text());
-        setStatus({ kind: "error", title: "Erro ao exportar agenda", body: payload?.message ?? "Não foi possível exportar a agenda." });
+        setStatus({ kind: "error", title: "Erro ao exportar agenda", body: friendlyApiError(payload, "Não foi possível exportar a agenda.") });
         return;
       }
 
@@ -1019,7 +1059,7 @@ export function BackofficePanel() {
       });
 
       if (!response.ok) {
-        setStatus({ kind: "error", title: "Erro ao gerar QR Code", body: payload?.message ?? "Não foi possível gerar o QR Code." });
+        setStatus({ kind: "error", title: "Erro ao gerar QR Code", body: friendlyApiError(payload, "Não foi possível gerar o QR Code.") });
         return;
       }
 
@@ -1134,7 +1174,7 @@ export function BackofficePanel() {
     });
 
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao guardar o barbeiro", body: payload?.message ?? "Não foi possível guardar o barbeiro." });
+      setStatus({ kind: "error", title: "Erro ao guardar o barbeiro", body: friendlyApiError(payload, "Não foi possível guardar o barbeiro.", ["name", "email", "phone"]) });
       return;
     }
 
@@ -1160,7 +1200,7 @@ export function BackofficePanel() {
         setStatus({
           kind: "error",
           title: "Erro ao guardar a foto",
-          body: payload?.message ?? payload?.errors?.photo?.[0] ?? "Não foi possível atualizar a foto do barbeiro.",
+          body: friendlyApiError(payload, "Não foi possível atualizar a foto do barbeiro.", ["photo"]),
         });
         return;
       }
@@ -1185,7 +1225,7 @@ export function BackofficePanel() {
     });
 
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao guardar o serviço", body: payload?.message ?? "Não foi possível guardar o serviço." });
+      setStatus({ kind: "error", title: "Erro ao guardar o serviço", body: friendlyApiError(payload, "Não foi possível guardar o serviço.", ["name", "price", "duration_minutes"]) });
       return;
     }
 
@@ -1219,7 +1259,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao guardar agendamento",
-        body: conflict ? "Este horário acabou de ficar indisponível. Escolhe outro." : payload?.message ?? "Não foi possível guardar o agendamento.",
+        body: conflict ? "Este horário acabou de ficar indisponível. Escolhe outro." : friendlyApiError(payload, "Não foi possível guardar o agendamento.", ["barber_id", "service_id", "client_name", "client_phone", "client_email", "starts_at", "status"]),
       });
       return;
     }
@@ -1243,7 +1283,7 @@ export function BackofficePanel() {
   async function handleDeleteBarber(id: number) {
     const { response, payload } = await apiRequest(`/barbers/${id}`, { method: "DELETE" });
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao apagar o barbeiro", body: payload?.message ?? "Não foi possível remover o barbeiro." });
+      setStatus({ kind: "error", title: "Erro ao apagar o barbeiro", body: friendlyApiError(payload, "Não foi possível remover o barbeiro.") });
       return;
     }
 
@@ -1254,7 +1294,7 @@ export function BackofficePanel() {
   async function handleDeleteService(id: number) {
     const { response, payload } = await apiRequest(`/services/${id}`, { method: "DELETE" });
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao apagar o serviço", body: payload?.message ?? "Não foi possível remover o serviço." });
+      setStatus({ kind: "error", title: "Erro ao apagar o serviço", body: friendlyApiError(payload, "Não foi possível remover o serviço.") });
       return;
     }
 
@@ -1265,7 +1305,7 @@ export function BackofficePanel() {
   async function handleDeleteAppointment(id: number) {
     const { response, payload } = await apiRequest(`/appointments/${id}`, { method: "DELETE" });
     if (!response.ok) {
-      setStatus({ kind: "error", title: "Erro ao apagar o agendamento", body: payload?.message ?? "Não foi possível remover o agendamento." });
+      setStatus({ kind: "error", title: "Erro ao apagar o agendamento", body: friendlyApiError(payload, "Não foi possível remover o agendamento.") });
       return;
     }
 

@@ -51,7 +51,7 @@ export default function AuthTestPage() {
   const [status, setStatus] = useState<ApiState>({
     kind: "idle",
     title: "Pronto para testar",
-    body: "Usa os formularios abaixo para chamar o backend Laravel.",
+    body: "Usa os formulários abaixo para validar o acesso.",
   });
   const [isSubmittingRegister, setIsSubmittingRegister] = useState(false);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
@@ -141,7 +141,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -202,7 +202,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -245,14 +245,14 @@ export default function AuthTestPage() {
       setStatus({
         kind: "success",
         title: "Utilizador autenticado",
-        body: "O token atual foi aceite pelo backend Laravel.",
+        body: "A sessão atual foi aceite.",
       });
       setResponsePayload(JSON.stringify(payload, null, 2));
     } catch (error) {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -306,7 +306,7 @@ export default function AuthTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -323,7 +323,7 @@ export default function AuthTestPage() {
       shopLabel="Area tecnica"
     >
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Registo" subtitle="Cria um utilizador diretamente no backend Laravel.">
+        <SectionCard title="Registo" subtitle="Cria um utilizador para validar o acesso.">
           <form className="grid gap-4" onSubmit={handleRegister}>
             <label className="grid gap-2">
               <span className="text-sm font-medium text-neutral-700">Nome</span>

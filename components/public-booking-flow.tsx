@@ -408,7 +408,7 @@ export function PublicBookingFlow({
       setStatus({
         kind: "error",
         title: "Falha de ligação",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível confirmar a marcação neste momento. Tenta novamente dentro de instantes.",
       });
     } finally {
       setIsSubmitting(false);

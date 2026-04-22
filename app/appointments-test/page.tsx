@@ -177,7 +177,7 @@ export default function AppointmentsTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento.",
       });
       setResponsePayload(String(error));
     } finally {
@@ -258,7 +258,7 @@ export default function AppointmentsTestPage() {
       setStatus({
         kind: "error",
         title: "Falha de ligacao",
-        body: "Não foi possível contactar o backend Laravel.",
+        body: "Não foi possível ligar ao serviço neste momento.",
       });
       setResponsePayload(String(error));
     } finally {
