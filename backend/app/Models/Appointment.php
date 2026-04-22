@@ -26,6 +26,7 @@ class Appointment extends Model
         'status',
         'source',
         'confirmation_sent_at',
+        'owner_notification_sent_at',
         'reminder_sent_at',
         'notes',
     ];
@@ -37,6 +38,7 @@ class Appointment extends Model
             'ends_at' => 'datetime',
             'status' => AppointmentStatus::class,
             'confirmation_sent_at' => 'datetime',
+            'owner_notification_sent_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
         ];
     }

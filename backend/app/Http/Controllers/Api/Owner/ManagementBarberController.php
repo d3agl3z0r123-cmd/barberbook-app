@@ -8,6 +8,8 @@ use App\Models\Barber;
 use App\Models\Barbershop;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class ManagementBarberController extends Controller
 {
@@ -54,6 +56,25 @@ class ManagementBarberController extends Controller
         ]);
     }
 
+    public function photo(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $barbershop = $this->resolveBarbershop($request);
+        $barber = $barbershop->barbers()->findOrFail($id);
+
+        $barber->photo_path = $this->storeBarberPhoto($request, $barbershop, $barber, $barber->photo_path);
+        $barber->photo_url = $this->publicAssetUrl($barber->photo_path);
+        $barber->save();
+
+        return response()->json([
+            'message' => 'Foto do barbeiro atualizada com sucesso.',
+            'barber' => $this->formatBarber($barber->fresh()),
+        ]);
+    }
+
     public function destroy(Request $request, int $id): JsonResponse
     {
         $barbershop = $this->resolveBarbershop($request);
@@ -72,6 +93,51 @@ class ManagementBarberController extends Controller
             ?? abort(404, 'Barbearia ainda não criada.');
     }
 
+    private function storeBarberPhoto(Request $request, Barbershop $barbershop, Barber $barber, ?string $currentPath = null): string
+    {
+        $file = $request->file('photo');
+        $extension = $file?->getClientOriginalExtension() ?: 'jpg';
+        $directory = public_path('uploads/barbers/photos');
+
+        File::ensureDirectoryExists($directory);
+
+        if ($currentPath) {
+            $previousPath = public_path($currentPath);
+
+            if (File::exists($previousPath)) {
+                File::delete($previousPath);
+            }
+        }
+
+        $filename = sprintf(
+            '%s-barber-%s-%s.%s',
+            $barbershop->slug,
+            $barber->id,
+            Str::random(12),
+            strtolower($extension)
+        );
+        $relativePath = 'uploads/barbers/photos/'.$filename;
+
+        $file?->move($directory, $filename);
+
+        return $relativePath;
+    }
+
+    private function publicAssetUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $baseUrl = rtrim((string) config('app.url'), '/');
+
+        if (! str_starts_with($baseUrl, 'http://') && ! str_starts_with($baseUrl, 'https://')) {
+            $baseUrl = 'https://'.$baseUrl;
+        }
+
+        return $baseUrl.'/'.ltrim($path, '/');
+    }
+
     private function formatBarber(Barber $barber): array
     {
         return [
@@ -80,6 +146,8 @@ class ManagementBarberController extends Controller
             'name' => $barber->name,
             'email' => $barber->email,
             'phone' => $barber->phone,
+            'photo_path' => $barber->photo_path,
+            'photo_url' => $barber->photo_url,
             'created_at' => $barber->created_at,
             'updated_at' => $barber->updated_at,
         ];

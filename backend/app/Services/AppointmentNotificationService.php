@@ -6,16 +6,20 @@ use App\Jobs\SendAppointmentConfirmationJob;
 use App\Jobs\SendAppointmentReminderJob;
 use App\Models\Appointment;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Log;
 
 class AppointmentNotificationService
 {
     public function dispatchConfirmation(Appointment $appointment): void
     {
-        if (! $appointment->client_email) {
-            return;
+        try {
+            SendAppointmentConfirmationJob::dispatch($appointment->id);
+        } catch (\Throwable $exception) {
+            Log::error('Falha ao preparar emails de confirmação da marcação.', [
+                'appointment_id' => $appointment->id,
+                'error' => $exception->getMessage(),
+            ]);
         }
-
-        SendAppointmentConfirmationJob::dispatch($appointment->id);
     }
 
     public function dispatchDailyReminders(): int

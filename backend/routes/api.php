@@ -49,6 +49,7 @@ Route::middleware(['auth:sanctum', 'active.account'])->group(function (): void {
         Route::get('barbers', [ManagementBarberController::class, 'index']);
         Route::post('barbers', [ManagementBarberController::class, 'store']);
         Route::put('barbers/{id}', [ManagementBarberController::class, 'update']);
+        Route::post('barbers/{id}/photo', [ManagementBarberController::class, 'photo']);
         Route::delete('barbers/{id}', [ManagementBarberController::class, 'destroy']);
 
         Route::get('services', [ManagementServiceController::class, 'index']);

@@ -88,6 +88,7 @@ type Barber = {
   name: string;
   email: string | null;
   phone: string | null;
+  photo_url?: string | null;
 };
 
 type Service = {
@@ -443,6 +444,7 @@ export function BackofficePanel() {
   const [isExportingAgenda, setIsExportingAgenda] = useState(false);
   const [qrActionFeedback, setQrActionFeedback] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [uploadingBarberPhotoId, setUploadingBarberPhotoId] = useState<number | null>(null);
   const [status, setStatus] = useState<StatusState>({
     kind: "idle",
     title: "Backoffice pronto",
@@ -819,9 +821,10 @@ export function BackofficePanel() {
     } finally {
       window.localStorage.removeItem(TOKEN_STORAGE_KEY);
       window.localStorage.removeItem(TOKEN_TYPE_STORAGE_KEY);
+      window.sessionStorage.clear();
       setToken("");
       setIsLoggingOut(false);
-      setStatus({ kind: "success", title: "Sessão terminada", body: "Terminaste a sessão com sucesso." });
+      window.location.href = "/login";
     }
   }
 
@@ -1138,6 +1141,35 @@ export function BackofficePanel() {
     setBarberForm({ id: "", name: "", email: "", phone: "" });
     await refreshBarbers();
     setStatus({ kind: "success", title: "Barbeiro guardado", body: "Os dados do barbeiro foram atualizados com sucesso." });
+  }
+
+  async function handleBarberPhotoUpload(barberId: number, file?: File | null) {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("photo", file);
+    setUploadingBarberPhotoId(barberId);
+
+    try {
+      const { response, payload } = await apiRequest(`/barbers/${barberId}/photo`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setStatus({
+          kind: "error",
+          title: "Erro ao guardar a foto",
+          body: payload?.message ?? payload?.errors?.photo?.[0] ?? "Não foi possível atualizar a foto do barbeiro.",
+        });
+        return;
+      }
+
+      await refreshBarbers();
+      setStatus({ kind: "success", title: "Foto atualizada", body: "A foto do barbeiro já aparece no link público." });
+    } finally {
+      setUploadingBarberPhotoId(null);
+    }
   }
 
   async function handleServiceSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1486,13 +1518,34 @@ export function BackofficePanel() {
             ) : (
               barbers.map((barber) => (
                 <div key={barber.id} className="rounded-2xl border border-[#D8C3A5]/70 p-4 transition-all hover:border-[#D8C3A5]/70 hover:shadow-sm">
-                  <p className="font-medium text-[#2B2118]">{barber.name}</p>
-                  <p className="mt-1 text-sm text-[#5B4F3A]/75">{barber.email || "Sem e-mail"}</p>
-                  <p className="mt-1 text-sm text-[#5B4F3A]/75">{barber.phone || "Sem telefone"}</p>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#A86840] text-lg font-semibold text-[#FFF7EC]">
+                      {barber.photo_url ? (
+                        <img src={barber.photo_url} alt={`Foto de ${barber.name}`} className="h-full w-full object-cover" />
+                      ) : (
+                        barber.name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[#2B2118]">{barber.name}</p>
+                      <p className="mt-1 text-sm text-[#5B4F3A]/75">{barber.email || "Sem e-mail"}</p>
+                      <p className="mt-1 text-sm text-[#5B4F3A]/75">{barber.phone || "Sem telefone"}</p>
+                    </div>
+                  </div>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" onClick={() => setBarberForm({ id: String(barber.id), name: barber.name, email: barber.email ?? "", phone: barber.phone ?? "" })} className={ghostButtonClass}>
                       Editar
                     </button>
+                    <label className={`${ghostButtonClass} cursor-pointer`}>
+                      {uploadingBarberPhotoId === barber.id ? "A carregar..." : "Carregar foto"}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        disabled={uploadingBarberPhotoId === barber.id}
+                        onChange={(event) => void handleBarberPhotoUpload(barber.id, event.target.files?.[0])}
+                      />
+                    </label>
                     <button type="button" onClick={() => void handleDeleteBarber(barber.id)} className={ghostButtonClass}>
                       Apagar
                     </button>
@@ -2206,10 +2259,10 @@ export function BackofficePanel() {
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? "bg-[#FFF7EC] text-[#A86840] shadow-sm ring-1 ring-white/10"
-                    : "text-[#5B4F3A]/85 hover:bg-[#FFF7EC] hover:text-[#FFF7EC]"
+                    : "text-[#F4EADB]/85 hover:bg-[#FFF7EC] hover:text-[#2B2118]"
                 }`}
               >
-                <span className={activeTab === tab.id ? "text-[#2B2118]" : "text-[#5B4F3A]/75"}>{getTabIcon(tab.id)}</span>
+                <span className={activeTab === tab.id ? "text-[#2B2118]" : "text-[#F4EADB]/75"}>{getTabIcon(tab.id)}</span>
                 {tab.label}
               </button>
             ))}
@@ -2252,9 +2305,6 @@ export function BackofficePanel() {
                   <p className="text-sm font-medium text-[#2B2118]">{user?.name ?? "Sem sessão ativa"}</p>
                   <p className="mt-1 text-sm text-[#5B4F3A]/75">{formatDateLabel(selectedDate, timezone)}</p>
                 </div>
-                <Link href="/dashboard-day" className={ghostButtonClass}>
-                  Página tecnica
-                </Link>
                 <button type="button" onClick={() => void handleLogout()} disabled={isLoggingOut} className={ghostButtonClass}>
                   {isLoggingOut ? "A terminar..." : "Terminar sessão"}
                 </button>
@@ -2270,7 +2320,7 @@ export function BackofficePanel() {
                   <div>
                     <p className="text-2xl font-semibold text-[#2B2118]">Início de sessão necessário</p>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5B4F3A]/75">
-                      Faz login em <code>/auth-test</code> para abrir o painel principal de gestão.
+                      Faz login para abrir o painel principal de gestão.
                     </p>
                   </div>
                 </div>

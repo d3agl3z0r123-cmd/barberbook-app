@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendAppointmentReminderJob implements ShouldQueue
@@ -35,11 +36,18 @@ class SendAppointmentReminderJob implements ShouldQueue
                 return;
             }
 
-            Mail::to($appointment->client_email)->send(new AppointmentReminderMail($appointment));
+            try {
+                Mail::to($appointment->client_email)->send(new AppointmentReminderMail($appointment));
 
-            $appointment->forceFill([
-                'reminder_sent_at' => now(),
-            ])->save();
+                $appointment->forceFill([
+                    'reminder_sent_at' => now(),
+                ])->save();
+            } catch (\Throwable $exception) {
+                Log::error('Falha ao enviar email de lembrete ao cliente.', [
+                    'appointment_id' => $appointment->id,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }, 3);
     }
 }

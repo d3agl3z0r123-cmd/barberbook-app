@@ -19,6 +19,8 @@ class Barber extends Model
         'name',
         'email',
         'phone',
+        'photo_path',
+        'photo_url',
         'bio',
         'is_active',
     ];

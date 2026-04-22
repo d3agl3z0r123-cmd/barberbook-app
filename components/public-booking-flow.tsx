@@ -228,7 +228,6 @@ function buildCalendarDays(visibleMonth: Date, timezone: string) {
 export function PublicBookingFlow({
   slug,
   timezone,
-  source,
   barbers,
   services,
 }: PublicBookingFlowProps) {
@@ -545,8 +544,12 @@ export function PublicBookingFlow({
                 title={barber.name}
                 subtitle={barber.specialty}
                 leading={
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-base font-semibold text-neutral-500">
-                    {barber.name.charAt(0).toUpperCase()}
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-lg font-semibold text-neutral-500 ring-1 ring-neutral-200">
+                    {barber.photoUrl ? (
+                      <img src={barber.photoUrl} alt={`Foto de ${barber.name}`} className="h-full w-full object-cover" />
+                    ) : (
+                      barber.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                 }
                 onClick={() => {
@@ -676,6 +679,7 @@ export function PublicBookingFlow({
                           ? "Já passou"
                           : "Disponível"
                     }
+                    tone={slotState.isOccupied ? "danger" : "default"}
                     onClick={() => setSelectedSlot(slotState.slot)}
                   />
                 ))}
@@ -808,7 +812,7 @@ export function PublicBookingFlow({
       {status.kind !== "idle" ? <StatusNotice kind={status.kind} title={status.title} body={status.body} /> : null}
 
       <p className="text-center text-sm text-neutral-400">
-        {source === "api" ? `Horários reais em ${timezone}.` : "Modo de demonstração ativo."}
+        Horários apresentados no fuso horário local da barbearia.
       </p>
     </div>
   );

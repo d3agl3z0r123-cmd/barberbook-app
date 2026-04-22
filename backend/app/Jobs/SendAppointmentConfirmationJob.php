@@ -3,10 +3,12 @@
 namespace App\Jobs;
 
 use App\Mail\AppointmentConfirmedMail;
+use App\Mail\AppointmentOwnerNotificationMail;
 use App\Models\Appointment;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendAppointmentConfirmationJob implements ShouldQueue
@@ -21,11 +23,11 @@ class SendAppointmentConfirmationJob implements ShouldQueue
     {
         DB::transaction(function (): void {
             $appointment = Appointment::query()
-                ->with(['barbershop', 'barber', 'service'])
+                ->with(['barbershop.user', 'barber', 'service'])
                 ->lockForUpdate()
                 ->find($this->appointmentId);
 
-            if (! $appointment || ! $appointment->client_email || $appointment->confirmation_sent_at) {
+            if (! $appointment) {
                 return;
             }
 
@@ -33,11 +35,38 @@ class SendAppointmentConfirmationJob implements ShouldQueue
                 return;
             }
 
-            Mail::to($appointment->client_email)->send(new AppointmentConfirmedMail($appointment));
+            if ($appointment->client_email && ! $appointment->confirmation_sent_at) {
+                try {
+                    Mail::to($appointment->client_email)->send(new AppointmentConfirmedMail($appointment));
 
-            $appointment->forceFill([
-                'confirmation_sent_at' => now(),
-            ])->save();
+                    $appointment->forceFill([
+                        'confirmation_sent_at' => now(),
+                    ])->save();
+                } catch (\Throwable $exception) {
+                    Log::error('Falha ao enviar email de confirmação ao cliente.', [
+                        'appointment_id' => $appointment->id,
+                        'error' => $exception->getMessage(),
+                    ]);
+                }
+            }
+
+            $ownerEmail = $appointment->barbershop?->email ?: $appointment->barbershop?->user?->email;
+
+            if ($ownerEmail && ! $appointment->owner_notification_sent_at) {
+                try {
+                    Mail::to($ownerEmail)->send(new AppointmentOwnerNotificationMail($appointment));
+
+                    $appointment->forceFill([
+                        'owner_notification_sent_at' => now(),
+                    ])->save();
+                } catch (\Throwable $exception) {
+                    Log::error('Falha ao enviar email de nova marcação à barbearia.', [
+                        'appointment_id' => $appointment->id,
+                        'owner_email' => $ownerEmail,
+                        'error' => $exception->getMessage(),
+                    ]);
+                }
+            }
         }, 3);
     }
 }

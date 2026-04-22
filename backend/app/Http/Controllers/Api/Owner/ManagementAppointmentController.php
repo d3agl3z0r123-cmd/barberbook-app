@@ -10,6 +10,7 @@ use App\Models\Barbershop;
 use App\Models\Service;
 use App\Services\AppointmentConflictService;
 use App\Services\AppointmentExcelExportService;
+use App\Services\AppointmentNotificationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +25,7 @@ class ManagementAppointmentController extends Controller
     public function __construct(
         private readonly AppointmentConflictService $conflicts,
         private readonly AppointmentExcelExportService $excelExport,
+        private readonly AppointmentNotificationService $notifications,
     )
     {
     }
@@ -178,7 +180,7 @@ class ManagementAppointmentController extends Controller
                     'ends_at' => $endsAtUtc,
                     'notes' => $request->validated('notes'),
                     'status' => $request->validated('status') ?? 'booked',
-                    'source' => 'management-test',
+                    'source' => 'backoffice',
                 ]);
             }, 3);
         } catch (QueryException $exception) {
@@ -188,6 +190,8 @@ class ManagementAppointmentController extends Controller
 
             throw $exception;
         }
+
+        $this->notifications->dispatchConfirmation($appointment->fresh(['barbershop.user', 'barber', 'service']));
 
         return response()->json([
             'message' => 'Agendamento criado com sucesso.',

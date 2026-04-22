@@ -18,6 +18,7 @@ export type ServiceCard = {
 export type BookingBarber = {
   id: string;
   name: string;
+  photoUrl?: string | null;
   specialty: string;
   rating: string;
   nextOpenSlot: string;
@@ -137,6 +138,7 @@ type ApiBarbershop = {
   barbers?: Array<{
     id: number;
     name: string;
+    photo_url?: string | null;
   }>;
 };
 
@@ -301,6 +303,7 @@ export async function getBookingSummary(slug: string): Promise<BookingSummary | 
     barbers: safeBarbers.map((barber) => ({
       id: String(barber.id),
       name: barber.name,
+      photoUrl: barber.photo_url ?? null,
       specialty: "Disponível para agendamento online",
       rating: "4.8",
       nextOpenSlot: "Consulte a disponibilidade abaixo",

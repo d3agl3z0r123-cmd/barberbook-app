@@ -314,6 +314,7 @@ export function SelectionTile({
   meta,
   disabled,
   leading,
+  tone = "default",
 }: {
   active?: boolean;
   onClick?: () => void;
@@ -322,6 +323,7 @@ export function SelectionTile({
   meta?: string;
   disabled?: boolean;
   leading?: ReactNode;
+  tone?: "default" | "danger";
 }) {
   return (
     <button
@@ -329,8 +331,10 @@ export function SelectionTile({
       onClick={onClick}
       disabled={disabled}
       className={`w-full rounded-2xl border px-4 py-4 text-left transition-all ${
-        disabled
-          ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
+        disabled && tone === "danger"
+          ? "cursor-not-allowed border-rose-200 bg-rose-50 text-rose-700"
+          : disabled
+            ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
           : active
             ? "border-neutral-950 bg-neutral-950 text-white"
             : "border-neutral-200 bg-white hover:border-neutral-400 hover:bg-neutral-50"
@@ -342,7 +346,7 @@ export function SelectionTile({
           <div>
             <p className="text-lg font-semibold tracking-[-0.02em]">{title}</p>
             {subtitle ? (
-              <p className={`mt-1 text-base leading-6 ${active ? "text-white/75" : "text-neutral-500"}`}>{subtitle}</p>
+              <p className={`mt-1 text-base leading-6 ${active ? "text-white/75" : disabled && tone === "danger" ? "text-rose-600" : "text-neutral-500"}`}>{subtitle}</p>
             ) : null}
           </div>
         </div>

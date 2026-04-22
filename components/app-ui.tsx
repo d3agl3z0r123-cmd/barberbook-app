@@ -158,7 +158,6 @@ export function InternalShell({
     { href: "/barbershop-test", label: "Barbearia" },
     { href: "/management-test", label: "Barbeiros e serviços" },
     { href: "/appointments-test", label: "Agendamentos" },
-    { href: "/auth-test", label: "Autenticação" },
   ];
 
   return (

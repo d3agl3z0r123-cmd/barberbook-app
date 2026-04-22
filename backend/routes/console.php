@@ -45,5 +45,5 @@ Artisan::command('app:ensure-admin', function (): int {
 })->purpose('Criar ou atualizar o utilizador admin a partir das variaveis de ambiente');
 
 Schedule::command('appointments:send-daily-reminders')
-    ->dailyAt('08:00')
+    ->dailyAt('07:00')
     ->timezone(config('app.timezone', 'Atlantic/Azores'));

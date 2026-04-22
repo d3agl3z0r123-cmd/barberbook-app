@@ -31,6 +31,7 @@ class BarbershopResource extends JsonResource
             'barbers' => $this->whenLoaded('barbers', fn () => $this->barbers->map(fn ($barber) => [
                 'id' => $barber->id,
                 'name' => $barber->name,
+                'photo_url' => $barber->photo_url,
             ])),
         ];
     }

@@ -137,7 +137,7 @@ class PublicAppointmentController extends Controller
                     'service_id' => $service->id,
                     'client_name' => $payload['client_name'],
                     'client_phone' => $payload['client_phone'],
-                    'client_e-mail' => $payload['client_e-mail'] ?? null,
+                    'client_email' => $payload['client_email'] ?? null,
                     'starts_at' => $startsAtUtc,
                     'ends_at' => $endsAtUtc,
                     'notes' => $payload['notes'] ?? null,
@@ -153,7 +153,7 @@ class PublicAppointmentController extends Controller
             throw $exception;
         }
 
-        $this->notifications->dispatchConfirmation($appointment);
+        $this->notifications->dispatchConfirmation($appointment->fresh(['barbershop.user', 'barber', 'service']));
 
         return response()->json([
             'message' => 'Agendamento confirmado com sucesso.',
@@ -175,7 +175,7 @@ class PublicAppointmentController extends Controller
                 ],
                 'client_name' => $appointment->client_name,
                 'client_phone' => $appointment->client_phone,
-                'client_e-mail' => $appointment->client_e-mail,
+                'client_email' => $appointment->client_email,
                 'starts_at' => $appointment->starts_at?->copy()->timezone($barbershop->timezone)->toIso8601String(),
                 'ends_at' => $appointment->ends_at?->copy()->timezone($barbershop->timezone)->toIso8601String(),
                 'status' => $appointment->status instanceof \BackedEnum ? $appointment->status->value : $appointment->status,
