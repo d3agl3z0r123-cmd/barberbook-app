@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api-url";
 
 const TOKEN_STORAGE_KEY = "token";
@@ -479,6 +479,7 @@ function slotIsCovered(appointment: Appointment, slot: string) {
 }
 
 export function BackofficePanel() {
+  const autoRefreshInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [token, setToken] = useState("");
@@ -614,6 +615,32 @@ export function BackofficePanel() {
   }, [selectedDate]);
 
   useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const refresh = () => {
+      void refreshBackofficeData(token, selectedDate);
+    };
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refresh();
+      }
+    };
+
+    refresh();
+    const intervalId = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [token, selectedDate, isSuperAdmin]);
+
+  useEffect(() => {
     if (isSuperAdmin && activeTab === "overview") {
       setActiveTab("admin");
     }
@@ -635,6 +662,72 @@ export function BackofficePanel() {
     setOpenAgendaBarberIds((current) =>
       current.includes(barberId) ? current.filter((id) => id !== barberId) : [...current, barberId]
     );
+  }
+
+  async function refreshBackofficeData(currentToken = token, currentDate = selectedDate) {
+    if (!currentToken || autoRefreshInFlightRef.current) {
+      return;
+    }
+
+    autoRefreshInFlightRef.current = true;
+
+    try {
+      const headers = { Accept: "application/json", Authorization: `Bearer ${currentToken}` };
+      const [barbershopResponse, barbersResponse, servicesResponse, agendaResponse, statisticsResponse] = await Promise.all([
+        fetch(apiUrl("/barbershop"), { headers }),
+        fetch(apiUrl("/barbers"), { headers }),
+        fetch(apiUrl("/services"), { headers }),
+        fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
+        fetch(apiUrl("/appointments/statistics"), { headers }),
+      ]);
+
+      if (barbershopResponse.status === 404) {
+        setBarbershop(null);
+        setQrCode(null);
+        setBarbers([]);
+        setServices([]);
+        setDayAgenda(null);
+        setStatistics(null);
+        return;
+      }
+
+      if (barbershopResponse.ok) {
+        const barbershopPayload = parseApiResponse(await barbershopResponse.text());
+        setBarbershop(barbershopPayload?.barbershop ?? null);
+      }
+
+      if (barbersResponse.ok) {
+        const barbersPayload = parseApiResponse(await barbersResponse.text());
+        setBarbers(barbersPayload?.barbers ?? []);
+      }
+
+      if (servicesResponse.ok) {
+        const servicesPayload = parseApiResponse(await servicesResponse.text());
+        setServices(servicesPayload?.services ?? []);
+      }
+
+      if (agendaResponse.ok) {
+        const agendaPayload = parseApiResponse(await agendaResponse.text());
+        setDayAgenda(agendaPayload ?? null);
+      }
+
+      if (statisticsResponse.ok) {
+        const statisticsPayload = parseApiResponse(await statisticsResponse.text());
+        setStatistics(statisticsPayload ?? null);
+      }
+
+      if (!qrCode) {
+        void loadQrCode(currentToken);
+      }
+
+      if (isSuperAdmin) {
+        void loadAdminPlatform(currentToken);
+      }
+    } catch {
+      // Atualização automática silenciosa: evita mostrar erros enquanto a rede oscila.
+    } finally {
+      autoRefreshInFlightRef.current = false;
+    }
   }
 
   async function apiRequest(path: string, init?: RequestInit) {
