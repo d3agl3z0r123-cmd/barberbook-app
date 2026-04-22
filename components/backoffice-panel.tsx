@@ -2236,7 +2236,26 @@ export function BackofficePanel() {
   return (
     <main className="min-h-screen bg-[#F4EADB] text-[#2B2118]">
       <div className="flex min-h-screen">
-        <aside className={`fixed inset-y-0 left-0 z-40 w-72 transform border-r border-[#D8C3A5]/70 bg-[#EAD8BF] px-5 py-6 text-[#2B2118] transition-all duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((current) => !current)}
+          className="fixed left-4 top-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#D8C3A5]/80 bg-[#2B2118] text-[#FFF7EC] shadow-[0_12px_30px_rgba(43,33,24,0.28)] transition-all hover:bg-[#A86840] lg:hidden"
+          aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={sidebarOpen}
+        >
+          <IconMenu />
+        </button>
+
+        {sidebarOpen ? (
+          <button
+            type="button"
+            className="fixed inset-0 z-30 bg-[#2B2118]/45 backdrop-blur-[1px] lg:hidden"
+            aria-label="Fechar menu"
+            onClick={() => setSidebarOpen(false)}
+          />
+        ) : null}
+
+        <aside className={`fixed inset-y-0 left-0 z-40 w-72 transform overflow-y-auto border-r border-[#D8C3A5]/70 bg-[#EAD8BF] px-5 py-6 pt-20 text-[#2B2118] transition-all duration-300 lg:translate-x-0 lg:pt-6 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFF7EC] text-[#A86840] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <IconSpark />
@@ -2284,14 +2303,7 @@ export function BackofficePanel() {
           <section className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-6 p-4 md:p-6 xl:p-8">
             <header className={`${whiteCardClass} flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between`}>
               <div className="flex items-start gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSidebarOpen((current) => !current)}
-                  className={`${ghostButtonClass} lg:hidden`}
-                >
-                  <IconMenu />
-                </button>
-                <div>
+                <div className="pl-12 lg:pl-0">
                   <p className="text-sm font-medium text-[#5B4F3A]/75">Backoffice principal</p>
                   <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#2B2118]">{barbershop?.name ?? "BarberBook"}</h1>
                   <p className="mt-2 text-sm text-[#5B4F3A]/75">
