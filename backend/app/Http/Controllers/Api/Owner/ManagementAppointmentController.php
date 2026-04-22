@@ -67,6 +67,8 @@ class ManagementAppointmentController extends Controller
             'booked' => $appointments->filter(fn (Appointment $appointment) => $this->appointmentStatusValue($appointment) === 'booked')->count(),
             'completed' => $appointments->filter(fn (Appointment $appointment) => $this->appointmentStatusValue($appointment) === 'completed')->count(),
             'cancelled' => $appointments->filter(fn (Appointment $appointment) => $this->appointmentStatusValue($appointment) === 'cancelled')->count(),
+            'revenue' => $this->appointmentRevenue($appointments),
+            'clients' => $this->uniqueClientCount($appointments),
             'upcoming' => $appointments
                 ->filter(fn (Appointment $appointment) => $appointment->starts_at?->isFuture())
                 ->count(),
@@ -77,6 +79,49 @@ class ManagementAppointmentController extends Controller
             'timezone' => $timezone,
             'summary' => $summary,
             'appointments' => $formattedAppointments,
+        ]);
+    }
+
+    public function statistics(Request $request): JsonResponse
+    {
+        $barbershop = $this->resolveBarbershop($request);
+        $timezone = $barbershop->timezone ?: 'Atlantic/Azores';
+        $appointments = $barbershop->appointments()
+            ->with(['barber', 'service'])
+            ->orderBy('starts_at')
+            ->get();
+        $validAppointments = $appointments->reject(fn (Appointment $appointment) => $this->isInvalidForStats($appointment));
+        $now = now($timezone)->toImmutable();
+        $today = $now->startOfDay();
+        $monthStart = $now->startOfMonth();
+        $todayAppointments = $validAppointments->filter(fn (Appointment $appointment) => $appointment->starts_at?->copy()->timezone($timezone)->isSameDay($today));
+        $monthAppointments = $validAppointments->filter(fn (Appointment $appointment) => $appointment->starts_at?->copy()->timezone($timezone)->greaterThanOrEqualTo($monthStart));
+        $services = $validAppointments
+            ->groupBy(fn (Appointment $appointment) => (string) ($appointment->service?->id ?? 0))
+            ->map(fn ($items) => [
+                'service_id' => $items->first()?->service?->id,
+                'name' => $items->first()?->service?->name ?? 'Serviço removido',
+                'appointments' => $items->count(),
+                'revenue' => $this->appointmentRevenue($items),
+            ])
+            ->sortByDesc('appointments')
+            ->values()
+            ->take(5);
+
+        return response()->json([
+            'timezone' => $timezone,
+            'summary' => [
+                'appointments_total' => $validAppointments->count(),
+                'appointments_today' => $todayAppointments->count(),
+                'appointments_month' => $monthAppointments->count(),
+                'revenue_total' => $this->appointmentRevenue($validAppointments),
+                'revenue_today' => $this->appointmentRevenue($todayAppointments),
+                'revenue_month' => $this->appointmentRevenue($monthAppointments),
+                'clients_total' => $this->uniqueClientCount($validAppointments),
+                'services_used' => $services,
+            ],
+            'clients' => $this->clientRows($validAppointments, $timezone),
+            'updated_at' => now()->toIso8601String(),
         ]);
     }
 
@@ -258,6 +303,83 @@ class ManagementAppointmentController extends Controller
         throw ValidationException::withMessages([
             'starts_at' => ['Este horário já não está disponível'],
         ]);
+    }
+
+    private function isInvalidForStats(Appointment $appointment): bool
+    {
+        return in_array($this->appointmentStatusValue($appointment), ['cancelled', 'no_show'], true);
+    }
+
+    private function appointmentRevenue(iterable $appointments): float
+    {
+        $total = 0.0;
+
+        foreach ($appointments as $appointment) {
+            if ($this->isInvalidForStats($appointment)) {
+                continue;
+            }
+
+            $total += (float) ($appointment->service?->price ?? 0);
+        }
+
+        return round($total, 2);
+    }
+
+    private function uniqueClientCount(iterable $appointments): int
+    {
+        $clients = [];
+
+        foreach ($appointments as $appointment) {
+            if ($this->isInvalidForStats($appointment)) {
+                continue;
+            }
+
+            $key = strtolower(trim((string) ($appointment->client_email ?: $appointment->client_phone ?: $appointment->client_name)));
+
+            if ($key !== '') {
+                $clients[$key] = true;
+            }
+        }
+
+        return count($clients);
+    }
+
+    private function clientRows(iterable $appointments, string $timezone): array
+    {
+        $clients = [];
+
+        foreach ($appointments as $appointment) {
+            if ($this->isInvalidForStats($appointment)) {
+                continue;
+            }
+
+            $key = strtolower(trim((string) ($appointment->client_email ?: $appointment->client_phone ?: $appointment->client_name)));
+
+            if ($key === '') {
+                continue;
+            }
+
+            $current = $clients[$key] ?? [
+                'name' => $appointment->client_name,
+                'phone' => $appointment->client_phone,
+                'email' => $appointment->client_email,
+                'appointments' => 0,
+                'last_appointment_at' => null,
+            ];
+
+            $current['appointments']++;
+            $last = $current['last_appointment_at'] ? CarbonImmutable::parse($current['last_appointment_at']) : null;
+
+            if (! $last || ($appointment->starts_at && $appointment->starts_at->greaterThan($last))) {
+                $current['last_appointment_at'] = $appointment->starts_at?->copy()->timezone($timezone)->toIso8601String();
+            }
+
+            $clients[$key] = $current;
+        }
+
+        usort($clients, fn (array $a, array $b) => strcmp((string) $b['last_appointment_at'], (string) $a['last_appointment_at']));
+
+        return array_values($clients);
     }
 
     private function isDuplicateSlotException(QueryException $exception): bool

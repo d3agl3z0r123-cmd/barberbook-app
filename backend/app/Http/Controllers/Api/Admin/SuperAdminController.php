@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Barbershop;
 use App\Models\User;
@@ -29,6 +30,8 @@ class SuperAdminController extends Controller
                 'users_total' => $users->count(),
                 'users_active' => $users->where('is_active', true)->count(),
                 'users_inactive' => $users->where('is_active', false)->count(),
+                'clients_total' => $users->filter(fn (User $user) => $this->roleValue($user) === UserRole::Client->value)->count(),
+                'owners_total' => $users->filter(fn (User $user) => $this->roleValue($user) === UserRole::Owner->value)->count(),
                 'barbershops_total' => $barbershops->count(),
                 'barbershops_active' => $barbershops->where('is_active', true)->count(),
                 'barbershops_inactive' => $barbershops->where('is_active', false)->count(),
@@ -40,14 +43,14 @@ class SuperAdminController extends Controller
 
     public function updateUserStatus(Request $request, User $user): JsonResponse
     {
-        $admin = $this->authorizeSuperAdmin($request);
+        $this->authorizeSuperAdmin($request);
         $payload = $request->validate([
             'is_active' => ['required', 'boolean'],
         ]);
 
-        if ($admin->is($user) && ! $payload['is_active']) {
+        if ($this->isProtectedSuperAdmin($user) && ! $payload['is_active']) {
             throw ValidationException::withMessages([
-                'is_active' => ['Não podes desativar a tua própria conta de super admin.'],
+                'is_active' => ['Não podes desativar a conta principal de super admin.'],
             ]);
         }
 
@@ -101,7 +104,7 @@ class SuperAdminController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $user->phone,
-            'role' => $user->role instanceof \BackedEnum ? $user->role->value : (string) $user->role,
+            'role' => $this->roleValue($user),
             'is_active' => (bool) $user->is_active,
             'is_super_admin' => $user->isSuperAdmin(),
             'disabled_at' => $user->disabled_at,
@@ -114,6 +117,19 @@ class SuperAdminController extends Controller
                 'created_at' => $user->barbershop->created_at,
             ] : null,
         ];
+    }
+
+    private function roleValue(User $user): string
+    {
+        return $user->role instanceof \BackedEnum ? $user->role->value : (string) $user->role;
+    }
+
+    private function isProtectedSuperAdmin(User $user): bool
+    {
+        $configuredEmail = (string) config('saas.super_admin_email');
+
+        return $configuredEmail !== ''
+            && strcasecmp($user->email, $configuredEmail) === 0;
     }
 
     private function formatBarbershop(Barbershop $barbershop): array

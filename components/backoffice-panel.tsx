@@ -29,7 +29,7 @@ const DAY_SLOTS = [
   "18:30",
 ];
 
-type TabId = "overview" | "agenda" | "barbershop" | "barbers" | "services" | "public-link" | "account" | "admin";
+type TabId = "overview" | "agenda" | "barbershop" | "barbers" | "services" | "clients" | "statistics" | "public-link" | "account" | "admin";
 
 type StatusState = {
   kind: "idle" | "success" | "error";
@@ -107,7 +107,7 @@ type Appointment = {
   starts_at: string;
   ends_at: string;
   notes: string | null;
-  status: "booked" | "completed" | "cancelled";
+  status: "booked" | "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
   barber: { id: number; name: string } | null;
   service: { id: number; name: string } | null;
 };
@@ -120,9 +120,38 @@ type DayPayload = {
     booked: number;
     completed: number;
     cancelled: number;
+    revenue: number;
+    clients: number;
     upcoming: number;
   };
   appointments: Appointment[];
+};
+
+type StatisticsPayload = {
+  timezone: string;
+  summary: {
+    appointments_total: number;
+    appointments_today: number;
+    appointments_month: number;
+    revenue_total: number;
+    revenue_today: number;
+    revenue_month: number;
+    clients_total: number;
+    services_used: Array<{
+      service_id: number | null;
+      name: string;
+      appointments: number;
+      revenue: number;
+    }>;
+  };
+  clients: Array<{
+    name: string;
+    phone: string;
+    email: string | null;
+    appointments: number;
+    last_appointment_at: string | null;
+  }>;
+  updated_at: string;
 };
 
 type AdminUser = {
@@ -165,6 +194,8 @@ type AdminPlatformPayload = {
     users_total: number;
     users_active: number;
     users_inactive: number;
+    clients_total: number;
+    owners_total: number;
     barbershops_total: number;
     barbershops_active: number;
     barbershops_inactive: number;
@@ -173,21 +204,18 @@ type AdminPlatformPayload = {
   barbershops: AdminBarbershop[];
 };
 
+type AdminFilter = "active" | "inactive" | "clients" | "owners";
+
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "overview", label: "Visão geral" },
   { id: "agenda", label: "Agenda" },
   { id: "barbershop", label: "Barbearia" },
   { id: "barbers", label: "Barbeiros" },
   { id: "services", label: "Serviços" },
+  { id: "clients", label: "Clientes" },
+  { id: "statistics", label: "Estatísticas" },
   { id: "public-link", label: "Link público" },
   { id: "account", label: "Definições de conta" },
-];
-
-const topMetrics = [
-  { label: "Receita do dia", value: "€420" },
-  { label: "Agendamentos hoje", value: "18" },
-  { label: "Novos clientes", value: "6" },
-  { label: "Taxa de ocupação", value: "84%" },
 ];
 
 const inputClass =
@@ -287,6 +315,8 @@ function getTabIcon(tabId: TabId) {
   if (tabId === "barbershop") return <IconStore />;
   if (tabId === "barbers") return <IconUsers />;
   if (tabId === "services") return <IconScissors />;
+  if (tabId === "clients") return <IconUsers />;
+  if (tabId === "statistics") return <IconSpark />;
   if (tabId === "public-link") return <IconLink />;
   if (tabId === "admin") return <IconSpark />;
   return <IconSettings />;
@@ -332,6 +362,15 @@ function formatDateTimeLabel(value: string, timezone: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatCurrency(value: number | string) {
+  const amount = typeof value === "number" ? value : Number(value);
+
+  return new Intl.NumberFormat("pt-PT", {
+    style: "currency",
+    currency: "EUR",
+  }).format(Number.isFinite(amount) ? amount : 0);
 }
 
 function escapeHtml(value: string) {
@@ -389,7 +428,9 @@ export function BackofficePanel() {
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [dayAgenda, setDayAgenda] = useState<DayPayload | null>(null);
+  const [statistics, setStatistics] = useState<StatisticsPayload | null>(null);
   const [adminPlatform, setAdminPlatform] = useState<AdminPlatformPayload | null>(null);
+  const [adminFilter, setAdminFilter] = useState<AdminFilter>("active");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
@@ -437,7 +478,7 @@ export function BackofficePanel() {
     client_email: "",
     starts_at: "",
     notes: "",
-    status: "booked" as "booked" | "completed" | "cancelled",
+    status: "booked" as Appointment["status"],
   });
 
   useEffect(() => {
@@ -457,6 +498,23 @@ export function BackofficePanel() {
     return (dayAgenda?.appointments ?? []).filter((appointment) => new Date(appointment.starts_at) >= now).slice(0, 5);
   }, [dayAgenda]);
 
+  const validDayAppointments = useMemo(
+    () => (dayAgenda?.appointments ?? []).filter((appointment) => !["cancelled", "no_show"].includes(appointment.status)),
+    [dayAgenda]
+  );
+
+  const topMetrics = useMemo(
+    () => [
+      { label: "Receita do dia", value: formatCurrency(statistics?.summary.revenue_today ?? dayAgenda?.summary.revenue ?? 0) },
+      { label: "Marcações hoje", value: String(statistics?.summary.appointments_today ?? dayAgenda?.summary.total ?? 0) },
+      { label: "Clientes", value: String(statistics?.summary.clients_total ?? dayAgenda?.summary.clients ?? 0) },
+      { label: "Serviços usados", value: String(statistics?.summary.services_used?.length ?? 0) },
+    ],
+    [dayAgenda, statistics]
+  );
+
+  const clients = statistics?.clients ?? [];
+
   useEffect(() => {
     if (!token) {
       setUser(null);
@@ -465,6 +523,7 @@ export function BackofficePanel() {
       setBarbers([]);
       setServices([]);
       setDayAgenda(null);
+      setStatistics(null);
       setAdminPlatform(null);
       return;
     }
@@ -505,13 +564,14 @@ export function BackofficePanel() {
 
     try {
       const headers = { Accept: "application/json", Authorization: `Bearer ${currentToken}` };
-      const [userResponse, barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
+      const [userResponse, barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse, statisticsResponse] = await Promise.all([
         fetch(apiUrl("/user"), { headers }),
         fetch(apiUrl("/barbershop"), { headers }),
         fetch(apiUrl("/barbershop/qr-code"), { headers }),
         fetch(apiUrl("/barbers"), { headers }),
         fetch(apiUrl("/services"), { headers }),
         fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
+        fetch(apiUrl("/appointments/statistics"), { headers }),
       ]);
 
       const userPayload = parseApiResponse(await userResponse.text());
@@ -520,6 +580,7 @@ export function BackofficePanel() {
       const barbersPayload = parseApiResponse(await barbersResponse.text());
       const servicesPayload = parseApiResponse(await servicesResponse.text());
       const agendaPayload = parseApiResponse(await agendaResponse.text());
+      const statisticsPayload = parseApiResponse(await statisticsResponse.text());
 
       if (!userResponse.ok) {
         setStatus({ kind: "error", title: "Sessão inválida", body: "Entra novamente para abrir o backoffice." });
@@ -546,12 +607,13 @@ export function BackofficePanel() {
         setAdminPlatform(null);
       }
 
-      if (barbershopResponse.status === 404 || agendaResponse.status === 404) {
+      if (barbershopResponse.status === 404 || agendaResponse.status === 404 || statisticsResponse.status === 404) {
         setBarbershop(null);
         setQrCode(null);
         setBarbers([]);
         setServices([]);
         setDayAgenda(null);
+        setStatistics(null);
         setStatus({
           kind: "idle",
           title: "Ainda sem barbearia",
@@ -560,7 +622,7 @@ export function BackofficePanel() {
         return;
       }
 
-      if (!barbershopResponse.ok || !barbersResponse.ok || !servicesResponse.ok || !agendaResponse.ok) {
+      if (!barbershopResponse.ok || !barbersResponse.ok || !servicesResponse.ok || !agendaResponse.ok || !statisticsResponse.ok) {
         setStatus({ kind: "error", title: "Erro ao carregar o painel", body: "Não foi possível carregar todos os dados." });
         return;
       }
@@ -571,6 +633,7 @@ export function BackofficePanel() {
       setBarbers(barbersPayload?.barbers ?? []);
       setServices(servicesPayload?.services ?? []);
       setDayAgenda(agendaPayload ?? null);
+      setStatistics(statisticsPayload ?? null);
       setBarbershopForm({
         name: currentBarbershop?.name ?? "",
         slug: currentBarbershop?.slug ?? "",
@@ -602,6 +665,22 @@ export function BackofficePanel() {
     if (response.ok) {
       setDayAgenda(payload);
     }
+  }
+
+  async function loadStatistics(currentToken = token) {
+    if (!currentToken) return null;
+
+    const response = await fetch(apiUrl("/appointments/statistics"), {
+      headers: { Accept: "application/json", Authorization: `Bearer ${currentToken}` },
+    });
+    const payload = parseApiResponse(await response.text());
+
+    if (response.ok) {
+      setStatistics(payload);
+      return payload;
+    }
+
+    return null;
   }
 
   async function loadQrCode(currentToken = token) {
@@ -1123,6 +1202,7 @@ export function BackofficePanel() {
       status: "booked",
     });
     await loadDayAgenda(token, selectedDate);
+    await loadStatistics();
     setStatus({ kind: "success", title: "Agendamento guardado", body: "A agenda foi atualizada com sucesso." });
   }
 
@@ -1156,6 +1236,7 @@ export function BackofficePanel() {
     }
 
     await loadDayAgenda(token, selectedDate);
+    await loadStatistics();
     setStatus({ kind: "success", title: "Agendamento removido", body: "O agendamento foi removido com sucesso." });
   }
 
@@ -1172,10 +1253,10 @@ export function BackofficePanel() {
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { label: "Marcações hoje", value: dayAgenda?.summary.total ?? 0 },
-            { label: "Booked", value: dayAgenda?.summary.booked ?? 0 },
-            { label: "Completed", value: dayAgenda?.summary.completed ?? 0 },
-            { label: "Cancelled", value: dayAgenda?.summary.cancelled ?? 0 },
+            { label: "Marcações válidas", value: validDayAppointments.length },
+            { label: "Faturação hoje", value: formatCurrency(dayAgenda?.summary.revenue ?? 0) },
+            { label: "Clientes hoje", value: dayAgenda?.summary.clients ?? 0 },
+            { label: "Canceladas", value: dayAgenda?.summary.cancelled ?? 0 },
           ].map((metric) => (
             <article key={metric.label} className={`${whiteCardClass} rounded-2xl p-6`}>
               <p className="text-sm text-[#5B4F3A]/75">{metric.label}</p>
@@ -1720,6 +1801,79 @@ export function BackofficePanel() {
     );
   }
 
+  function renderClients() {
+    return (
+      <section className={`${whiteCardClass} overflow-hidden`}>
+        <div className="border-b border-[#D8C3A5]/70 p-6">
+          <h2 className="text-2xl font-semibold text-[#2B2118]">Clientes</h2>
+          <p className="mt-1 text-sm text-[#5B4F3A]/75">Lista real agregada a partir das marcações válidas da barbearia.</p>
+        </div>
+        <div className="divide-y divide-[#D8C3A5]/60">
+          {clients.map((client) => (
+            <div key={`${client.email ?? client.phone}-${client.name}`} className="grid gap-4 p-5 md:grid-cols-[1fr_0.8fr_0.5fr] md:items-center">
+              <div>
+                <p className="font-semibold text-[#2B2118]">{client.name}</p>
+                <p className="mt-1 text-sm text-[#5B4F3A]/75">{client.email ?? "Sem e-mail"}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#2B2118]/40">Contacto</p>
+                <p className="mt-1 text-sm text-[#2B2118]">{client.phone}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#2B2118]/40">Marcações</p>
+                <p className="mt-1 text-sm font-semibold text-[#2B2118]">{client.appointments}</p>
+              </div>
+            </div>
+          ))}
+          {clients.length === 0 ? (
+            <div className="p-6 text-sm text-[#5B4F3A]/75">Ainda não existem clientes com marcações válidas.</div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  function renderStatistics() {
+    const summary = statistics?.summary;
+
+    return (
+      <div className="space-y-6">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: "Faturação total", value: formatCurrency(summary?.revenue_total ?? 0) },
+            { label: "Faturação mensal", value: formatCurrency(summary?.revenue_month ?? 0) },
+            { label: "Marcações válidas", value: summary?.appointments_total ?? 0 },
+            { label: "Clientes únicos", value: summary?.clients_total ?? 0 },
+          ].map((metric) => (
+            <article key={metric.label} className={`${whiteCardClass} p-5`}>
+              <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/70">{metric.label}</p>
+              <p className="mt-3 text-3xl font-semibold text-[#2B2118]">{metric.value}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className={`${whiteCardClass} overflow-hidden`}>
+          <div className="border-b border-[#D8C3A5]/70 p-6">
+            <h2 className="text-2xl font-semibold text-[#2B2118]">Serviços mais usados</h2>
+            <p className="mt-1 text-sm text-[#5B4F3A]/75">Calculado com base em marcações válidas, sem canceladas.</p>
+          </div>
+          <div className="divide-y divide-[#D8C3A5]/60">
+            {(summary?.services_used ?? []).map((service) => (
+              <div key={service.service_id ?? service.name} className="grid gap-4 p-5 md:grid-cols-[1fr_0.5fr_0.5fr] md:items-center">
+                <p className="font-semibold text-[#2B2118]">{service.name}</p>
+                <p className="text-sm text-[#5B4F3A]/75">{service.appointments} marcações</p>
+                <p className="text-sm font-semibold text-[#2B2118]">{formatCurrency(service.revenue)}</p>
+              </div>
+            ))}
+            {(summary?.services_used ?? []).length === 0 ? (
+              <div className="p-6 text-sm text-[#5B4F3A]/75">Ainda não há dados suficientes para estatísticas detalhadas.</div>
+            ) : null}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   function renderAdminPanel() {
     if (!isSuperAdmin) {
       return (
@@ -1734,8 +1888,26 @@ export function BackofficePanel() {
     const metricCards = [
       { label: "Contas totais", value: summary?.users_total ?? 0 },
       { label: "Contas ativas", value: summary?.users_active ?? 0 },
-      { label: "Barbearias totais", value: summary?.barbershops_total ?? 0 },
+      { label: "Utilizadores", value: summary?.clients_total ?? 0 },
       { label: "Barbearias ativas", value: summary?.barbershops_active ?? 0 },
+    ];
+    const filteredUsers = (adminPlatform?.users ?? []).filter((adminUser) => {
+      if (adminFilter === "active") return adminUser.is_active;
+      if (adminFilter === "inactive") return !adminUser.is_active;
+      if (adminFilter === "clients") return adminUser.role === "client";
+      return adminUser.role === "owner" || Boolean(adminUser.barbershop);
+    });
+    const filteredBarbershops = (adminPlatform?.barbershops ?? []).filter((adminBarbershop) => {
+      if (adminFilter === "active") return adminBarbershop.is_active;
+      if (adminFilter === "inactive") return !adminBarbershop.is_active;
+      if (adminFilter === "clients") return false;
+      return true;
+    });
+    const filterButtons: Array<{ id: AdminFilter; label: string; count: number }> = [
+      { id: "active", label: "Contas Ativas", count: summary?.users_active ?? 0 },
+      { id: "inactive", label: "Contas Inativas", count: summary?.users_inactive ?? 0 },
+      { id: "clients", label: "Utilizadores", count: summary?.clients_total ?? 0 },
+      { id: "owners", label: "Barbearias", count: summary?.owners_total ?? 0 },
     ];
 
     return (
@@ -1764,13 +1936,31 @@ export function BackofficePanel() {
           ))}
         </section>
 
+        <section className={`${whiteCardClass} p-4`}>
+          <div className="grid gap-3 md:grid-cols-4">
+            {filterButtons.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setAdminFilter(filter.id)}
+                className={`rounded-2xl px-4 py-3 text-left transition-all ${
+                  adminFilter === filter.id ? "bg-[#A86840] text-[#FFF7EC]" : "bg-[#F8E8D3] text-[#2B2118] hover:bg-[#F1DDC2]"
+                }`}
+              >
+                <span className="block text-sm font-semibold">{filter.label}</span>
+                <span className="mt-1 block text-xs opacity-75">{filter.count} registos</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className={`${whiteCardClass} overflow-hidden`}>
           <div className="border-b border-[#D8C3A5]/70 p-6">
             <h3 className="text-xl font-semibold text-[#2B2118]">Contas de utilizador</h3>
             <p className="mt-1 text-sm text-[#5B4F3A]/75">Ativa ou desativa acessos à plataforma.</p>
           </div>
           <div className="divide-y divide-white/10">
-            {(adminPlatform?.users ?? []).map((adminUser) => (
+            {filteredUsers.map((adminUser) => (
               <div key={adminUser.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr_0.6fr_auto] lg:items-center">
                 <div>
                   <p className="font-semibold text-[#2B2118]">{adminUser.name}</p>
@@ -1796,8 +1986,8 @@ export function BackofficePanel() {
                 </button>
               </div>
             ))}
-            {!isAdminLoading && (adminPlatform?.users ?? []).length === 0 ? (
-              <div className="p-6 text-sm text-[#5B4F3A]/75">Ainda não existem contas registadas.</div>
+            {!isAdminLoading && filteredUsers.length === 0 ? (
+              <div className="p-6 text-sm text-[#5B4F3A]/75">Não existem contas para este filtro.</div>
             ) : null}
           </div>
         </section>
@@ -1808,7 +1998,7 @@ export function BackofficePanel() {
             <p className="mt-1 text-sm text-[#5B4F3A]/75">Controla a visibilidade pública e o acesso operacional de cada barbearia.</p>
           </div>
           <div className="divide-y divide-white/10">
-            {(adminPlatform?.barbershops ?? []).map((adminBarbershop) => (
+            {filteredBarbershops.map((adminBarbershop) => (
               <div key={adminBarbershop.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.9fr_0.6fr_auto] lg:items-center">
                 <div>
                   <p className="font-semibold text-[#2B2118]">{adminBarbershop.name}</p>
@@ -1832,8 +2022,8 @@ export function BackofficePanel() {
                 </button>
               </div>
             ))}
-            {!isAdminLoading && (adminPlatform?.barbershops ?? []).length === 0 ? (
-              <div className="p-6 text-sm text-[#5B4F3A]/75">Ainda não existem barbearias criadas.</div>
+            {!isAdminLoading && filteredBarbershops.length === 0 ? (
+              <div className="p-6 text-sm text-[#5B4F3A]/75">Não existem barbearias para este filtro.</div>
             ) : null}
           </div>
         </section>
@@ -1956,6 +2146,10 @@ export function BackofficePanel() {
         return renderBarbers();
       case "services":
         return renderServices();
+      case "clients":
+        return renderClients();
+      case "statistics":
+        return renderStatistics();
       case "public-link":
         return renderPublicLink();
       case "account":

@@ -58,6 +58,7 @@ Route::middleware(['auth:sanctum', 'active.account'])->group(function (): void {
 
         Route::get('appointments', [ManagementAppointmentController::class, 'index']);
         Route::get('appointments/day', [ManagementAppointmentController::class, 'day']);
+        Route::get('appointments/statistics', [ManagementAppointmentController::class, 'statistics']);
         Route::get('appointments/export', [ManagementAppointmentController::class, 'export']);
         Route::post('appointments', [ManagementAppointmentController::class, 'store']);
         Route::put('appointments/{id}', [ManagementAppointmentController::class, 'update']);
