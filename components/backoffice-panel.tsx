@@ -2682,19 +2682,7 @@ export function BackofficePanel() {
                     </article>
                   ))}
                 </section>
-                {!isLoading ? renderActiveTab() : (
-                  <section className={`${whiteCardClass} p-8`}>
-                    <div className="flex items-start gap-4">
-                      <div className="h-11 w-11 animate-pulse rounded-2xl bg-neutral-100" />
-                      <div>
-                        <p className="text-2xl font-semibold text-[#2B2118]">A carregar o painel</p>
-                        <p className="mt-2 text-sm leading-6 text-[#5B4F3A]/75">
-                          Estamos a preparar a tua agenda, os barbeiros, os serviços e a configuração da barbearia.
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-                )}
+                {renderActiveTab()}
               </>
             )}
           </section>
