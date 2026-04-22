@@ -288,7 +288,7 @@ export default function DashboardDayPage() {
             {[
               { label: "Total de hoje", value: payload?.summary.total ?? 0, note: "Marcações do dia selecionado" },
               { label: "Booked", value: payload?.summary.booked ?? 0, note: "Prontas para atendimento" },
-              { label: "Concluidas", value: payload?.summary.completed ?? 0, note: "Finalizadas com sucesso" },
+              { label: "Concluídas", value: payload?.summary.completed ?? 0, note: "Finalizadas com sucesso" },
               { label: "Canceladas", value: payload?.summary.cancelled ?? 0, note: "Não entram na produção" },
             ].map((metric) => (
               <article key={metric.label} className={`${whiteCardClass} p-5`}>

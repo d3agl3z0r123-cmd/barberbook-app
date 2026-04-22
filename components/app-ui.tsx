@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ReactNode } from "react";
 
 export const inputClass =
-  "w-full rounded-xl border border-[#D8C3A5] bg-[#FFF7EC] px-4 py-2.5 text-sm text-[#2B2118] outline-none transition-all placeholder:text-[#8B735B]/55 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
+  "w-full rounded-xl border border-[#D8C3A5] bg-[#FFF7EC] px-4 py-3 text-base font-medium text-[#2B2118] outline-none transition-all placeholder:text-[#8B735B]/55 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
 export const primaryButtonClass =
   "inline-flex items-center justify-center rounded-xl bg-[#A86840] px-4 py-2.5 text-sm font-bold text-[#FFF7EC] transition-all hover:bg-[#8A5433] disabled:opacity-50";
 export const secondaryButtonClass =
@@ -22,7 +22,7 @@ export const luxurySecondaryButtonClass =
 export const luxuryGhostButtonClass =
   "inline-flex items-center justify-center rounded-xl border border-[#D8C3A5] bg-white/45 px-4 py-2.5 text-sm font-bold text-[#5B4F3A] transition-all hover:border-[#A86840] hover:bg-[#FFF7EC] disabled:opacity-50";
 export const luxuryInputClass =
-  "w-full rounded-xl border border-[#D8C3A5] bg-[#FFF7EC] px-4 py-3 text-sm text-[#2B2118] outline-none transition-all placeholder:text-[#8B735B]/55 focus:border-[#A86840]/80 focus:ring-2 focus:ring-[#A86840]/20";
+  "w-full rounded-xl border border-[#D8C3A5] bg-[#FFF7EC] px-4 py-3 text-base font-medium text-[#2B2118] outline-none transition-all placeholder:text-[#8B735B]/55 focus:border-[#A86840]/80 focus:ring-2 focus:ring-[#A86840]/20";
 export const luxuryHeadingClass = "font-extrabold tracking-tight text-[#2B2118]";
 
 export function PageHeader({

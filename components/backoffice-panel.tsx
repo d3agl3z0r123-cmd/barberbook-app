@@ -221,7 +221,7 @@ const tabs: Array<{ id: TabId; label: string }> = [
 ];
 
 const inputClass =
-  "w-full rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-2.5 text-sm text-[#2B2118] outline-none transition-all placeholder:text-[#2B2118]/35 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
+  "w-full rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-3 text-base font-medium text-[#2B2118] outline-none transition-all placeholder:text-[#2B2118]/35 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
 const primaryButtonClass =
   "inline-flex items-center justify-center rounded-xl bg-[#A86840] px-4 py-2.5 text-sm font-medium text-[#FFF7EC] transition-all hover:bg-[#8A5433] disabled:opacity-50";
 const secondaryButtonClass =
@@ -404,6 +404,19 @@ function statusBadge(status: Appointment["status"]) {
   if (status === "booked") return "border border-amber-200 bg-amber-100 text-amber-800";
   if (status === "completed") return "border border-emerald-200 bg-emerald-100 text-emerald-800";
   return "border border-rose-200 bg-rose-100 text-rose-700";
+}
+
+function statusLabel(status: Appointment["status"]) {
+  const labels: Record<Appointment["status"], string> = {
+    booked: "Marcada",
+    pending: "Pendente",
+    confirmed: "Confirmada",
+    completed: "Concluída",
+    cancelled: "Cancelada",
+    no_show: "Faltou",
+  };
+
+  return labels[status] ?? status;
 }
 
 function parseApiResponse(text: string) {
@@ -1544,7 +1557,7 @@ export function BackofficePanel() {
             </button>
             {barberForm.id ? (
               <button type="button" onClick={() => setBarberForm({ id: "", name: "", email: "", phone: "" })} className={secondaryButtonClass}>
-                Cancelar edicao
+                Cancelar edição
               </button>
             ) : null}
           </div>
@@ -1607,8 +1620,8 @@ export function BackofficePanel() {
           <p className="mt-2 text-sm text-[#5B4F3A]/75">Define o catálogo e o tempo de atendimento de cada serviço.</p>
           <div className="mt-5 grid gap-4">
             <input className={inputClass} placeholder="Nome" value={serviceForm.name} onChange={(event) => setServiceForm((current) => ({ ...current, name: event.target.value }))} />
-            <input className={inputClass} placeholder="Preco" value={serviceForm.price} onChange={(event) => setServiceForm((current) => ({ ...current, price: event.target.value }))} />
-            <input className={inputClass} placeholder="Duracao em minutos" value={serviceForm.duration_minutes} onChange={(event) => setServiceForm((current) => ({ ...current, duration_minutes: event.target.value }))} />
+            <input className={inputClass} placeholder="Preço" value={serviceForm.price} onChange={(event) => setServiceForm((current) => ({ ...current, price: event.target.value }))} />
+            <input className={inputClass} placeholder="Duração em minutos" value={serviceForm.duration_minutes} onChange={(event) => setServiceForm((current) => ({ ...current, duration_minutes: event.target.value }))} />
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button type="submit" className={primaryButtonClass}>
@@ -1616,7 +1629,7 @@ export function BackofficePanel() {
             </button>
             {serviceForm.id ? (
               <button type="button" onClick={() => setServiceForm({ id: "", name: "", price: "", duration_minutes: "" })} className={secondaryButtonClass}>
-                Cancelar edicao
+                Cancelar edição
               </button>
             ) : null}
           </div>
@@ -1631,8 +1644,8 @@ export function BackofficePanel() {
               services.map((service) => (
                 <div key={service.id} className="rounded-2xl border border-[#D8C3A5]/70 p-4 transition-all hover:border-[#D8C3A5]/70 hover:shadow-sm">
                   <p className="font-medium text-[#2B2118]">{service.name}</p>
-                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Preco: {service.price} EUR</p>
-                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Duracao: {service.duration_minutes} minutos</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Preço: {service.price} EUR</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Duração: {service.duration_minutes} minutos</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" onClick={() => setServiceForm({ id: String(service.id), name: service.name, price: String(service.price), duration_minutes: String(service.duration_minutes) })} className={ghostButtonClass}>
                       Editar
@@ -1651,6 +1664,10 @@ export function BackofficePanel() {
   }
 
   function renderAgenda() {
+    const appointments = dayAgenda?.appointments ?? [];
+    const sortedAppointments = [...appointments].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+    const calendarBarbers = barbers.length > 0 ? barbers : [{ id: 0, name: "Agenda", email: null, phone: null } satisfies Barber];
+
     return (
       <div className="space-y-6">
         <article className={`${whiteCardClass} rounded-2xl p-8`}>
@@ -1671,7 +1688,76 @@ export function BackofficePanel() {
           </div>
         </article>
 
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <article className={`${whiteCardClass} overflow-hidden rounded-2xl`}>
+          <div className="flex flex-col gap-3 border-b border-[#D8C3A5]/70 p-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A86840]">Calendário diário</p>
+              <h3 className="mt-1 text-2xl font-black text-[#2B2118]">Marcações por horário e barbeiro</h3>
+            </div>
+            <p className="text-sm font-medium text-[#5B4F3A]/80">
+              {appointments.length === 0 ? "Sem marcações neste dia." : `${appointments.length} marcações neste dia.`}
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <div
+              className="grid min-w-[860px]"
+              style={{ gridTemplateColumns: `92px repeat(${calendarBarbers.length}, minmax(220px, 1fr))` }}
+            >
+              <div className="sticky left-0 z-10 border-b border-r border-[#D8C3A5]/70 bg-[#F8E8D3] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]">
+                Hora
+              </div>
+              {calendarBarbers.map((barber) => (
+                <div key={barber.id} className="border-b border-r border-[#D8C3A5]/70 bg-[#F8E8D3] p-3">
+                  <p className="text-base font-black text-[#2B2118]">{barber.name}</p>
+                </div>
+              ))}
+
+              {DAY_SLOTS.map((slot) => (
+                <div key={slot} className="contents">
+                  <div key={`${slot}-time`} className="sticky left-0 z-10 flex min-h-[92px] items-start border-b border-r border-[#D8C3A5]/70 bg-[#FFF7EC] p-3">
+                    <p className="text-base font-black text-[#2B2118]">{slot}</p>
+                  </div>
+
+                  {calendarBarbers.map((barber) => {
+                    const appointment = appointments.find((item) => {
+                      const sameBarber = barber.id === 0 || item.barber_id === barber.id;
+                      return sameBarber && slotIsCovered(item, slot);
+                    });
+
+                    return (
+                      <div key={`${slot}-${barber.id}`} className="min-h-[92px] border-b border-r border-[#D8C3A5]/70 bg-[#FFF7EC] p-2">
+                        {appointment ? (
+                          <button
+                            type="button"
+                            onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone, client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })}
+                            className="h-full w-full rounded-2xl border border-[#A86840]/25 bg-[#F8E8D3] p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#A86840]/60 hover:shadow-md"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-black text-[#2B2118]">{formatTime(appointment.starts_at)}</p>
+                              <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black ${statusBadge(appointment.status)}`}>
+                                {statusLabel(appointment.status)}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-base font-black text-[#2B2118]">{appointment.client_name}</p>
+                            <p className="mt-1 text-sm font-semibold text-[#5B4F3A]">{appointment.service?.name ?? "Serviço"}</p>
+                            <p className="mt-1 text-xs font-medium text-[#5B4F3A]/75">{appointment.client_phone}</p>
+                          </button>
+                        ) : (
+                          <div className="flex h-full min-h-[74px] items-center justify-center rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] text-xs font-bold text-[#5B4F3A]/45">
+                            Livre
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </article>
+
+        <div className="grid gap-6">
           <form className={`${whiteCardClass} rounded-2xl p-8`} onSubmit={handleAppointmentSubmit}>
             <h3 className="text-2xl font-semibold text-[#2B2118]">{appointmentForm.id ? "Editar agendamento" : "Criar agendamento"}</h3>
             <p className="mt-2 text-sm text-[#5B4F3A]/75">Agenda manual para a equipa quando o cliente marca diretamente com a barbearia.</p>
@@ -1702,7 +1788,7 @@ export function BackofficePanel() {
             </div>
           </form>
 
-          <div className="space-y-6">
+          <div className="hidden">
             <article className={`${whiteCardClass} rounded-2xl p-8`}>
               <p className="text-sm text-[#5B4F3A]/75">Agenda visual</p>
               <div className="mt-5 grid gap-2">
@@ -2318,10 +2404,10 @@ export function BackofficePanel() {
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? "bg-[#FFF7EC] text-[#A86840] shadow-sm ring-1 ring-white/10"
-                    : "text-[#F4EADB]/85 hover:bg-[#FFF7EC] hover:text-[#2B2118]"
+                    : "text-[#5B4F3A] hover:bg-[#FFF7EC] hover:text-[#2B2118]"
                 }`}
               >
-                <span className={activeTab === tab.id ? "text-[#2B2118]" : "text-[#F4EADB]/75"}>{getTabIcon(tab.id)}</span>
+                <span className={activeTab === tab.id ? "text-[#2B2118]" : "text-[#5B4F3A]"}>{getTabIcon(tab.id)}</span>
                 {tab.label}
               </button>
             ))}
