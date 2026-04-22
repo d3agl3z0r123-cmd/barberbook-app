@@ -152,6 +152,8 @@ class SocialAuthController extends Controller
                 ]);
             }
 
+            $this->syncSuperAdminRole($user, $email);
+
             $account = SocialAccount::query()->create([
                 'user_id' => $user->id,
                 'provider' => 'google',
@@ -184,6 +186,23 @@ class SocialAuthController extends Controller
                 'nickname' => $googleUser->getNickname(),
                 'raw' => $googleUser->user,
             ],
+        ])->save();
+    }
+
+    private function syncSuperAdminRole(User $user, string $email): void
+    {
+        $superAdminEmail = Str::lower((string) config('saas.super_admin_email'));
+
+        if ($superAdminEmail === '' || $email !== $superAdminEmail) {
+            return;
+        }
+
+        $user->forceFill([
+            'role' => UserRole::Admin,
+            'is_active' => true,
+            'is_super_admin' => true,
+            'disabled_at' => null,
+            'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
     }
 
