@@ -25,7 +25,7 @@ class AuthController extends Controller
             $user = User::query()->create([
                 'name' => $payload['name'],
                 'email' => $payload['email'],
-                'password' => $payload['password'],
+                'password' => Hash::make($payload['password']),
                 'phone' => $payload['phone'] ?? null,
                 'role' => $payload['role'] ?? UserRole::Client->value,
                 'timezone' => config('saas.default_timezone'),
@@ -64,7 +64,7 @@ class AuthController extends Controller
         $payload = $request->validated();
         $user = User::query()->where('email', $payload['email'])->first();
 
-        if (! $user || ! Hash::check($payload['password'], $user->password)) {
+        if (! $user || ! $this->passwordMatches($user, $payload['password'])) {
             throw ValidationException::withMessages([
                 'email' => ['Credenciais inválidas.'],
             ]);
@@ -102,6 +102,23 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Sessão terminada com sucesso.',
         ]);
+    }
+
+    private function passwordMatches(User $user, string $password): bool
+    {
+        if (Hash::check($password, $user->password)) {
+            return true;
+        }
+
+        if (! hash_equals((string) $user->password, $password)) {
+            return false;
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($password),
+        ])->save();
+
+        return true;
     }
 
     private function formatAuthUser(User $user): array
