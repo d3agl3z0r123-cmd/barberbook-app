@@ -725,7 +725,7 @@ export function BackofficePanel() {
       });
       setStatus({ kind: "success", title: "Painel carregado", body: "Os dados principais da tua barbearia já estão prontos." });
     } catch {
-      setStatus({ kind: "error", title: "Falha de ligação", body: "Não foi possível carregar os dados neste momento. Tenta novamente dentro de instantes." });
+      setStatus({ kind: "idle", title: "A carregar painel", body: "Estamos a preparar os dados da tua conta." });
     } finally {
       setIsLoading(false);
     }
@@ -2479,19 +2479,13 @@ export function BackofficePanel() {
               </section>
             ) : (
               <>
-                <section className={`${whiteCardClass} p-4`}>
-                  <div className={`rounded-2xl border px-4 py-4 text-sm ${
-                    status.kind === "success"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : status.kind === "error"
-                        ? "border-rose-200 bg-rose-50 text-rose-700"
-                        : "border-[#D8C3A5]/70 bg-[#F8E8D3] text-[#5B4F3A]/85"
-                  }`}>
+                {status.kind === "error" ? <section className={`${whiteCardClass} p-4`}>
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
                     <p className="font-semibold">{status.title}</p>
                     <p className="mt-2 leading-6">{status.body}</p>
                     <p className="mt-2 text-xs opacity-80">{isLoading ? "A carregar painel..." : "Pronto."}</p>
                   </div>
-                </section>
+                </section> : null}
                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   {topMetrics.map((metric) => (
                     <article key={metric.label} className="rounded-2xl bg-[#FFF7EC] p-4 shadow-sm">

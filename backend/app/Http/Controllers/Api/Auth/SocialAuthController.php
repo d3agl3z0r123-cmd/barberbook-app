@@ -72,7 +72,7 @@ class SocialAuthController extends Controller
                 'is_new_user' => $result['is_new_user'],
             ]);
 
-            return redirect()->away($this->frontendCallbackUrl([
+            return redirect()->away($this->frontendSuccessUrl([
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'role' => $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
@@ -260,5 +260,11 @@ class SocialAuthController extends Controller
     {
         return rtrim((string) config('app.frontend_url', 'http://localhost:3000'), '/')
             .'/auth/social-callback?'.http_build_query($query);
+    }
+
+    private function frontendSuccessUrl(array $query): string
+    {
+        return rtrim((string) config('app.frontend_url', 'http://localhost:3000'), '/')
+            .'/backoffice?'.http_build_query($query);
     }
 }
