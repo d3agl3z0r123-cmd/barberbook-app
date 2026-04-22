@@ -491,6 +491,7 @@ export function BackofficePanel() {
   const [statistics, setStatistics] = useState<StatisticsPayload | null>(null);
   const [adminPlatform, setAdminPlatform] = useState<AdminPlatformPayload | null>(null);
   const [adminFilter, setAdminFilter] = useState<AdminFilter>("active");
+  const [openAgendaBarberIds, setOpenAgendaBarberIds] = useState<number[]>([]);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
@@ -618,6 +619,24 @@ export function BackofficePanel() {
     }
   }, [isSuperAdmin, activeTab]);
 
+  useEffect(() => {
+    if (barbers.length === 0) {
+      setOpenAgendaBarberIds([]);
+      return;
+    }
+
+    setOpenAgendaBarberIds((current) => {
+      const validIds = current.filter((id) => barbers.some((barber) => barber.id === id));
+      return validIds.length > 0 ? validIds : [barbers[0].id];
+    });
+  }, [barbers]);
+
+  function toggleAgendaBarber(barberId: number) {
+    setOpenAgendaBarberIds((current) =>
+      current.includes(barberId) ? current.filter((id) => id !== barberId) : [...current, barberId]
+    );
+  }
+
   async function apiRequest(path: string, init?: RequestInit) {
     const response = await fetch(apiUrl(path), {
       ...init,
@@ -665,24 +684,20 @@ export function BackofficePanel() {
         phone: userPayload?.user?.phone ?? "",
       });
 
-      const [barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse, statisticsResponse] = await Promise.all([
+      const [barbershopResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
         fetch(apiUrl("/barbershop"), { headers }),
-        fetch(apiUrl("/barbershop/qr-code"), { headers }),
         fetch(apiUrl("/barbers"), { headers }),
         fetch(apiUrl("/services"), { headers }),
         fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
-        fetch(apiUrl("/appointments/statistics"), { headers }),
       ]);
 
       const barbershopPayload = parseApiResponse(await barbershopResponse.text());
-      const qrPayload = parseApiResponse(await qrResponse.text());
       const barbersPayload = parseApiResponse(await barbersResponse.text());
       const servicesPayload = parseApiResponse(await servicesResponse.text());
       const agendaPayload = parseApiResponse(await agendaResponse.text());
-      const statisticsPayload = parseApiResponse(await statisticsResponse.text());
 
 
-      if (barbershopResponse.status === 404 || agendaResponse.status === 404 || statisticsResponse.status === 404) {
+      if (barbershopResponse.status === 404 || agendaResponse.status === 404) {
         setBarbershop(null);
         setQrCode(null);
         setBarbers([]);
@@ -697,18 +712,18 @@ export function BackofficePanel() {
         return;
       }
 
-      if (!barbershopResponse.ok || !barbersResponse.ok || !servicesResponse.ok || !agendaResponse.ok || !statisticsResponse.ok) {
+      if (!barbershopResponse.ok || !barbersResponse.ok || !servicesResponse.ok || !agendaResponse.ok) {
         setStatus({ kind: "error", title: "Erro ao carregar o painel", body: "Não foi possível carregar todos os dados." });
         return;
       }
 
       const currentBarbershop = barbershopPayload?.barbershop ?? null;
       setBarbershop(currentBarbershop);
-      setQrCode(qrResponse.ok ? qrPayload?.qr_code ?? null : null);
       setBarbers(barbersPayload?.barbers ?? []);
       setServices(servicesPayload?.services ?? []);
       setDayAgenda(agendaPayload ?? null);
-      setStatistics(statisticsPayload ?? null);
+      void loadQrCode(currentToken);
+      void loadStatistics(currentToken);
       setBarbershopForm({
         name: currentBarbershop?.name ?? "",
         slug: currentBarbershop?.slug ?? "",
@@ -1705,15 +1720,92 @@ export function BackofficePanel() {
         <article className={`${whiteCardClass} overflow-hidden rounded-2xl`}>
           <div className="flex flex-col gap-3 border-b border-[#D8C3A5]/70 p-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A86840]">Calendário diário</p>
-              <h3 className="mt-1 text-2xl font-black text-[#2B2118]">Marcações por horário e barbeiro</h3>
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A86840]">Calendário da equipa</p>
+              <h3 className="mt-1 text-2xl font-black text-[#2B2118]">Marcações por barbeiro</h3>
             </div>
             <p className="text-sm font-medium text-[#5B4F3A]/80">
               {appointments.length === 0 ? "Sem marcações neste dia." : `${appointments.length} marcações neste dia.`}
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="space-y-3 p-5">
+            {barbers.length === 0 ? (
+              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm text-[#5B4F3A]/75">
+                <IconEmpty />
+                <div>
+                  <p className="font-medium text-[#2B2118]">Ainda sem barbeiros</p>
+                  <p className="mt-1">Cria pelo menos um barbeiro para veres o calendário da equipa.</p>
+                </div>
+              </div>
+            ) : (
+              barbers.map((barber) => {
+                const barberAppointments = sortedAppointments.filter((appointment) => appointment.barber_id === barber.id);
+                const isOpen = openAgendaBarberIds.includes(barber.id);
+
+                return (
+                  <div key={barber.id} className="overflow-hidden rounded-2xl border border-[#D8C3A5]/70 bg-[#FFF7EC] shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => toggleAgendaBarber(barber.id)}
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-all hover:bg-[#F8E8D3]"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#A86840] text-sm font-black text-[#FFF7EC]">
+                          {barber.photo_url ? (
+                            <img src={barber.photo_url} alt={`Foto de ${barber.name}`} className="h-full w-full object-cover" />
+                          ) : (
+                            barber.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-black text-[#2B2118]">{barber.name}</p>
+                          <p className="text-sm font-medium text-[#5B4F3A]/75">
+                            {barberAppointments.length === 0 ? "Sem marcações neste dia" : `${barberAppointments.length} marcações`}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="rounded-full border border-[#D8C3A5]/70 bg-[#F8E8D3] px-3 py-1 text-sm font-black text-[#2B2118]">
+                        {isOpen ? "Fechar" : "Abrir"}
+                      </span>
+                    </button>
+
+                    {isOpen ? (
+                      <div className="border-t border-[#D8C3A5]/70 bg-[#FFF7EC] p-4">
+                        {barberAppointments.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm font-medium text-[#5B4F3A]/75">
+                            Sem marcações para este barbeiro nesta data.
+                          </div>
+                        ) : (
+                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {barberAppointments.map((appointment) => (
+                              <button
+                                key={appointment.id}
+                                type="button"
+                                onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone, client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })}
+                                className="rounded-2xl border border-[#A86840]/25 bg-[#F8E8D3] p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#A86840]/60 hover:shadow-md"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-xl font-black text-[#2B2118]">{formatTime(appointment.starts_at)}</p>
+                                  <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black ${statusBadge(appointment.status)}`}>
+                                    {statusLabel(appointment.status)}
+                                  </span>
+                                </div>
+                                <p className="mt-3 text-base font-black text-[#2B2118]">{appointment.client_name}</p>
+                                <p className="mt-1 text-sm font-semibold text-[#5B4F3A]">{appointment.service?.name ?? "Serviço"}</p>
+                                <p className="mt-1 text-xs font-medium text-[#5B4F3A]/75">{appointment.client_phone}</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="hidden">
             <div
               className="grid min-w-[860px]"
               style={{ gridTemplateColumns: `92px repeat(${calendarBarbers.length}, minmax(220px, 1fr))` }}
