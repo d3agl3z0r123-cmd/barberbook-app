@@ -111,7 +111,7 @@ class SocialAuthController extends Controller
     {
         return DB::transaction(function () use ($googleUser): array {
             $providerId = (string) $googleUser->getId();
-            $email = $googleUser->getE-mail();
+            $email = Str::lower((string) $googleUser->getEmail());
 
             if ($providerId === '') {
                 throw new \RuntimeException('O Google não devolveu um identificador válido.');
@@ -135,7 +135,7 @@ class SocialAuthController extends Controller
                 ];
             }
 
-            $user = User::query()->where('email', $email)->first();
+            $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
             $isNewUser = false;
 
             if (! $user) {
@@ -174,7 +174,7 @@ class SocialAuthController extends Controller
     private function updateGoogleAccount(SocialAccount $account, SocialiteUser $googleUser): void
     {
         $account->forceFill([
-            'email' => $googleUser->getE-mail() ?: $account->email,
+            'email' => Str::lower((string) ($googleUser->getEmail() ?: $account->email)),
             'name' => $googleUser->getName() ?: $account->name,
             'avatar' => $googleUser->getAvatar() ?: $account->avatar,
             'metadata' => [
