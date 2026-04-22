@@ -55,7 +55,7 @@ class PublicAppointmentController extends Controller
             'date' => ['required', 'date_format:Y-m-d'],
         ]);
 
-        $barber = Barber::query()->with('barbershop')->findOrFail($payload['barber_id']);
+        $barber = Barber::query()->with('barbershop.user')->findOrFail($payload['barber_id']);
         $barbershop = $barber->barbershop;
 
         abort_if(! $barbershop?->is_active || ! $barbershop->user?->is_active, 404);
@@ -65,6 +65,7 @@ class PublicAppointmentController extends Controller
         $endsAtUtc = $day->endOfDay()->utc();
 
         $appointments = Appointment::query()
+            ->select(['id', 'barber_id', 'starts_at', 'ends_at', 'status'])
             ->where('barber_id', $barber->id)
             ->whereBetween('starts_at', [$startsAtUtc, $endsAtUtc])
             ->whereIn('status', [

@@ -114,7 +114,7 @@ type Appointment = {
   notes: string | null;
   status: "booked" | "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
   barber: { id: number; name: string } | null;
-  service: { id: number; name: string } | null;
+  service: { id: number; name: string; duration_minutes?: number; price?: string | number } | null;
 };
 
 type DayPayload = {
@@ -210,6 +210,11 @@ type AdminPlatformPayload = {
 };
 
 type AdminFilter = "active" | "inactive" | "clients" | "owners";
+
+type OptimisticTotalsInput = {
+  appointments: Appointment[];
+  services: Service[];
+};
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "overview", label: "Visão geral" },
@@ -554,6 +559,46 @@ function currentTimeTop(date: string, timezone: string) {
   return ((minutes - CALENDAR_START_MINUTES) / 30) * CALENDAR_ROW_HEIGHT;
 }
 
+function isStatsValidAppointment(appointment: Appointment) {
+  return appointment.status !== "cancelled" && appointment.status !== "no_show";
+}
+
+function appointmentServicePrice(appointment: Appointment, services: Service[]) {
+  const appointmentServicePriceValue = Number(appointment.service?.price);
+
+  if (Number.isFinite(appointmentServicePriceValue)) {
+    return appointmentServicePriceValue;
+  }
+
+  const service = services.find((item) => item.id === appointment.service_id);
+  const servicePrice = Number(service?.price ?? 0);
+
+  return Number.isFinite(servicePrice) ? servicePrice : 0;
+}
+
+function buildDaySummary({ appointments, services }: OptimisticTotalsInput): DayPayload["summary"] {
+  const validAppointments = appointments.filter(isStatsValidAppointment);
+  const clients = new Set(
+    validAppointments
+      .map((appointment) =>
+        String(appointment.client_email || appointment.client_phone || appointment.client_name || "")
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
+  return {
+    total: appointments.length,
+    booked: appointments.filter((appointment) => appointment.status === "booked").length,
+    completed: appointments.filter((appointment) => appointment.status === "completed").length,
+    cancelled: appointments.filter((appointment) => appointment.status === "cancelled").length,
+    revenue: Number(validAppointments.reduce((total, appointment) => total + appointmentServicePrice(appointment, services), 0).toFixed(2)),
+    clients: clients.size,
+    upcoming: validAppointments.filter((appointment) => new Date(appointment.starts_at).getTime() > Date.now()).length,
+  };
+}
+
 export function BackofficePanel() {
   const autoRefreshInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -570,7 +615,7 @@ export function BackofficePanel() {
   const [adminFilter, setAdminFilter] = useState<AdminFilter>("active");
   const [openAgendaBarberIds, setOpenAgendaBarberIds] = useState<number[]>([]);
   const [selectedAgendaAppointment, setSelectedAgendaAppointment] = useState<Appointment | null>(null);
-  const [mobileAgendaBarberId, setMobileAgendaBarberId] = useState("all");
+  const [mobileAgendaBarberId, setMobileAgendaBarberId] = useState("");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
@@ -667,6 +712,41 @@ export function BackofficePanel() {
   );
 
   const clients = statistics?.clients ?? [];
+  const mobileTabs = useMemo(
+    () =>
+      [
+        { id: "overview" as TabId, label: "Painel" },
+        { id: "agenda" as TabId, label: "Agenda" },
+        { id: "clients" as TabId, label: "Clientes" },
+        { id: "services" as TabId, label: "Serviços" },
+        { id: "account" as TabId, label: "Perfil" },
+      ].filter((item) => visibleTabs.some((tab) => tab.id === item.id)),
+    [visibleTabs]
+  );
+
+  function updateDayAgendaAppointments(updater: (appointments: Appointment[]) => Appointment[]) {
+    setDayAgenda((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const appointments = updater(current.appointments).sort(
+        (first, second) => new Date(first.starts_at).getTime() - new Date(second.starts_at).getTime()
+      );
+
+      return {
+        ...current,
+        summary: buildDaySummary({ appointments, services }),
+        appointments,
+      };
+    });
+  }
+
+  function updateStatisticsSoon() {
+    window.setTimeout(() => {
+      void loadStatistics();
+    }, 250);
+  }
 
   useEffect(() => {
     if (!token) {
@@ -724,12 +804,21 @@ export function BackofficePanel() {
   useEffect(() => {
     if (barbers.length === 0) {
       setOpenAgendaBarberIds([]);
+      setMobileAgendaBarberId("");
       return;
     }
 
     setOpenAgendaBarberIds((current) => {
       const validIds = current.filter((id) => barbers.some((barber) => barber.id === id));
       return validIds.length > 0 ? validIds : [barbers[0].id];
+    });
+
+    setMobileAgendaBarberId((current) => {
+      if (barbers.length === 1) {
+        return String(barbers[0].id);
+      }
+
+      return current === "all" || barbers.some((barber) => String(barber.id) === current) ? current : "";
     });
   }, [barbers]);
 
@@ -1047,26 +1136,6 @@ export function BackofficePanel() {
   function showQrFeedback(message: string) {
     setQrActionFeedback(message);
     window.setTimeout(() => setQrActionFeedback(""), 3200);
-  }
-
-  async function refreshBarbers() {
-    const response = await fetch(apiUrl("/barbers"), {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-    });
-    const payload = parseApiResponse(await response.text());
-    if (response.ok) {
-      setBarbers(payload?.barbers ?? []);
-    }
-  }
-
-  async function refreshServices() {
-    const response = await fetch(apiUrl("/services"), {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-    });
-    const payload = parseApiResponse(await response.text());
-    if (response.ok) {
-      setServices(payload?.services ?? []);
-    }
   }
 
   async function handleLogout() {
@@ -1394,8 +1463,23 @@ export function BackofficePanel() {
       return;
     }
 
+    const savedBarber = payload?.barber as Barber | undefined;
+    if (savedBarber) {
+      setBarbers((current) =>
+        barberForm.id
+          ? current.map((barber) => (barber.id === savedBarber.id ? savedBarber : barber))
+          : [savedBarber, ...current]
+      );
+      updateDayAgendaAppointments((appointments) =>
+        appointments.map((appointment) =>
+          appointment.barber_id === savedBarber.id
+            ? { ...appointment, barber: { id: savedBarber.id, name: savedBarber.name } }
+            : appointment
+        )
+      );
+    }
+
     setBarberForm({ id: "", name: "", email: "", phone: "" });
-    await refreshBarbers();
     setStatus({ kind: "success", title: "Barbeiro guardado", body: "Os dados do barbeiro foram atualizados com sucesso." });
   }
 
@@ -1421,7 +1505,10 @@ export function BackofficePanel() {
         return;
       }
 
-      await refreshBarbers();
+      const savedBarber = payload?.barber as Barber | undefined;
+      if (savedBarber) {
+        setBarbers((current) => current.map((barber) => (barber.id === savedBarber.id ? savedBarber : barber)));
+      }
       setStatus({ kind: "success", title: "Foto atualizada", body: "A foto do barbeiro já aparece no link público." });
     } finally {
       setUploadingBarberPhotoId(null);
@@ -1445,8 +1532,24 @@ export function BackofficePanel() {
       return;
     }
 
+    const savedService = payload?.service as Service | undefined;
+    if (savedService) {
+      setServices((current) =>
+        serviceForm.id
+          ? current.map((service) => (service.id === savedService.id ? savedService : service))
+          : [savedService, ...current]
+      );
+      updateDayAgendaAppointments((appointments) =>
+        appointments.map((appointment) =>
+          appointment.service_id === savedService.id
+            ? { ...appointment, service: { id: savedService.id, name: savedService.name, duration_minutes: savedService.duration_minutes, price: savedService.price } }
+            : appointment
+        )
+      );
+      updateStatisticsSoon();
+    }
+
     setServiceForm({ id: "", name: "", price: "", duration_minutes: "" });
-    await refreshServices();
       setStatus({ kind: "success", title: "Serviço guardado", body: "Os dados do serviço foram atualizados com sucesso." });
   }
 
@@ -1480,6 +1583,17 @@ export function BackofficePanel() {
       return;
     }
 
+    const savedAppointment = payload?.appointment as Appointment | undefined;
+    if (savedAppointment && savedAppointment.starts_at.slice(0, 10) === selectedDate) {
+      updateDayAgendaAppointments((appointments) => {
+        const withoutCurrent = appointments.filter((appointment) => appointment.id !== savedAppointment.id);
+        return [...withoutCurrent, savedAppointment];
+      });
+    } else {
+      void loadDayAgenda(token, selectedDate);
+    }
+    updateStatisticsSoon();
+
     setAppointmentForm({
       id: "",
       barber_id: "",
@@ -1491,8 +1605,6 @@ export function BackofficePanel() {
       notes: "",
       status: "booked",
     });
-    await loadDayAgenda(token, selectedDate);
-    await loadStatistics();
     setStatus({ kind: "success", title: "Agendamento guardado", body: "A agenda foi atualizada com sucesso." });
   }
 
@@ -1503,7 +1615,9 @@ export function BackofficePanel() {
       return;
     }
 
-    await refreshBarbers();
+    setBarbers((current) => current.filter((barber) => barber.id !== id));
+    updateDayAgendaAppointments((appointments) => appointments.filter((appointment) => appointment.barber_id !== id));
+    updateStatisticsSoon();
     setStatus({ kind: "success", title: "Barbeiro removido", body: "O barbeiro foi removido com sucesso." });
   }
 
@@ -1514,7 +1628,9 @@ export function BackofficePanel() {
       return;
     }
 
-    await refreshServices();
+    setServices((current) => current.filter((service) => service.id !== id));
+    updateDayAgendaAppointments((appointments) => appointments.filter((appointment) => appointment.service_id !== id));
+    updateStatisticsSoon();
       setStatus({ kind: "success", title: "Serviço removido", body: "O serviço foi removido com sucesso." });
   }
 
@@ -1525,8 +1641,8 @@ export function BackofficePanel() {
       return;
     }
 
-    await loadDayAgenda(token, selectedDate);
-    await loadStatistics();
+    updateDayAgendaAppointments((appointments) => appointments.filter((appointment) => appointment.id !== id));
+    updateStatisticsSoon();
     setStatus({ kind: "success", title: "Agendamento removido", body: "O agendamento foi removido com sucesso." });
   }
 
@@ -1871,6 +1987,8 @@ export function BackofficePanel() {
     const sortedAppointments = [...appointments].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
     const calendarBarbers = barbers.length > 0 ? barbers : [{ id: 0, name: "Agenda", email: null, phone: null } satisfies Barber];
     const nowTop = currentTimeTop(selectedDate, timezone);
+    const hasMultipleBarbers = barbers.length > 1;
+    const hasMobileBarberSelection = !hasMultipleBarbers || Boolean(mobileAgendaBarberId);
     const mobileAppointments = mobileAgendaBarberId === "all"
       ? sortedAppointments
       : sortedAppointments.filter((appointment) => String(appointment.barber_id) === mobileAgendaBarberId);
@@ -1929,18 +2047,13 @@ export function BackofficePanel() {
           ) : (
             <>
             <div className="bg-[#EEE7DC] p-4 md:hidden">
+              {hasMultipleBarbers ? (
+                <div className="mb-3 rounded-2xl border border-[#D8C3A5]/70 bg-[#FFF7EC] p-4">
+                  <p className="text-sm font-black text-[#2B2118]">Escolhe um barbeiro para abrir a agenda</p>
+                  <p className="mt-1 text-sm text-[#5B4F3A]/75">Assim a leitura fica mais rápida e clara no telemóvel.</p>
+                </div>
+              ) : null}
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-3">
-                <button
-                  type="button"
-                  onClick={() => setMobileAgendaBarberId("all")}
-                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold ${
-                    mobileAgendaBarberId === "all"
-                      ? "border-[#A86840] bg-[#A86840] text-[#FFF7EC]"
-                      : "border-[#D8C3A5]/70 bg-[#FFF7EC] text-[#5B4F3A]"
-                  }`}
-                >
-                  Todos
-                </button>
                 {barbers.map((barber) => (
                   <button
                     key={barber.id}
@@ -1955,10 +2068,27 @@ export function BackofficePanel() {
                     {barber.name}
                   </button>
                 ))}
+                {hasMultipleBarbers ? (
+                  <button
+                    type="button"
+                    onClick={() => setMobileAgendaBarberId("all")}
+                    className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold ${
+                      mobileAgendaBarberId === "all"
+                        ? "border-[#A86840] bg-[#A86840] text-[#FFF7EC]"
+                        : "border-[#D8C3A5]/70 bg-[#FFF7EC] text-[#5B4F3A]"
+                    }`}
+                  >
+                    Ver todos
+                  </button>
+                ) : null}
               </div>
 
               <div className="space-y-3">
-                {mobileAppointments.length === 0 ? (
+                {!hasMobileBarberSelection ? (
+                  <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] p-5 text-sm font-medium text-[#5B4F3A]/75">
+                    Seleciona um barbeiro acima para veres as marcações do dia.
+                  </div>
+                ) : mobileAppointments.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] p-5 text-sm font-medium text-[#5B4F3A]/75">
                     Sem marcações para este filtro neste dia.
                   </div>
@@ -2907,8 +3037,33 @@ export function BackofficePanel() {
           </div>
         </aside>
 
+        <nav className="fixed bottom-3 left-3 right-3 z-50 grid grid-cols-5 gap-1 rounded-[24px] border border-[#D8C3A5]/80 bg-[#FFF7EC]/95 p-2 shadow-[0_18px_50px_rgba(43,33,24,0.18)] backdrop-blur lg:hidden">
+          {mobileTabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSidebarOpen(false);
+                }}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-2 text-[11px] font-semibold transition-all ${
+                  isActive
+                    ? "bg-[#A86840] text-[#FFF7EC] shadow-sm"
+                    : "text-[#5B4F3A] hover:bg-[#F8E8D3] hover:text-[#2B2118]"
+                }`}
+              >
+                <span className="text-current">{getTabIcon(tab.id)}</span>
+                <span className="max-w-full truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
         <div className="w-full lg:pl-72">
-          <section className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-4 p-3 pt-20 sm:p-4 sm:pt-20 md:gap-6 md:p-6 xl:p-8">
+          <section className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-4 p-3 pb-28 pt-20 sm:p-4 sm:pb-28 sm:pt-20 md:gap-6 md:p-6 xl:p-8">
             <header className={`${whiteCardClass} flex flex-col gap-5 p-4 sm:p-6 md:flex-row md:items-center md:justify-between`}>
               <div className="flex items-start gap-3">
                 <div className="pl-12 lg:pl-0">

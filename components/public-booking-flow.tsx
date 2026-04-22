@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StatusNotice } from "@/components/app-ui";
 import {
   BookingStepCard,
@@ -145,6 +145,12 @@ function getMonthDateFromIso(isoDate: string) {
   return new Date(Date.UTC(year, month - 1, 1, 12, 0, 0));
 }
 
+function addDaysToIsoDate(isoDate: string, days: number) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0));
+  return getIsoDateInTimezone(date, "UTC");
+}
+
 function shiftUtcMonth(date: Date, amount: number) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1, 12, 0, 0));
 }
@@ -231,6 +237,7 @@ export function PublicBookingFlow({
   barbers,
   services,
 }: PublicBookingFlowProps) {
+  const availabilityCacheRef = useRef<Record<string, string[]>>({});
   const safeBarbers = Array.isArray(barbers) ? barbers : [];
   const safeServices = Array.isArray(services) ? services : [];
   const safeTimezone = useMemo(() => resolveSafeTimezone(timezone), [timezone]);
@@ -244,6 +251,7 @@ export function PublicBookingFlow({
   const [selectedSlot, setSelectedSlot] = useState("");
   const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isRefreshingSlots, setIsRefreshingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasNoPreference, setHasNoPreference] = useState(false);
   const [status, setStatus] = useState<StatusState>({
@@ -327,25 +335,58 @@ export function PublicBookingFlow({
     }
 
     let active = true;
+    const cacheKey = `${selectedBarberId}:${selectedDateIso}`;
+    const cachedSlots = availabilityCacheRef.current[cacheKey];
 
     async function loadAppointments() {
-      setIsLoadingSlots(true);
+      if (cachedSlots) {
+        setOccupiedSlots(cachedSlots);
+        setIsLoadingSlots(false);
+        setIsRefreshingSlots(true);
+      } else {
+        setIsLoadingSlots(true);
+      }
+
       const payload = await getPublicAppointments(selectedBarberId, selectedDateIso);
 
       if (!active) {
         return;
       }
 
-      setOccupiedSlots((payload?.appointments ?? []).map((appointment) => appointment.slot));
+      const slots = (payload?.appointments ?? []).map((appointment) => appointment.slot);
+      availabilityCacheRef.current[cacheKey] = slots;
+      setOccupiedSlots(slots);
       setSelectedSlot("");
       setIsLoadingSlots(false);
+      setIsRefreshingSlots(false);
     }
 
     void loadAppointments();
 
     return () => {
       active = false;
+      setIsRefreshingSlots(false);
     };
+  }, [selectedBarberId, selectedDateIso]);
+
+  useEffect(() => {
+    if (!selectedBarberId || !selectedDateIso) {
+      return;
+    }
+
+    const datesToPrefetch = [addDaysToIsoDate(selectedDateIso, 1), addDaysToIsoDate(selectedDateIso, 2)];
+
+    datesToPrefetch.forEach((date) => {
+      const cacheKey = `${selectedBarberId}:${date}`;
+
+      if (availabilityCacheRef.current[cacheKey]) {
+        return;
+      }
+
+      void getPublicAppointments(selectedBarberId, date).then((payload) => {
+        availabilityCacheRef.current[cacheKey] = (payload?.appointments ?? []).map((appointment) => appointment.slot);
+      });
+    });
   }, [selectedBarberId, selectedDateIso]);
 
   async function submitBooking() {
@@ -401,7 +442,11 @@ export function PublicBookingFlow({
         notes: "",
         accepted_terms: false,
       });
-      setOccupiedSlots((current) => [...current, selectedSlot]);
+      setOccupiedSlots((current) => {
+        const nextSlots = Array.from(new Set([...current, selectedSlot]));
+        availabilityCacheRef.current[`${selectedBarberId}:${selectedDateIso}`] = nextSlots;
+        return nextSlots;
+      });
       setSelectedSlot("");
       setCurrentStep("service");
     } catch {
@@ -656,13 +701,15 @@ export function PublicBookingFlow({
                 <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-neutral-950">{selectedDay.full}</p>
               </div>
               <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm font-medium text-neutral-500">
-                {chosenProfessionalLabel}
+                {isRefreshingSlots ? "A atualizar..." : chosenProfessionalLabel}
               </span>
             </div>
 
             {isLoadingSlots ? (
-              <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-8 text-sm text-neutral-500">
-                A carregar horários disponíveis...
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {FIXED_SLOTS.slice(0, 6).map((slot) => (
+                  <div key={slot} className="h-14 animate-pulse rounded-2xl bg-neutral-100" />
+                ))}
               </div>
             ) : hasAvailableSlots ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
