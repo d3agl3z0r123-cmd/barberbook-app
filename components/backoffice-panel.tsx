@@ -28,6 +28,10 @@ const DAY_SLOTS = [
   "18:00",
   "18:30",
 ];
+const CALENDAR_ROW_HEIGHT = 48;
+const CALENDAR_START_MINUTES = 9 * 60;
+const CALENDAR_END_MINUTES = 19 * 60;
+const calendarHeight = DAY_SLOTS.length * CALENDAR_ROW_HEIGHT;
 
 type TabId = "overview" | "agenda" | "barbershop" | "branding" | "barbers" | "services" | "clients" | "statistics" | "public-link" | "account" | "admin";
 
@@ -478,6 +482,78 @@ function slotIsCovered(appointment: Appointment, slot: string) {
   return slotDate >= start && slotDate < end;
 }
 
+function timeLabelToMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return (Number.isFinite(hours) ? hours : 0) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+}
+
+function appointmentMinutes(value: string) {
+  return timeLabelToMinutes(formatTime(value));
+}
+
+function appointmentDurationMinutes(appointment: Appointment) {
+  const duration = Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / 60000);
+  return Number.isFinite(duration) && duration > 0 ? duration : 30;
+}
+
+function appointmentBlockStyle(appointment: Appointment) {
+  const startsAt = Math.max(CALENDAR_START_MINUTES, appointmentMinutes(appointment.starts_at));
+  const endsAt = Math.min(CALENDAR_END_MINUTES, appointmentMinutes(appointment.ends_at));
+  const visibleDuration = Math.max(30, endsAt - startsAt || appointmentDurationMinutes(appointment));
+
+  return {
+    top: `${((startsAt - CALENDAR_START_MINUTES) / 30) * CALENDAR_ROW_HEIGHT + 4}px`,
+    height: `${Math.max(40, (visibleDuration / 30) * CALENDAR_ROW_HEIGHT - 8)}px`,
+  };
+}
+
+function appointmentTone(appointment: Appointment) {
+  if (appointment.status === "cancelled" || appointment.status === "no_show") {
+    return "border-[#7D7370] bg-[#605957] text-white";
+  }
+
+  const serviceName = appointment.service?.name.toLowerCase() ?? "";
+
+  if (serviceName.includes("barba")) return "border-[#7A6043] bg-[#76644A] text-white";
+  if (serviceName.includes("combo")) return "border-[#4E5865] bg-[#424854] text-white";
+  if (serviceName.includes("premium") || serviceName.includes("corte")) return "border-[#7FA3D5] bg-[#9DBCE8] text-[#23314A]";
+  if (serviceName.includes("pigment") || serviceName.includes("color")) return "border-[#D3A95E] bg-[#EBCF8E] text-[#4A361F]";
+
+  return "border-[#BBB5AC] bg-[#D1CBC2] text-[#2B2118]";
+}
+
+function addDaysToDate(value: string, days: number) {
+  const date = new Date(`${value}T12:00:00`);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function currentMinutesInTimezone(timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone || "Atlantic/Azores",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const hours = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
+  const minutes = Number(parts.find((part) => part.type === "minute")?.value ?? 0);
+  return hours * 60 + minutes;
+}
+
+function currentTimeTop(date: string, timezone: string) {
+  if (date !== getTodayInAzores()) {
+    return null;
+  }
+
+  const minutes = currentMinutesInTimezone(timezone);
+
+  if (minutes < CALENDAR_START_MINUTES || minutes > CALENDAR_END_MINUTES) {
+    return null;
+  }
+
+  return ((minutes - CALENDAR_START_MINUTES) / 30) * CALENDAR_ROW_HEIGHT;
+}
+
 export function BackofficePanel() {
   const autoRefreshInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -493,6 +569,7 @@ export function BackofficePanel() {
   const [adminPlatform, setAdminPlatform] = useState<AdminPlatformPayload | null>(null);
   const [adminFilter, setAdminFilter] = useState<AdminFilter>("active");
   const [openAgendaBarberIds, setOpenAgendaBarberIds] = useState<number[]>([]);
+  const [selectedAgendaAppointment, setSelectedAgendaAppointment] = useState<Appointment | null>(null);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
@@ -1792,6 +1869,7 @@ export function BackofficePanel() {
     const appointments = dayAgenda?.appointments ?? [];
     const sortedAppointments = [...appointments].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
     const calendarBarbers = barbers.length > 0 ? barbers : [{ id: 0, name: "Agenda", email: null, phone: null } satisfies Barber];
+    const nowTop = currentTimeTop(selectedDate, timezone);
 
     return (
       <div className="space-y-6">
@@ -1802,7 +1880,16 @@ export function BackofficePanel() {
               <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">{dayAgenda ? formatDayTitle(dayAgenda.date, timezone) : "Seleciona uma data"}</h2>
             </div>
             <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => setSelectedDate((current) => addDaysToDate(current, -1))} className={secondaryButtonClass}>
+                Dia anterior
+              </button>
               <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className={inputClass} />
+              <button type="button" onClick={() => setSelectedDate((current) => addDaysToDate(current, 1))} className={secondaryButtonClass}>
+                Dia seguinte
+              </button>
+              <button type="button" onClick={() => setSelectedDate(getTodayInAzores())} className={secondaryButtonClass}>
+                Hoje
+              </button>
               <button type="button" onClick={() => void loadDayAgenda(token, selectedDate)} className={secondaryButtonClass}>
                 Atualizar agenda
               </button>
@@ -1814,6 +1901,128 @@ export function BackofficePanel() {
         </article>
 
         <article className={`${whiteCardClass} overflow-hidden rounded-2xl`}>
+          <div className="flex flex-col gap-3 border-b border-[#D8C3A5]/70 bg-[#FFF7EC] p-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase text-[#A86840]">Calendário da equipa</p>
+              <h3 className="mt-1 text-2xl font-black text-[#2B2118]">Marcações por barbeiro</h3>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#5B4F3A]/75">
+              <span className="rounded-full border border-[#D8C3A5]/70 bg-[#F8E8D3] px-3 py-1">{appointments.length} marcações</span>
+              <span className="rounded-full border border-[#D8C3A5]/70 bg-[#F8E8D3] px-3 py-1">09:00 - 19:00</span>
+            </div>
+          </div>
+
+          {barbers.length === 0 ? (
+            <div className="p-5">
+              <div className="flex items-start gap-3 rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#F8E8D3] px-4 py-5 text-sm text-[#5B4F3A]/75">
+                <IconEmpty />
+                <div>
+                  <p className="font-medium text-[#2B2118]">Ainda sem barbeiros</p>
+                  <p className="mt-1">Cria pelo menos um barbeiro para veres o calendário da equipa.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto bg-[#EEE7DC]">
+              <div className="min-w-[920px]">
+                <div
+                  className="grid border-b border-[#D8C3A5]/70 bg-[#FFF7EC]"
+                  style={{ gridTemplateColumns: `74px repeat(${calendarBarbers.length}, minmax(190px, 1fr))` }}
+                >
+                  <div className="border-r border-[#D8C3A5]/70 px-3 py-3 text-xs font-black text-[#5B4F3A]/70">Hora</div>
+                  {calendarBarbers.map((barber) => {
+                    const barberAppointments = sortedAppointments.filter((appointment) => appointment.barber_id === barber.id);
+
+                    return (
+                      <div key={barber.id} className="flex items-center gap-3 border-r border-[#D8C3A5]/70 px-3 py-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#A86840] text-xs font-black text-[#FFF7EC]">
+                          {barber.photo_url ? (
+                            <img src={barber.photo_url} alt={`Foto de ${barber.name}`} className="h-full w-full object-cover" />
+                          ) : (
+                            barber.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-black text-[#2B2118]">{barber.name}</p>
+                          <p className="text-xs font-bold text-[#5B4F3A]/60">{barberAppointments.length} marcações</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div
+                  className="grid"
+                  style={{ gridTemplateColumns: `74px repeat(${calendarBarbers.length}, minmax(190px, 1fr))` }}
+                >
+                  <div className="relative border-r border-[#D8C3A5]/70 bg-[#FFF7EC]" style={{ height: `${calendarHeight}px` }}>
+                    {DAY_SLOTS.map((slot, index) => (
+                      <div
+                        key={slot}
+                        className="absolute left-0 right-0 border-t border-[#D8C3A5]/70 px-3 pt-1 text-[11px] font-black text-[#5B4F3A]/70"
+                        style={{ top: `${index * CALENDAR_ROW_HEIGHT}px`, height: `${CALENDAR_ROW_HEIGHT}px` }}
+                      >
+                        {slot}
+                      </div>
+                    ))}
+                  </div>
+
+                  {calendarBarbers.map((barber) => {
+                    const barberAppointments = sortedAppointments.filter((appointment) => appointment.barber_id === barber.id);
+
+                    return (
+                      <div key={barber.id} className="relative border-r border-[#D8C3A5]/70 bg-[#F6EFE5]" style={{ height: `${calendarHeight}px` }}>
+                        {DAY_SLOTS.map((slot, index) => (
+                          <div
+                            key={`${barber.id}-${slot}`}
+                            className="absolute left-0 right-0 border-t border-[#D8C3A5]/55"
+                            style={{ top: `${index * CALENDAR_ROW_HEIGHT}px`, height: `${CALENDAR_ROW_HEIGHT}px` }}
+                          />
+                        ))}
+
+                        {barberAppointments.length === 0 ? (
+                          <div className="absolute inset-x-3 top-4 rounded-xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC]/75 px-3 py-2 text-xs font-bold text-[#5B4F3A]/55">
+                            Sem marcações
+                          </div>
+                        ) : null}
+
+                        {barberAppointments.map((appointment) => (
+                          <button
+                            key={appointment.id}
+                            type="button"
+                            onClick={() => setSelectedAgendaAppointment(appointment)}
+                            className={`absolute left-2 right-2 overflow-hidden rounded-xl border px-2.5 py-2 text-left shadow-sm transition-all hover:z-10 hover:-translate-y-0.5 hover:shadow-lg ${appointmentTone(appointment)}`}
+                            style={appointmentBlockStyle(appointment)}
+                            title={`${formatTime(appointment.starts_at)} - ${appointment.client_name}`}
+                          >
+                            <span className="absolute right-2 top-2 text-xs leading-none opacity-70">=</span>
+                            <span className="block truncate text-xs font-semibold opacity-80">
+                              {formatTime(appointment.starts_at)} ({appointmentDurationMinutes(appointment)}m)
+                            </span>
+                            <span className="mt-1 block truncate text-sm font-black">{appointment.client_name}</span>
+                            <span className="block truncate text-xs font-semibold opacity-80">{appointment.service?.name ?? "Serviço"}</span>
+                            <span className="mt-1 inline-flex rounded-full bg-black/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide opacity-85">
+                              {statusLabel(appointment.status)}
+                            </span>
+                          </button>
+                        ))}
+                        {nowTop !== null ? (
+                          <div className="pointer-events-none absolute left-0 right-0 z-20 flex items-center" style={{ top: `${nowTop}px` }}>
+                            <span className="h-2 w-2 rounded-full bg-[#A86840]" />
+                            <span className="h-[2px] flex-1 bg-[#A86840]" />
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </article>
+
+        {false ? (
+        <article className={`${whiteCardClass} hidden overflow-hidden rounded-2xl`}>
           <div className="flex flex-col gap-3 border-b border-[#D8C3A5]/70 p-5 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A86840]">Calendário da equipa</p>
@@ -1901,6 +2110,7 @@ export function BackofficePanel() {
             )}
           </div>
 
+          {false ? (
           <div className="hidden">
             <div
               className="grid min-w-[860px]"
@@ -1957,7 +2167,9 @@ export function BackofficePanel() {
               ))}
             </div>
           </div>
+          ) : null}
         </article>
+        ) : null}
 
         <div className="grid gap-6">
           <form className={`${whiteCardClass} rounded-2xl p-8`} onSubmit={handleAppointmentSubmit}>
@@ -1990,6 +2202,7 @@ export function BackofficePanel() {
             </div>
           </form>
 
+          {false ? (
           <div className="hidden">
             <article className={`${whiteCardClass} rounded-2xl p-8`}>
               <p className="text-sm text-[#5B4F3A]/75">Agenda visual</p>
@@ -2056,6 +2269,7 @@ export function BackofficePanel() {
               </div>
             </article>
           </div>
+          ) : null}
         </div>
       </div>
     );
@@ -2688,6 +2902,87 @@ export function BackofficePanel() {
           </section>
         </div>
       </div>
+      {selectedAgendaAppointment ? (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[#2B2118]/45 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-xl rounded-[28px] border border-[#D8C3A5]/80 bg-[#FFF7EC] p-6 shadow-[0_24px_80px_rgba(43,33,24,0.28)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#A86840]">Detalhe da marcação</p>
+                <h2 className="mt-2 text-2xl font-black text-[#2B2118]">{selectedAgendaAppointment.client_name}</h2>
+                <p className="mt-1 text-sm font-medium text-[#5B4F3A]/75">
+                  {formatDateTimeLabel(selectedAgendaAppointment.starts_at, timezone)}
+                </p>
+              </div>
+              <button type="button" onClick={() => setSelectedAgendaAppointment(null)} className={ghostButtonClass}>
+                Fechar
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]/60">Serviço</p>
+                <p className="mt-2 font-semibold text-[#2B2118]">{selectedAgendaAppointment.service?.name ?? "Serviço"}</p>
+              </div>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]/60">Barbeiro</p>
+                <p className="mt-2 font-semibold text-[#2B2118]">{selectedAgendaAppointment.barber?.name ?? "Barbeiro"}</p>
+              </div>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]/60">Contacto</p>
+                <p className="mt-2 font-semibold text-[#2B2118]">{selectedAgendaAppointment.client_phone}</p>
+                <p className="mt-1 text-sm text-[#5B4F3A]/75">{selectedAgendaAppointment.client_email ?? "Sem e-mail"}</p>
+              </div>
+              <div className="rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]/60">Estado</p>
+                <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-black ${statusBadge(selectedAgendaAppointment.status)}`}>
+                  {statusLabel(selectedAgendaAppointment.status)}
+                </span>
+              </div>
+            </div>
+
+            {selectedAgendaAppointment.notes ? (
+              <div className="mt-3 rounded-2xl bg-[#F8E8D3] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]/60">Notas</p>
+                <p className="mt-2 text-sm leading-6 text-[#2B2118]">{selectedAgendaAppointment.notes}</p>
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setAppointmentForm({
+                    id: String(selectedAgendaAppointment.id),
+                    barber_id: String(selectedAgendaAppointment.barber_id),
+                    service_id: String(selectedAgendaAppointment.service_id),
+                    client_name: selectedAgendaAppointment.client_name,
+                    client_phone: selectedAgendaAppointment.client_phone,
+                    client_email: selectedAgendaAppointment.client_email ?? "",
+                    starts_at: toDatetimeLocal(selectedAgendaAppointment.starts_at),
+                    notes: selectedAgendaAppointment.notes ?? "",
+                    status: selectedAgendaAppointment.status,
+                  });
+                  setSelectedAgendaAppointment(null);
+                }}
+                className={primaryButtonClass}
+              >
+                Editar marcação
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const appointmentId = selectedAgendaAppointment.id;
+                  setSelectedAgendaAppointment(null);
+                  void handleDeleteAppointment(appointmentId);
+                }}
+                className={secondaryButtonClass}
+              >
+                Apagar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
