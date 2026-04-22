@@ -628,7 +628,6 @@ export function BackofficePanel() {
       }
     };
 
-    refresh();
     const intervalId = window.setInterval(refresh, 15000);
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -749,7 +748,13 @@ export function BackofficePanel() {
 
     try {
       const headers = { Accept: "application/json", Authorization: `Bearer ${currentToken}` };
-      const userResponse = await fetch(apiUrl("/user"), { headers });
+      const userRequest = fetch(apiUrl("/user"), { headers });
+      const barbershopRequest = fetch(apiUrl("/barbershop"), { headers });
+      const barbersRequest = fetch(apiUrl("/barbers"), { headers });
+      const servicesRequest = fetch(apiUrl("/services"), { headers });
+      const agendaRequest = fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers });
+
+      const userResponse = await userRequest;
       const userPayload = parseApiResponse(await userResponse.text());
 
       if (!userResponse.ok) {
@@ -778,10 +783,10 @@ export function BackofficePanel() {
       });
 
       const [barbershopResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
-        fetch(apiUrl("/barbershop"), { headers }),
-        fetch(apiUrl("/barbers"), { headers }),
-        fetch(apiUrl("/services"), { headers }),
-        fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
+        barbershopRequest,
+        barbersRequest,
+        servicesRequest,
+        agendaRequest,
       ]);
 
       const barbershopPayload = parseApiResponse(await barbershopResponse.text());
