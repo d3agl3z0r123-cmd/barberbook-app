@@ -543,6 +543,18 @@ export function BackofficePanel() {
   });
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    const urlTokenType = params.get("token_type") ?? "Bearer";
+
+    if (urlToken) {
+      window.localStorage.setItem(TOKEN_STORAGE_KEY, urlToken);
+      window.localStorage.setItem(TOKEN_TYPE_STORAGE_KEY, urlTokenType);
+      window.history.replaceState(null, "", window.location.pathname);
+      setToken(urlToken);
+      return;
+    }
+
     setToken(window.localStorage.getItem(TOKEN_STORAGE_KEY) ?? "");
   }, []);
 
@@ -625,23 +637,8 @@ export function BackofficePanel() {
 
     try {
       const headers = { Accept: "application/json", Authorization: `Bearer ${currentToken}` };
-      const [userResponse, barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse, statisticsResponse] = await Promise.all([
-        fetch(apiUrl("/user"), { headers }),
-        fetch(apiUrl("/barbershop"), { headers }),
-        fetch(apiUrl("/barbershop/qr-code"), { headers }),
-        fetch(apiUrl("/barbers"), { headers }),
-        fetch(apiUrl("/services"), { headers }),
-        fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
-        fetch(apiUrl("/appointments/statistics"), { headers }),
-      ]);
-
+      const userResponse = await fetch(apiUrl("/user"), { headers });
       const userPayload = parseApiResponse(await userResponse.text());
-      const barbershopPayload = parseApiResponse(await barbershopResponse.text());
-      const qrPayload = parseApiResponse(await qrResponse.text());
-      const barbersPayload = parseApiResponse(await barbersResponse.text());
-      const servicesPayload = parseApiResponse(await servicesResponse.text());
-      const agendaPayload = parseApiResponse(await agendaResponse.text());
-      const statisticsPayload = parseApiResponse(await statisticsResponse.text());
 
       if (!userResponse.ok) {
         setStatus({ kind: "error", title: "Sessão inválida", body: "Entra novamente para abrir o backoffice." });
@@ -651,7 +648,7 @@ export function BackofficePanel() {
       const currentUser = userPayload?.user
         ? {
             ...userPayload.user,
-            is_super_admin: Boolean(userPayload?.is_super_admin ?? userPayload.user?.is_super_admin),
+            is_super_admin: Boolean(userPayload?.is_super_admin ?? userPayload.user?.is_super_admin ?? userPayload.user?.role === "admin"),
             is_active: userPayload.user?.is_active ?? true,
           }
         : null;
@@ -659,17 +656,31 @@ export function BackofficePanel() {
       setUser(currentUser);
       if (currentUser?.is_super_admin || currentUser?.role === "admin") {
         setActiveTab("admin");
+        void loadAdminPlatform(currentToken);
+      } else {
+        setAdminPlatform(null);
       }
       setAccountProfileForm({
         email: userPayload?.user?.email ?? "",
         phone: userPayload?.user?.phone ?? "",
       });
 
-      if (currentUser?.is_super_admin) {
-        await loadAdminPlatform(currentToken);
-      } else {
-        setAdminPlatform(null);
-      }
+      const [barbershopResponse, qrResponse, barbersResponse, servicesResponse, agendaResponse, statisticsResponse] = await Promise.all([
+        fetch(apiUrl("/barbershop"), { headers }),
+        fetch(apiUrl("/barbershop/qr-code"), { headers }),
+        fetch(apiUrl("/barbers"), { headers }),
+        fetch(apiUrl("/services"), { headers }),
+        fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers }),
+        fetch(apiUrl("/appointments/statistics"), { headers }),
+      ]);
+
+      const barbershopPayload = parseApiResponse(await barbershopResponse.text());
+      const qrPayload = parseApiResponse(await qrResponse.text());
+      const barbersPayload = parseApiResponse(await barbersResponse.text());
+      const servicesPayload = parseApiResponse(await servicesResponse.text());
+      const agendaPayload = parseApiResponse(await agendaResponse.text());
+      const statisticsPayload = parseApiResponse(await statisticsResponse.text());
+
 
       if (barbershopResponse.status === 404 || agendaResponse.status === 404 || statisticsResponse.status === 404) {
         setBarbershop(null);
