@@ -22,7 +22,7 @@ export function PublicPageShell({
 }) {
   return (
     <main className={publicPageClass}>
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 md:px-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-3 py-4 sm:px-4 sm:py-6 md:px-6">
         <div className="mb-6 flex items-center justify-between">
           <Link href="/" className="text-lg font-extrabold tracking-tight text-[#2B2118]">
             BarberBook
@@ -58,8 +58,8 @@ export function MinimalAuthCard({
         </Link>
       }
     >
-      <div className="mx-auto flex w-full max-w-xl flex-1 items-center justify-center py-8">
-        <section className={`${publicCardClass} w-full p-7 md:p-9`}>
+      <div className="mx-auto flex w-full max-w-xl flex-1 items-center justify-center py-4 sm:py-8">
+        <section className={`${publicCardClass} w-full p-5 sm:p-7 md:p-9`}>
           <div className="mb-8">
             <p className="text-sm font-bold tracking-tight text-[#8B735B]">BarberBook</p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.03em] text-[#2B2118] md:text-[2rem]">{title}</h1>
@@ -132,18 +132,18 @@ export function BookingHeader({
 }) {
   return (
     <section className="overflow-hidden rounded-[28px] border border-[#D8C3A5]/80 bg-[#FFF7EC] shadow-[0_18px_50px_rgba(43,33,24,0.10)]">
-      <div className="relative flex h-56 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#EAD8BF_0%,#D8C3A5_38%,#A86840_100%)] px-6 text-center md:h-72">
+      <div className="relative flex h-44 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#EAD8BF_0%,#D8C3A5_38%,#A86840_100%)] px-4 text-center sm:h-56 md:h-72">
         {imageUrl ? (
           <img src={imageUrl} alt={`Imagem da barbearia ${name}`} className="absolute inset-0 h-full w-full scale-105 object-cover blur-[2px]" />
         ) : null}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(43,33,24,0.16),rgba(43,33,24,0.58))]" />
         <div className="relative z-10 mx-auto max-w-3xl text-[#FFF7EC]">
           <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#FFF7EC]/80">Nova marcação</p>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-[-0.05em] md:text-6xl">{name}</h1>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-[-0.05em] sm:text-4xl md:text-6xl">{name}</h1>
         </div>
       </div>
-      <div className="relative space-y-5 p-6 pt-0 text-center md:p-10 md:pt-0">
-        <div className="mx-auto -mt-16 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-3xl font-extrabold text-[#FFF7EC] shadow-sm md:h-36 md:w-36">
+      <div className="relative space-y-4 p-4 pt-0 text-center sm:p-6 sm:pt-0 md:p-10 md:pt-0">
+        <div className="mx-auto -mt-12 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-[#FFF7EC] bg-[#A86840] text-2xl font-extrabold text-[#FFF7EC] shadow-sm sm:-mt-16 sm:h-32 sm:w-32 sm:text-3xl md:h-36 md:w-36">
           {logoUrl ? (
             <img src={logoUrl} alt={`Logo da barbearia ${name}`} className="h-full w-full object-cover" />
           ) : (
@@ -221,7 +221,7 @@ export function BookingStepCard({
 }) {
   return (
     <section className={`${publicCardClass} overflow-hidden`}>
-      <div className="border-b border-neutral-200 px-7 py-6 md:px-10">
+      <div className="border-b border-neutral-200 px-4 py-5 sm:px-7 sm:py-6 md:px-10">
         <div className="flex items-start gap-4">
           <div className="w-10">
             {onBack ? (
@@ -239,8 +239,8 @@ export function BookingStepCard({
             )}
           </div>
           <div className="flex-1 text-center">
-            <h2 className="text-2xl font-bold tracking-[-0.04em] text-neutral-950 md:text-3xl">{title}</h2>
-            {description ? <p className="mt-2 text-base leading-7 text-neutral-500">{description}</p> : null}
+            <h2 className="text-xl font-bold tracking-[-0.04em] text-neutral-950 sm:text-2xl md:text-3xl">{title}</h2>
+            {description ? <p className="mt-2 text-sm leading-6 text-neutral-500 sm:text-base sm:leading-7">{description}</p> : null}
           </div>
           <div className="w-10">
             {onNext ? (
@@ -260,8 +260,8 @@ export function BookingStepCard({
           </div>
         </div>
       </div>
-      <div className="px-7 py-7 md:px-10 md:py-8">{children}</div>
-      {footer ? <div className="border-t border-neutral-200 px-7 py-6 md:px-10">{footer}</div> : null}
+      <div className="px-4 py-5 sm:px-7 sm:py-7 md:px-10 md:py-8">{children}</div>
+      {footer ? <div className="border-t border-neutral-200 px-4 py-5 sm:px-7 sm:py-6 md:px-10">{footer}</div> : null}
     </section>
   );
 }
@@ -276,12 +276,12 @@ export function StepNavigation({
   onBack?: () => void;
 }) {
   return (
-    <div className="mb-6 flex items-center justify-between gap-4">
-      <div className="flex gap-2">
+    <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6 sm:gap-4">
+      <div className="flex flex-1 gap-1.5 sm:gap-2">
         {Array.from({ length: totalSteps }).map((_, index) => (
           <span
             key={index}
-            className={`h-2.5 w-10 rounded-full transition-all ${
+            className={`h-2.5 flex-1 rounded-full transition-all sm:w-10 sm:flex-none ${
               index + 1 <= currentStep ? "bg-neutral-950" : "bg-neutral-200"
             }`}
           />
@@ -330,7 +330,7 @@ export function SelectionTile({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full rounded-2xl border px-4 py-4 text-left transition-all ${
+      className={`w-full rounded-2xl border px-4 py-4 text-left transition-all active:scale-[0.99] ${
         disabled && tone === "danger"
           ? "cursor-not-allowed border-rose-200 bg-rose-50 text-rose-700"
           : disabled
@@ -340,19 +340,19 @@ export function SelectionTile({
             : "border-neutral-200 bg-white hover:border-neutral-400 hover:bg-neutral-50"
       }`}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           {leading ? <div>{leading}</div> : null}
-          <div>
-            <p className="text-lg font-semibold tracking-[-0.02em]">{title}</p>
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold tracking-[-0.02em] sm:text-lg">{title}</p>
             {subtitle ? (
-              <p className={`mt-1 text-base leading-6 ${active ? "text-white/75" : disabled && tone === "danger" ? "text-rose-600" : "text-neutral-500"}`}>{subtitle}</p>
+              <p className={`mt-1 text-sm leading-6 sm:text-base ${active ? "text-white/75" : disabled && tone === "danger" ? "text-rose-600" : "text-neutral-500"}`}>{subtitle}</p>
             ) : null}
           </div>
         </div>
         {meta ? (
           <span
-            className={`rounded-full px-3 py-1.5 text-base font-semibold ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold sm:text-base ${
               active ? "bg-white text-neutral-950" : "bg-neutral-100 text-neutral-700"
             }`}
           >

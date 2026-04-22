@@ -468,7 +468,7 @@ export function PublicBookingFlow({
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-[56rem] gap-5">
+    <div className="mx-auto grid w-full max-w-[56rem] gap-4 sm:gap-5">
       <div className="px-2">
         <StepNavigation currentStep={steps.indexOf(currentStep) + 1} totalSteps={steps.length} />
       </div>
@@ -582,7 +582,7 @@ export function PublicBookingFlow({
             </div>
           }
         >
-          <div className="rounded-[28px] border border-neutral-200 bg-neutral-50/70 p-5 md:p-6">
+          <div className="rounded-[24px] border border-neutral-200 bg-neutral-50/70 p-3 sm:rounded-[28px] sm:p-5 md:p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-400">Calendário</p>
@@ -613,7 +613,7 @@ export function PublicBookingFlow({
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-7 gap-2 text-center">
+            <div className="mt-5 grid grid-cols-7 gap-1.5 text-center sm:mt-6 sm:gap-2">
               {WEEKDAY_LABELS.map((label) => (
                 <span key={label} className="py-2 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-400">
                   {label}
@@ -630,7 +630,7 @@ export function PublicBookingFlow({
                       setSelectedDateIso(day.isoDate);
                       setSelectedSlot("");
                     }}
-                    className={`flex aspect-square items-center justify-center rounded-2xl text-sm font-semibold transition-all ${
+                    className={`flex aspect-square items-center justify-center rounded-xl text-sm font-semibold transition-all sm:rounded-2xl ${
                       day.isoDate === selectedDateIso
                         ? "bg-neutral-950 text-white shadow-sm"
                         : day.isDisabled
@@ -665,7 +665,7 @@ export function PublicBookingFlow({
                 A carregar horários disponíveis...
               </div>
             ) : hasAvailableSlots ? (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {slotStates.map((slotState) => (
                   <SelectionTile
                     key={slotState.slot}

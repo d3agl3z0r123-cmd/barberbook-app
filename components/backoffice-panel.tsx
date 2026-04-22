@@ -225,13 +225,13 @@ const tabs: Array<{ id: TabId; label: string }> = [
 ];
 
 const inputClass =
-  "w-full rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-3 text-base font-medium text-[#2B2118] outline-none transition-all placeholder:text-[#2B2118]/35 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
+  "w-full min-h-12 rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-3 text-base font-medium text-[#2B2118] outline-none transition-all placeholder:text-[#2B2118]/35 focus:border-[#A86840] focus:ring-2 focus:ring-[#A86840]/20";
 const primaryButtonClass =
-  "inline-flex items-center justify-center rounded-xl bg-[#A86840] px-4 py-2.5 text-sm font-medium text-[#FFF7EC] transition-all hover:bg-[#8A5433] disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center rounded-xl bg-[#A86840] px-4 py-2.5 text-sm font-medium text-[#FFF7EC] transition-all hover:bg-[#8A5433] disabled:opacity-50";
 const secondaryButtonClass =
-  "inline-flex items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-2.5 text-sm font-medium text-[#2B2118] transition-all hover:border-[#A86840]/45 hover:bg-[#F1DDC2]";
+  "inline-flex min-h-11 items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-4 py-2.5 text-sm font-medium text-[#2B2118] transition-all hover:border-[#A86840]/45 hover:bg-[#F1DDC2]";
 const ghostButtonClass =
-  "inline-flex items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-3.5 py-2 text-sm font-medium text-[#5B4F3A] transition-all hover:border-[#A86840]/45 hover:bg-[#F1DDC2]";
+  "inline-flex min-h-11 items-center justify-center rounded-xl border border-[#D8C3A5]/70 bg-[#FFF7EC] px-3.5 py-2 text-sm font-medium text-[#5B4F3A] transition-all hover:border-[#A86840]/45 hover:bg-[#F1DDC2]";
 const whiteCardClass = "rounded-2xl border border-[#D8C3A5]/70 bg-[#FFF7EC] shadow-[0_12px_40px_rgba(0,0,0,0.18)]";
 
 function IconDashboard() {
@@ -570,6 +570,7 @@ export function BackofficePanel() {
   const [adminFilter, setAdminFilter] = useState<AdminFilter>("active");
   const [openAgendaBarberIds, setOpenAgendaBarberIds] = useState<number[]>([]);
   const [selectedAgendaAppointment, setSelectedAgendaAppointment] = useState<Appointment | null>(null);
+  const [mobileAgendaBarberId, setMobileAgendaBarberId] = useState("all");
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInAzores());
   const [isLoading, setIsLoading] = useState(false);
@@ -1870,30 +1871,33 @@ export function BackofficePanel() {
     const sortedAppointments = [...appointments].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
     const calendarBarbers = barbers.length > 0 ? barbers : [{ id: 0, name: "Agenda", email: null, phone: null } satisfies Barber];
     const nowTop = currentTimeTop(selectedDate, timezone);
+    const mobileAppointments = mobileAgendaBarberId === "all"
+      ? sortedAppointments
+      : sortedAppointments.filter((appointment) => String(appointment.barber_id) === mobileAgendaBarberId);
 
     return (
       <div className="space-y-6">
-        <article className={`${whiteCardClass} rounded-2xl p-8`}>
+        <article className={`${whiteCardClass} rounded-2xl p-5 sm:p-8`}>
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm text-[#5B4F3A]/75">Agenda</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#2B2118]">{dayAgenda ? formatDayTitle(dayAgenda.date, timezone) : "Seleciona uma data"}</h2>
+              <h2 className="mt-2 text-xl font-semibold text-[#2B2118] sm:text-2xl">{dayAgenda ? formatDayTitle(dayAgenda.date, timezone) : "Seleciona uma data"}</h2>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={() => setSelectedDate((current) => addDaysToDate(current, -1))} className={secondaryButtonClass}>
-                Dia anterior
+            <div className="grid gap-3 sm:flex sm:flex-wrap">
+              <button type="button" onClick={() => setSelectedDate((current) => addDaysToDate(current, -1))} className={`${secondaryButtonClass} w-full sm:w-auto`}>
+                Anterior
               </button>
               <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className={inputClass} />
-              <button type="button" onClick={() => setSelectedDate((current) => addDaysToDate(current, 1))} className={secondaryButtonClass}>
-                Dia seguinte
+              <button type="button" onClick={() => setSelectedDate((current) => addDaysToDate(current, 1))} className={`${secondaryButtonClass} w-full sm:w-auto`}>
+                Seguinte
               </button>
-              <button type="button" onClick={() => setSelectedDate(getTodayInAzores())} className={secondaryButtonClass}>
+              <button type="button" onClick={() => setSelectedDate(getTodayInAzores())} className={`${secondaryButtonClass} w-full sm:w-auto`}>
                 Hoje
               </button>
-              <button type="button" onClick={() => void loadDayAgenda(token, selectedDate)} className={secondaryButtonClass}>
+              <button type="button" onClick={() => void loadDayAgenda(token, selectedDate)} className={`${secondaryButtonClass} w-full sm:w-auto`}>
                 Atualizar agenda
               </button>
-              <button type="button" onClick={handleExportAgenda} disabled={isExportingAgenda} className={primaryButtonClass}>
+              <button type="button" onClick={handleExportAgenda} disabled={isExportingAgenda} className={`${primaryButtonClass} w-full sm:w-auto`}>
                 {isExportingAgenda ? "A exportar..." : "Exportar agenda"}
               </button>
             </div>
@@ -1923,7 +1927,68 @@ export function BackofficePanel() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto bg-[#EEE7DC]">
+            <>
+            <div className="bg-[#EEE7DC] p-4 md:hidden">
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileAgendaBarberId("all")}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold ${
+                    mobileAgendaBarberId === "all"
+                      ? "border-[#A86840] bg-[#A86840] text-[#FFF7EC]"
+                      : "border-[#D8C3A5]/70 bg-[#FFF7EC] text-[#5B4F3A]"
+                  }`}
+                >
+                  Todos
+                </button>
+                {barbers.map((barber) => (
+                  <button
+                    key={barber.id}
+                    type="button"
+                    onClick={() => setMobileAgendaBarberId(String(barber.id))}
+                    className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold ${
+                      mobileAgendaBarberId === String(barber.id)
+                        ? "border-[#A86840] bg-[#A86840] text-[#FFF7EC]"
+                        : "border-[#D8C3A5]/70 bg-[#FFF7EC] text-[#5B4F3A]"
+                    }`}
+                  >
+                    {barber.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {mobileAppointments.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] p-5 text-sm font-medium text-[#5B4F3A]/75">
+                    Sem marcações para este filtro neste dia.
+                  </div>
+                ) : (
+                  mobileAppointments.map((appointment) => (
+                    <button
+                      key={appointment.id}
+                      type="button"
+                      onClick={() => setSelectedAgendaAppointment(appointment)}
+                      className={`w-full rounded-2xl border p-4 text-left shadow-sm transition-all active:scale-[0.99] ${appointmentTone(appointment)}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-2xl font-black">{formatTime(appointment.starts_at)}</p>
+                          <p className="mt-1 text-xs font-bold opacity-80">{appointmentDurationMinutes(appointment)} minutos</p>
+                        </div>
+                        <span className="rounded-full bg-black/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide">
+                          {statusLabel(appointment.status)}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-lg font-black">{appointment.client_name}</p>
+                      <p className="mt-1 text-sm font-semibold opacity-85">{appointment.service?.name ?? "Serviço"}</p>
+                      <p className="mt-1 text-sm font-medium opacity-75">{appointment.barber?.name ?? "Barbeiro"}</p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="hidden overflow-x-auto bg-[#EEE7DC] md:block">
               <div className="min-w-[920px]">
                 <div
                   className="grid border-b border-[#D8C3A5]/70 bg-[#FFF7EC]"
@@ -2018,6 +2083,7 @@ export function BackofficePanel() {
                 </div>
               </div>
             </div>
+            </>
           )}
         </article>
 
@@ -2842,8 +2908,8 @@ export function BackofficePanel() {
         </aside>
 
         <div className="w-full lg:pl-72">
-          <section className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-6 p-4 md:p-6 xl:p-8">
-            <header className={`${whiteCardClass} flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between`}>
+          <section className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col gap-4 p-3 pt-20 sm:p-4 sm:pt-20 md:gap-6 md:p-6 xl:p-8">
+            <header className={`${whiteCardClass} flex flex-col gap-5 p-4 sm:p-6 md:flex-row md:items-center md:justify-between`}>
               <div className="flex items-start gap-3">
                 <div className="pl-12 lg:pl-0">
                   <p className="text-sm font-medium text-[#5B4F3A]/75">Backoffice principal</p>
@@ -2854,12 +2920,12 @@ export function BackofficePanel() {
                 </div>
               </div>
 
-              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
                 <div className="rounded-2xl bg-[#F8E8D3] px-4 py-3 text-left sm:text-right">
                   <p className="text-sm font-medium text-[#2B2118]">{user?.name ?? "Sem sessão ativa"}</p>
                   <p className="mt-1 text-sm text-[#5B4F3A]/75">{formatDateLabel(selectedDate, timezone)}</p>
                 </div>
-                <button type="button" onClick={() => void handleLogout()} disabled={isLoggingOut} className={ghostButtonClass}>
+                <button type="button" onClick={() => void handleLogout()} disabled={isLoggingOut} className={`${ghostButtonClass} w-full sm:w-auto`}>
                   {isLoggingOut ? "A terminar..." : "Terminar sessão"}
                 </button>
               </div>
@@ -2888,7 +2954,7 @@ export function BackofficePanel() {
                     <p className="mt-2 text-xs opacity-80">{isLoading ? "A carregar painel..." : "Pronto."}</p>
                   </div>
                 </section> : null}
-                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <section className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
                   {topMetrics.map((metric) => (
                     <article key={metric.label} className="rounded-2xl bg-[#FFF7EC] p-4 shadow-sm">
                       <p className="text-xs text-[#5B4F3A]/75">{metric.label}</p>
