@@ -164,15 +164,17 @@ export function BookingHeader({
           ))}
         </div>
         {(instagramUrl || facebookUrl) ? (
-          <div className="flex justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             {instagramUrl ? (
-              <a href={instagramUrl} target="_blank" rel="noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D8C3A5] bg-white text-[#A86840] transition-all hover:border-[#A86840] hover:bg-[#F8E8D3]" aria-label="Abrir Instagram">
+              <a href={instagramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D8C3A5] bg-white px-4 py-2 text-sm font-semibold text-[#A86840] shadow-sm transition-all hover:border-[#A86840] hover:bg-[#F8E8D3]" aria-label="Abrir Instagram">
                 <InstagramIcon />
+                <span>Instagram</span>
               </a>
             ) : null}
             {facebookUrl ? (
-              <a href={facebookUrl} target="_blank" rel="noreferrer" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D8C3A5] bg-white text-[#A86840] transition-all hover:border-[#A86840] hover:bg-[#F8E8D3]" aria-label="Abrir Facebook">
+              <a href={facebookUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D8C3A5] bg-white px-4 py-2 text-sm font-semibold text-[#A86840] shadow-sm transition-all hover:border-[#A86840] hover:bg-[#F8E8D3]" aria-label="Abrir Facebook">
                 <FacebookIcon />
+                <span>Facebook</span>
               </a>
             ) : null}
           </div>
