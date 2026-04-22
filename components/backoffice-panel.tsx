@@ -548,7 +548,7 @@ export function BackofficePanel() {
 
   const timezone = dayAgenda?.timezone ?? barbershop?.timezone ?? "Atlantic/Azores";
   const todayLabel = formatDateLabel(getTodayInAzores(), timezone);
-  const isSuperAdmin = Boolean(user?.is_super_admin);
+  const isSuperAdmin = Boolean(user?.is_super_admin || user?.role === "admin");
   const visibleTabs = useMemo(
     () => (isSuperAdmin ? [...tabs, { id: "admin" as TabId, label: "Admin global" }] : tabs),
     [isSuperAdmin]
@@ -601,10 +601,10 @@ export function BackofficePanel() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (isSuperAdmin && !barbershop && activeTab === "overview") {
+    if (isSuperAdmin && activeTab === "overview") {
       setActiveTab("admin");
     }
-  }, [isSuperAdmin, barbershop, activeTab]);
+  }, [isSuperAdmin, activeTab]);
 
   async function apiRequest(path: string, init?: RequestInit) {
     const response = await fetch(apiUrl(path), {
@@ -657,6 +657,9 @@ export function BackofficePanel() {
         : null;
 
       setUser(currentUser);
+      if (currentUser?.is_super_admin || currentUser?.role === "admin") {
+        setActiveTab("admin");
+      }
       setAccountProfileForm({
         email: userPayload?.user?.email ?? "",
         phone: userPayload?.user?.phone ?? "",

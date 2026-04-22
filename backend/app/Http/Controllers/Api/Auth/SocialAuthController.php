@@ -130,9 +130,10 @@ class SocialAuthController extends Controller
 
             if ($account) {
                 $this->updateGoogleAccount($account, $googleUser);
+                $this->syncSuperAdminRole($account->user, $email);
 
                 return [
-                    'user' => $account->user,
+                    'user' => $account->user->fresh(),
                     'is_new_user' => false,
                 ];
             }
@@ -169,7 +170,7 @@ class SocialAuthController extends Controller
             ]);
 
             return [
-                'user' => $account->user,
+                'user' => $account->user->fresh(),
                 'is_new_user' => $isNewUser,
             ];
         });
