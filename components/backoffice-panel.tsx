@@ -394,6 +394,14 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeContactValue(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function normalizePhoneValue(value?: string | null) {
+  return (value ?? "").replace(/\D+/g, "");
+}
+
 function formatTime(value: string) {
   return value.slice(11, 16);
 }
@@ -601,6 +609,7 @@ function buildDaySummary({ appointments, services }: OptimisticTotalsInput): Day
 
 export function BackofficePanel() {
   const autoRefreshInFlightRef = useRef(false);
+  const statisticsRefreshTimeoutRef = useRef<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [token, setToken] = useState("");
@@ -732,7 +741,12 @@ export function BackofficePanel() {
   }
 
   function updateStatisticsSoon() {
-    window.setTimeout(() => {
+    if (statisticsRefreshTimeoutRef.current) {
+      window.clearTimeout(statisticsRefreshTimeoutRef.current);
+    }
+
+    statisticsRefreshTimeoutRef.current = window.setTimeout(() => {
+      statisticsRefreshTimeoutRef.current = null;
       void loadStatistics();
     }, 250);
   }
@@ -930,6 +944,7 @@ export function BackofficePanel() {
       const barbersRequest = fetch(apiUrl("/barbers"), { headers });
       const servicesRequest = fetch(apiUrl("/services"), { headers });
       const agendaRequest = fetch(apiUrl(`/appointments/day?date=${currentDate}`), { headers });
+      const statisticsRequest = fetch(apiUrl("/appointments/statistics"), { headers });
 
       const userResponse = await userRequest;
       const userPayload = parseApiResponse(await userResponse.text());
@@ -959,17 +974,19 @@ export function BackofficePanel() {
         phone: userPayload?.user?.phone ?? "",
       });
 
-      const [barbershopResponse, barbersResponse, servicesResponse, agendaResponse] = await Promise.all([
+      const [barbershopResponse, barbersResponse, servicesResponse, agendaResponse, statisticsResponse] = await Promise.all([
         barbershopRequest,
         barbersRequest,
         servicesRequest,
         agendaRequest,
+        statisticsRequest,
       ]);
 
       const barbershopPayload = parseApiResponse(await barbershopResponse.text());
       const barbersPayload = parseApiResponse(await barbersResponse.text());
       const servicesPayload = parseApiResponse(await servicesResponse.text());
       const agendaPayload = parseApiResponse(await agendaResponse.text());
+      const statisticsPayload = parseApiResponse(await statisticsResponse.text());
 
 
       if (barbershopResponse.status === 404 || agendaResponse.status === 404) {
@@ -997,8 +1014,8 @@ export function BackofficePanel() {
       setBarbers(barbersPayload?.barbers ?? []);
       setServices(servicesPayload?.services ?? []);
       setDayAgenda(agendaPayload ?? null);
+      setStatistics(statisticsResponse.ok ? statisticsPayload ?? null : null);
       void loadQrCode(currentToken);
-      void loadStatistics(currentToken);
       setBarbershopForm({
         name: currentBarbershop?.name ?? "",
         slug: currentBarbershop?.slug ?? "",
@@ -1465,6 +1482,26 @@ export function BackofficePanel() {
   async function handleBarberSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isBarberSaving) return;
+
+    const nextEmail = normalizeContactValue(barberForm.email);
+    const nextPhone = normalizePhoneValue(barberForm.phone);
+    const duplicateBarber = barbers.find((barber) => {
+      if (barberForm.id && barber.id === Number(barberForm.id)) {
+        return false;
+      }
+
+      return (nextEmail && normalizeContactValue(barber.email) === nextEmail) || (nextPhone && normalizePhoneValue(barber.phone) === nextPhone);
+    });
+
+    if (duplicateBarber) {
+      showFeedback({
+        kind: "error",
+        title: "Barbeiro duplicado",
+        body: "Ja existe um barbeiro com este e-mail ou telemovel.",
+      });
+      return;
+    }
+
     setIsBarberSaving(true);
     const { response, payload } = await apiRequest(barberForm.id ? `/barbers/${barberForm.id}` : "/barbers", {
       method: barberForm.id ? "PUT" : "POST",
@@ -1538,6 +1575,25 @@ export function BackofficePanel() {
   async function handleServiceSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isServiceSaving) return;
+
+    const nextServiceName = normalizeContactValue(serviceForm.name);
+    const duplicateService = services.find((service) => {
+      if (serviceForm.id && service.id === Number(serviceForm.id)) {
+        return false;
+      }
+
+      return normalizeContactValue(service.name) === nextServiceName;
+    });
+
+    if (duplicateService) {
+      showFeedback({
+        kind: "error",
+        title: "Servico duplicado",
+        body: "Ja existe um servico com este nome.",
+      });
+      return;
+    }
+
     setIsServiceSaving(true);
     const { response, payload } = await apiRequest(serviceForm.id ? `/services/${serviceForm.id}` : "/services", {
       method: serviceForm.id ? "PUT" : "POST",

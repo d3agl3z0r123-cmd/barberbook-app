@@ -30,6 +30,7 @@ class ManagementBarberController extends Controller
         $payload = $request->validated();
 
         $this->ensureNotRecentDuplicate($request, 'barber', $payload);
+        $this->ensureUniqueContact($barbershop, $payload);
 
         $barber = $barbershop->barbers()->create([
             'name' => $payload['name'],
@@ -48,11 +49,14 @@ class ManagementBarberController extends Controller
     {
         $barbershop = $this->resolveBarbershop($request);
         $barber = $barbershop->barbers()->findOrFail($id);
+        $payload = $request->validated();
+
+        $this->ensureUniqueContact($barbershop, $payload, $barber->id);
 
         $barber->update([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'phone' => $request->validated('phone'),
+            'name' => $payload['name'],
+            'email' => $payload['email'],
+            'phone' => $payload['phone'],
         ]);
 
         return response()->json([
@@ -156,6 +160,36 @@ class ManagementBarberController extends Controller
         throw ValidationException::withMessages([
             'request' => ['Este pedido já está a ser processado. Aguarda um instante.'],
         ]);
+    }
+
+    private function ensureUniqueContact(Barbershop $barbershop, array $payload, ?int $ignoreId = null): void
+    {
+        $email = strtolower(trim((string) ($payload['email'] ?? '')));
+        $phone = $this->normalizePhone($payload['phone'] ?? null);
+        $query = $barbershop->barbers();
+
+        if ($ignoreId) {
+            $query->whereKeyNot($ignoreId);
+        }
+
+        foreach ($query->get(['id', 'email', 'phone']) as $barber) {
+            if ($email !== '' && strtolower(trim((string) $barber->email)) === $email) {
+                throw ValidationException::withMessages([
+                    'email' => ['Ja existe um barbeiro com este e-mail.'],
+                ]);
+            }
+
+            if ($phone !== '' && $this->normalizePhone($barber->phone) === $phone) {
+                throw ValidationException::withMessages([
+                    'phone' => ['Ja existe um barbeiro com este telemovel.'],
+                ]);
+            }
+        }
+    }
+
+    private function normalizePhone(mixed $phone): string
+    {
+        return preg_replace('/\D+/', '', (string) $phone) ?: '';
     }
 
     private function formatBarber(Barber $barber): array

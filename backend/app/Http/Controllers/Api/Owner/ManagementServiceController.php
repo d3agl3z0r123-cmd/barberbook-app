@@ -28,6 +28,7 @@ class ManagementServiceController extends Controller
         $payload = $request->validated();
 
         $this->ensureNotRecentDuplicate($request, 'service', $payload);
+        $this->ensureUniqueServiceName($barbershop, $payload['name']);
 
         $service = $barbershop->services()->create([
             'name' => $payload['name'],
@@ -46,11 +47,14 @@ class ManagementServiceController extends Controller
     {
         $barbershop = $this->resolveBarbershop($request);
         $service = $barbershop->services()->findOrFail($id);
+        $payload = $request->validated();
+
+        $this->ensureUniqueServiceName($barbershop, $payload['name'], $service->id);
 
         $service->update([
-            'name' => $request->validated('name'),
-            'price' => $request->validated('price'),
-            'duration_minutes' => $request->validated('duration_minutes'),
+            'name' => $payload['name'],
+            'price' => $payload['price'],
+            'duration_minutes' => $payload['duration_minutes'],
         ]);
 
         return response()->json([
@@ -89,6 +93,28 @@ class ManagementServiceController extends Controller
 
         throw ValidationException::withMessages([
             'request' => ['Este pedido já está a ser processado. Aguarda um instante.'],
+        ]);
+    }
+
+    private function ensureUniqueServiceName(Barbershop $barbershop, string $name, ?int $ignoreId = null): void
+    {
+        $normalizedName = strtolower(trim($name));
+        $query = $barbershop->services();
+
+        if ($ignoreId) {
+            $query->whereKeyNot($ignoreId);
+        }
+
+        $exists = $query
+            ->whereRaw('LOWER(name) = ?', [$normalizedName])
+            ->exists();
+
+        if (! $exists) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'name' => ['Ja existe um servico com este nome.'],
         ]);
     }
 

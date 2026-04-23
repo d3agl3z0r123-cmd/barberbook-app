@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -191,7 +192,14 @@ class ManagementAppointmentController extends Controller
             throw $exception;
         }
 
-        $this->notifications->dispatchConfirmation($appointment->fresh(['barbershop.user', 'barber', 'service']));
+        try {
+            $this->notifications->dispatchConfirmation($appointment->fresh(['barbershop.user', 'barber', 'service']));
+        } catch (\Throwable $exception) {
+            Log::warning('Appointment created but backoffice confirmation notification failed.', [
+                'appointment_id' => $appointment->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Agendamento criado com sucesso.',

@@ -343,14 +343,25 @@ export async function getPublicAppointments(barberId: string, date: string) {
     date,
   });
 
-  return safeFetch<{
-    barber_id: number;
-    date: string;
-    timezone: string;
-    appointments: PublicAppointmentSlot[];
-  }>(`/public/appointments?${query.toString()}`, undefined, {
-    revalidate: 10,
-  });
+  try {
+    const response = await fetch(`${publicApiBaseUrl}/public/appointments?${query.toString()}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as {
+      barber_id: number;
+      date: string;
+      timezone: string;
+      appointments: PublicAppointmentSlot[];
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function createPublicAppointment(payload: PublicBookingPayload) {

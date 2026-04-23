@@ -15,6 +15,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PublicAppointmentController extends Controller
@@ -154,7 +155,14 @@ class PublicAppointmentController extends Controller
             throw $exception;
         }
 
-        $this->notifications->dispatchConfirmation($appointment->fresh(['barbershop.user', 'barber', 'service']));
+        try {
+            $this->notifications->dispatchConfirmation($appointment->fresh(['barbershop.user', 'barber', 'service']));
+        } catch (\Throwable $exception) {
+            Log::warning('Appointment created but public confirmation notification failed.', [
+                'appointment_id' => $appointment->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Agendamento confirmado com sucesso.',

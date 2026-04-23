@@ -145,12 +145,6 @@ function getMonthDateFromIso(isoDate: string) {
   return new Date(Date.UTC(year, month - 1, 1, 12, 0, 0));
 }
 
-function addDaysToIsoDate(isoDate: string, days: number) {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0));
-  return getIsoDateInTimezone(date, "UTC");
-}
-
 function shiftUtcMonth(date: Date, amount: number) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1, 12, 0, 0));
 }
@@ -238,6 +232,7 @@ export function PublicBookingFlow({
   services,
 }: PublicBookingFlowProps) {
   const availabilityCacheRef = useRef<Record<string, string[]>>({});
+  const availabilityRequestsRef = useRef<Record<string, Promise<string[]>>>({});
   const safeBarbers = Array.isArray(barbers) ? barbers : [];
   const safeServices = Array.isArray(services) ? services : [];
   const safeTimezone = useMemo(() => resolveSafeTimezone(timezone), [timezone]);
@@ -347,13 +342,21 @@ export function PublicBookingFlow({
         setIsLoadingSlots(true);
       }
 
-      const payload = await getPublicAppointments(selectedBarberId, selectedDateIso);
+      const request =
+        availabilityRequestsRef.current[cacheKey] ??
+        getPublicAppointments(selectedBarberId, selectedDateIso).then((payload) =>
+          (payload?.appointments ?? []).map((appointment) => appointment.slot)
+        );
+
+      availabilityRequestsRef.current[cacheKey] = request;
+      const slots = await request.finally(() => {
+        delete availabilityRequestsRef.current[cacheKey];
+      });
 
       if (!active) {
         return;
       }
 
-      const slots = (payload?.appointments ?? []).map((appointment) => appointment.slot);
       availabilityCacheRef.current[cacheKey] = slots;
       setOccupiedSlots(slots);
       setSelectedSlot("");
@@ -367,26 +370,6 @@ export function PublicBookingFlow({
       active = false;
       setIsRefreshingSlots(false);
     };
-  }, [selectedBarberId, selectedDateIso]);
-
-  useEffect(() => {
-    if (!selectedBarberId || !selectedDateIso) {
-      return;
-    }
-
-    const datesToPrefetch = [addDaysToIsoDate(selectedDateIso, 1), addDaysToIsoDate(selectedDateIso, 2)];
-
-    datesToPrefetch.forEach((date) => {
-      const cacheKey = `${selectedBarberId}:${date}`;
-
-      if (availabilityCacheRef.current[cacheKey]) {
-        return;
-      }
-
-      void getPublicAppointments(selectedBarberId, date).then((payload) => {
-        availabilityCacheRef.current[cacheKey] = (payload?.appointments ?? []).map((appointment) => appointment.slot);
-      });
-    });
   }, [selectedBarberId, selectedDateIso]);
 
   async function submitBooking() {
@@ -415,7 +398,7 @@ export function PublicBookingFlow({
 
       const { response, data } = await createPublicAppointment(bookingPayload);
 
-      if (!response.ok) {
+      if (!response.ok && !data?.appointment) {
         const slotUnavailableMessage =
           data?.errors?.time?.[0]?.includes("indispon") || data?.message?.includes("indispon");
 
