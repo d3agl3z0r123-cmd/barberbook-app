@@ -331,35 +331,35 @@ class ManagementAppointmentController extends Controller
 
     private function uniqueClientCount(iterable $appointments): int
     {
-        $clients = [];
-
-        foreach ($appointments as $appointment) {
-            if ($this->isInvalidForStats($appointment)) {
-                continue;
-            }
-
-            $key = strtolower(trim((string) ($appointment->client_email ?: $appointment->client_phone ?: $appointment->client_name)));
-
-            if ($key !== '') {
-                $clients[$key] = true;
-            }
-        }
-
-        return count($clients);
+        return count($this->clientRows($appointments, 'UTC'));
     }
 
     private function clientRows(iterable $appointments, string $timezone): array
     {
         $clients = [];
+        $aliases = [];
 
         foreach ($appointments as $appointment) {
             if ($this->isInvalidForStats($appointment)) {
                 continue;
             }
 
-            $key = strtolower(trim((string) ($appointment->client_email ?: $appointment->client_phone ?: $appointment->client_name)));
+            $emailKey = $this->clientAlias('email', $appointment->client_email);
+            $phoneKey = $this->clientAlias('phone', $appointment->client_phone);
+            $fallbackNameKey = (! $emailKey && ! $phoneKey) ? $this->clientAlias('name', $appointment->client_name) : null;
+            $knownAliases = array_values(array_filter([$emailKey, $phoneKey, $fallbackNameKey]));
+            $key = null;
 
-            if ($key === '') {
+            foreach ($knownAliases as $alias) {
+                if (isset($aliases[$alias])) {
+                    $key = $aliases[$alias];
+                    break;
+                }
+            }
+
+            $key ??= $emailKey ?: $phoneKey ?: $fallbackNameKey;
+
+            if (! $key) {
                 continue;
             }
 
@@ -372,6 +372,9 @@ class ManagementAppointmentController extends Controller
             ];
 
             $current['appointments']++;
+            $current['name'] = $current['name'] ?: $appointment->client_name;
+            $current['phone'] = $current['phone'] ?: $appointment->client_phone;
+            $current['email'] = $current['email'] ?: $appointment->client_email;
             $last = $current['last_appointment_at'] ? CarbonImmutable::parse($current['last_appointment_at']) : null;
 
             if (! $last || ($appointment->starts_at && $appointment->starts_at->greaterThan($last))) {
@@ -379,11 +382,30 @@ class ManagementAppointmentController extends Controller
             }
 
             $clients[$key] = $current;
+
+            foreach ($knownAliases as $alias) {
+                $aliases[$alias] = $key;
+            }
         }
 
         usort($clients, fn (array $a, array $b) => strcmp((string) $b['last_appointment_at'], (string) $a['last_appointment_at']));
 
         return array_values($clients);
+    }
+
+    private function clientAlias(string $field, mixed $value): ?string
+    {
+        $normalized = strtolower(trim((string) $value));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if ($field === 'phone') {
+            $normalized = preg_replace('/\D+/', '', $normalized) ?: $normalized;
+        }
+
+        return $field.':'.$normalized;
     }
 
     private function isDuplicateSlotException(QueryException $exception): bool

@@ -53,7 +53,7 @@ class AppointmentExcelExportService
     {
         $timezone = $barbershop->timezone ?: 'Atlantic/Azores';
         $rows = [
-            ['Cliente', 'Data', 'Hora', 'Serviço', 'Barbeiro', 'Contacto', 'Estado da marcação'],
+            ['Cliente', 'Data', 'Hora', 'Serviço', 'Barbeiro', 'Telemóvel', 'E-mail', 'Estado da marcação'],
         ];
 
         foreach ($appointments as $appointment) {
@@ -65,7 +65,8 @@ class AppointmentExcelExportService
                 $startsAt instanceof CarbonInterface ? $startsAt->format('H:i') : '',
                 $appointment->service?->name ?? '',
                 $appointment->barber?->name ?? '',
-                $appointment->client_phone,
+                $appointment->client_phone ?? '',
+                $appointment->client_email ?? '',
                 $appointment->status instanceof \BackedEnum ? $appointment->status->value : (string) $appointment->status,
             ];
         }
@@ -99,7 +100,8 @@ class AppointmentExcelExportService
             .'<col min="4" max="4" width="24" customWidth="1"/>'
             .'<col min="5" max="5" width="22" customWidth="1"/>'
             .'<col min="6" max="6" width="18" customWidth="1"/>'
-            .'<col min="7" max="7" width="20" customWidth="1"/>'
+            .'<col min="7" max="7" width="28" customWidth="1"/>'
+            .'<col min="8" max="8" width="20" customWidth="1"/>'
             .'</cols>'
             .'<sheetData>'.implode('', $xmlRows).'</sheetData>'
             .'</worksheet>';

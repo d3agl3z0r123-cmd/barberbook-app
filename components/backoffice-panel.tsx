@@ -107,7 +107,7 @@ type Appointment = {
   barber_id: number;
   service_id: number;
   client_name: string;
-  client_phone: string;
+  client_phone: string | null;
   client_email: string | null;
   starts_at: string;
   ends_at: string;
@@ -701,30 +701,14 @@ export function BackofficePanel() {
     return (dayAgenda?.appointments ?? []).filter((appointment) => new Date(appointment.starts_at) >= now).slice(0, 5);
   }, [dayAgenda]);
 
-  const validDayAppointments = useMemo(
-    () => (dayAgenda?.appointments ?? []).filter((appointment) => !["cancelled", "no_show"].includes(appointment.status)),
-    [dayAgenda]
-  );
-
-  const topMetrics = useMemo(
-    () => [
-      { label: "Receita do dia", value: formatCurrency(statistics?.summary.revenue_today ?? dayAgenda?.summary.revenue ?? 0) },
-      { label: "Marcações hoje", value: String(statistics?.summary.appointments_today ?? dayAgenda?.summary.total ?? 0) },
-      { label: "Clientes", value: String(statistics?.summary.clients_total ?? dayAgenda?.summary.clients ?? 0) },
-      { label: "Serviços usados", value: String(statistics?.summary.services_used?.length ?? 0) },
-    ],
-    [dayAgenda, statistics]
-  );
-
   const clients = statistics?.clients ?? [];
   const mobileTabs = useMemo(
     () =>
       [
-        { id: "overview" as TabId, label: "Painel" },
         { id: "agenda" as TabId, label: "Agenda" },
+        { id: "public-link" as TabId, label: "Link" },
+        { id: "branding" as TabId, label: "Personalizar" },
         { id: "clients" as TabId, label: "Clientes" },
-        { id: "services" as TabId, label: "Serviços" },
-        { id: "account" as TabId, label: "Perfil" },
       ].filter((item) => visibleTabs.some((tab) => tab.id === item.id)),
     [visibleTabs]
   );
@@ -1604,7 +1588,7 @@ export function BackofficePanel() {
         barber_id: Number(appointmentForm.barber_id),
         service_id: Number(appointmentForm.service_id),
         client_name: appointmentForm.client_name,
-        client_phone: appointmentForm.client_phone,
+        client_phone: appointmentForm.client_phone || null,
         client_email: appointmentForm.client_email || null,
         starts_at: appointmentForm.starts_at,
         notes: appointmentForm.notes || null,
@@ -1621,7 +1605,7 @@ export function BackofficePanel() {
       setStatus({
         kind: "error",
         title: "Erro ao guardar agendamento",
-        body: conflict ? "Este horário acabou de ficar indisponível. Escolhe outro." : friendlyApiError(payload, "Não foi possível guardar o agendamento.", ["barber_id", "service_id", "client_name", "client_phone", "client_email", "starts_at", "status"]),
+        body: conflict ? "Este horário acabou de ficar indisponível. Escolhe outro." : friendlyApiError(payload, "Não foi possível guardar o agendamento.", ["barber_id", "service_id", "client_name", "client_email", "starts_at", "status"]),
       });
       return;
     }
@@ -1701,20 +1685,6 @@ export function BackofficePanel() {
 
     return (
       <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            { label: "Marcações válidas", value: validDayAppointments.length },
-            { label: "Faturação hoje", value: formatCurrency(dayAgenda?.summary.revenue ?? 0) },
-            { label: "Clientes hoje", value: dayAgenda?.summary.clients ?? 0 },
-            { label: "Canceladas", value: dayAgenda?.summary.cancelled ?? 0 },
-          ].map((metric) => (
-            <article key={metric.label} className={`${whiteCardClass} rounded-2xl p-6`}>
-              <p className="text-sm text-[#5B4F3A]/75">{metric.label}</p>
-              <p className="mt-3 text-4xl font-semibold text-[#2B2118]">{metric.value}</p>
-            </article>
-          ))}
-        </div>
-
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <article className={`${whiteCardClass} rounded-2xl p-6`}>
             <p className="text-sm text-[#5B4F3A]/75">Resumo da unidade</p>
@@ -2326,7 +2296,7 @@ export function BackofficePanel() {
                               <button
                                 key={appointment.id}
                                 type="button"
-                                onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone, client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })}
+                                onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone ?? "", client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })}
                                 className="rounded-2xl border border-[#A86840]/25 bg-[#F8E8D3] p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#A86840]/60 hover:shadow-md"
                               >
                                 <div className="flex items-start justify-between gap-2">
@@ -2337,7 +2307,7 @@ export function BackofficePanel() {
                                 </div>
                                 <p className="mt-3 text-base font-black text-[#2B2118]">{appointment.client_name}</p>
                                 <p className="mt-1 text-sm font-semibold text-[#5B4F3A]">{appointment.service?.name ?? "Serviço"}</p>
-                                <p className="mt-1 text-xs font-medium text-[#5B4F3A]/75">{appointment.client_phone}</p>
+                                <p className="mt-1 text-xs font-medium text-[#5B4F3A]/75">{appointment.client_phone ?? appointment.client_email ?? "Sem contacto"}</p>
                               </button>
                             ))}
                           </div>
@@ -2382,7 +2352,7 @@ export function BackofficePanel() {
                         {appointment ? (
                           <button
                             type="button"
-                            onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone, client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })}
+                            onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone ?? "", client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })}
                             className="h-full w-full rounded-2xl border border-[#A86840]/25 bg-[#F8E8D3] p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#A86840]/60 hover:shadow-md"
                           >
                             <div className="flex items-start justify-between gap-2">
@@ -2393,7 +2363,7 @@ export function BackofficePanel() {
                             </div>
                             <p className="mt-2 text-base font-black text-[#2B2118]">{appointment.client_name}</p>
                             <p className="mt-1 text-sm font-semibold text-[#5B4F3A]">{appointment.service?.name ?? "Serviço"}</p>
-                            <p className="mt-1 text-xs font-medium text-[#5B4F3A]/75">{appointment.client_phone}</p>
+                            <p className="mt-1 text-xs font-medium text-[#5B4F3A]/75">{appointment.client_phone ?? appointment.client_email ?? "Sem contacto"}</p>
                           </button>
                         ) : (
                           <div className="flex h-full min-h-[74px] items-center justify-center rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] text-xs font-bold text-[#5B4F3A]/45">
@@ -2425,8 +2395,8 @@ export function BackofficePanel() {
                 {services.map((service) => <option key={service.id} value={service.id}>{service.name} ({service.duration_minutes} min)</option>)}
               </select>
               <input className={inputClass} placeholder="Nome do cliente" value={appointmentForm.client_name} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_name: event.target.value }))} />
-              <input className={inputClass} placeholder="Telefone do cliente" value={appointmentForm.client_phone} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_phone: event.target.value }))} />
-              <input className={inputClass} placeholder="E-mail do cliente" value={appointmentForm.client_email} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_email: event.target.value }))} />
+              <input className={inputClass} placeholder="Telemóvel do cliente (opcional)" value={appointmentForm.client_phone} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_phone: event.target.value }))} />
+              <input className={inputClass} placeholder="E-mail do cliente (opcional)" value={appointmentForm.client_email} onChange={(event) => setAppointmentForm((current) => ({ ...current, client_email: event.target.value }))} />
               <input className={inputClass} type="datetime-local" value={appointmentForm.starts_at} onChange={(event) => setAppointmentForm((current) => ({ ...current, starts_at: event.target.value }))} />
               <textarea className={`${inputClass} min-h-24`} placeholder="Notas" value={appointmentForm.notes} onChange={(event) => setAppointmentForm((current) => ({ ...current, notes: event.target.value }))} />
             </div>
@@ -2495,7 +2465,7 @@ export function BackofficePanel() {
                       <p className="font-medium text-[#2B2118]">{formatTime(appointment.starts_at)} · {appointment.client_name}</p>
                       <p className="mt-1 text-sm text-[#5B4F3A]/75">{appointment.service?.name ?? "Serviço"} · {appointment.barber?.name ?? "Barbeiro"}</p>
                       <div className="mt-4 flex flex-wrap gap-3">
-                        <button type="button" onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone, client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })} className={ghostButtonClass}>
+                        <button type="button" onClick={() => setAppointmentForm({ id: String(appointment.id), barber_id: String(appointment.barber_id), service_id: String(appointment.service_id), client_name: appointment.client_name, client_phone: appointment.client_phone ?? "", client_email: appointment.client_email ?? "", starts_at: toDatetimeLocal(appointment.starts_at), notes: appointment.notes ?? "", status: appointment.status })} className={ghostButtonClass}>
                           Editar
                         </button>
                         <button type="button" onClick={() => void handleDeleteAppointment(appointment.id)} className={ghostButtonClass}>
@@ -2687,16 +2657,17 @@ export function BackofficePanel() {
 
   function renderStatistics() {
     const summary = statistics?.summary;
+    const statisticCards = [
+      { label: "Receita do dia", value: formatCurrency(dayAgenda?.summary.revenue ?? summary?.revenue_today ?? 0) },
+      { label: "Marcações hoje", value: dayAgenda?.summary.total ?? summary?.appointments_today ?? 0 },
+      { label: "Clientes", value: summary?.clients_total ?? dayAgenda?.summary.clients ?? 0 },
+      { label: "Serviços usados", value: summary?.services_used?.length ?? 0 },
+    ];
 
     return (
       <div className="space-y-6">
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            { label: "Faturação total", value: formatCurrency(summary?.revenue_total ?? 0) },
-            { label: "Faturação mensal", value: formatCurrency(summary?.revenue_month ?? 0) },
-            { label: "Marcações válidas", value: summary?.appointments_total ?? 0 },
-            { label: "Clientes únicos", value: summary?.clients_total ?? 0 },
-          ].map((metric) => (
+          {statisticCards.map((metric) => (
             <article key={metric.label} className={`${whiteCardClass} p-5`}>
               <p className="text-xs uppercase tracking-[0.18em] text-[#5B4F3A]/70">{metric.label}</p>
               <p className="mt-3 text-3xl font-semibold text-[#2B2118]">{metric.value}</p>
@@ -3081,7 +3052,7 @@ export function BackofficePanel() {
           </div>
         </aside>
 
-        <nav className="fixed bottom-3 left-3 right-3 z-50 grid grid-cols-5 gap-1 rounded-[24px] border border-[#D8C3A5]/80 bg-[#FFF7EC]/95 p-2 shadow-[0_18px_50px_rgba(43,33,24,0.18)] backdrop-blur lg:hidden">
+        <nav className="fixed bottom-3 left-3 right-3 z-50 grid grid-cols-4 gap-1 rounded-[24px] border border-[#D8C3A5]/80 bg-[#FFF7EC]/95 p-2 shadow-[0_18px_50px_rgba(43,33,24,0.18)] backdrop-blur lg:hidden">
           {mobileTabs.map((tab) => {
             const isActive = activeTab === tab.id;
 
@@ -3153,14 +3124,6 @@ export function BackofficePanel() {
                     <p className="mt-2 text-xs opacity-80">{isLoading ? "A carregar painel..." : "Pronto."}</p>
                   </div>
                 </section> : null}
-                <section className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
-                  {topMetrics.map((metric) => (
-                    <article key={metric.label} className="rounded-2xl bg-[#FFF7EC] p-4 shadow-sm">
-                      <p className="text-xs text-[#5B4F3A]/75">{metric.label}</p>
-                      <p className="mt-2 text-2xl font-semibold text-[#2B2118]">{metric.value}</p>
-                    </article>
-                  ))}
-                </section>
                 {renderActiveTab()}
               </>
             )}
@@ -3215,7 +3178,7 @@ export function BackofficePanel() {
               </div>
               <div className="rounded-2xl bg-[#F8E8D3] p-4">
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5B4F3A]/60">Contacto</p>
-                <p className="mt-2 font-semibold text-[#2B2118]">{selectedAgendaAppointment.client_phone}</p>
+                <p className="mt-2 font-semibold text-[#2B2118]">{selectedAgendaAppointment.client_phone ?? "Sem telemóvel"}</p>
                 <p className="mt-1 text-sm text-[#5B4F3A]/75">{selectedAgendaAppointment.client_email ?? "Sem e-mail"}</p>
               </div>
               <div className="rounded-2xl bg-[#F8E8D3] p-4">
@@ -3242,7 +3205,7 @@ export function BackofficePanel() {
                     barber_id: String(selectedAgendaAppointment.barber_id),
                     service_id: String(selectedAgendaAppointment.service_id),
                     client_name: selectedAgendaAppointment.client_name,
-                    client_phone: selectedAgendaAppointment.client_phone,
+                    client_phone: selectedAgendaAppointment.client_phone ?? "",
                     client_email: selectedAgendaAppointment.client_email ?? "",
                     starts_at: toDatetimeLocal(selectedAgendaAppointment.starts_at),
                     notes: selectedAgendaAppointment.notes ?? "",
