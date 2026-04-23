@@ -572,7 +572,7 @@ export function PublicBookingFlow({
                 title={barber.name}
                 subtitle={barber.specialty}
                 leading={
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-lg font-semibold text-neutral-500 ring-1 ring-neutral-200">
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#F3E8DA] text-2xl font-semibold text-[#8A5433] ring-2 ring-white shadow-sm">
                     {barber.photoUrl ? (
                       <img src={barber.photoUrl} alt={`Foto de ${barber.name}`} className="h-full w-full object-cover" />
                     ) : (
