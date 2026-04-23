@@ -244,9 +244,7 @@ function mapStatus(status: ApiAppointment["status"]): DashboardAppointment["stat
 }
 
 export async function getBookingSummary(slug: string): Promise<BookingSummary | null> {
-  const apiShop = await safeFetch<ApiBarbershop>(`/public/barbershop/${slug}`, undefined, {
-    revalidate: 120,
-  });
+  const apiShop = await safeFetch<ApiBarbershop>(`/public/barbershop/${slug}`, { cache: "no-store" });
 
   if (!apiShop) {
     if (slug !== organizationProfile.slug) {

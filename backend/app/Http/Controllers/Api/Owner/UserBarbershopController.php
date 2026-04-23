@@ -132,6 +132,7 @@ class UserBarbershopController extends Controller
 
         if ($request->hasFile('background_image') || $request->hasFile('image')) {
             $field = $request->hasFile('background_image') ? 'background_image' : 'image';
+            $barbershop->background_image_data_url = $this->imageDataUrl($request, $field);
             $barbershop->background_image_path = $this->storeBrandImage($request, $barbershop, $field, 'backgrounds', $barbershop->background_image_path ?? $barbershop->image_path);
             $barbershop->background_image_url = $this->publicAssetUrl($barbershop->background_image_path);
             $barbershop->image_path = $barbershop->background_image_path;
@@ -139,6 +140,7 @@ class UserBarbershopController extends Controller
         }
 
         if ($request->hasFile('logo')) {
+            $barbershop->logo_data_url = $this->imageDataUrl($request, 'logo');
             $barbershop->logo_path = $this->storeBrandImage($request, $barbershop, 'logo', 'logos', $barbershop->logo_path);
             $barbershop->logo_url = $this->publicAssetUrl($barbershop->logo_path);
         }
@@ -151,6 +153,20 @@ class UserBarbershopController extends Controller
             'message' => 'Personalização atualizada com sucesso.',
             'barbershop' => $this->formatBarbershop($barbershop->fresh()),
         ]);
+    }
+
+    private function imageDataUrl(Request $request, string $field): ?string
+    {
+        $file = $request->file($field);
+
+        if (! $file) {
+            return null;
+        }
+
+        $mimeType = $file->getMimeType() ?: 'image/jpeg';
+        $contents = File::get($file->getRealPath());
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($contents);
     }
 
     private function storeBrandImage(Request $request, Barbershop $barbershop, string $field, string $folder, ?string $currentPath = null): string
@@ -229,6 +245,11 @@ class UserBarbershopController extends Controller
 
     private function formatBarbershop(Barbershop $barbershop): array
     {
+        $backgroundImageUrl = $barbershop->background_image_data_url
+            ?? $barbershop->background_image_url
+            ?? $barbershop->image_url;
+        $logoUrl = $barbershop->logo_data_url ?? $barbershop->logo_url;
+
         return [
             'id' => $barbershop->id,
             'user_id' => $barbershop->user_id,
@@ -239,11 +260,11 @@ class UserBarbershopController extends Controller
             'address' => $barbershop->address,
             'timezone' => $barbershop->timezone,
             'image_path' => $barbershop->image_path,
-            'image_url' => $barbershop->image_url,
+            'image_url' => $backgroundImageUrl,
             'background_image_path' => $barbershop->background_image_path ?? $barbershop->image_path,
-            'background_image_url' => $barbershop->background_image_url ?? $barbershop->image_url,
+            'background_image_url' => $backgroundImageUrl,
             'logo_path' => $barbershop->logo_path,
-            'logo_url' => $barbershop->logo_url,
+            'logo_url' => $logoUrl,
             'instagram_url' => $barbershop->instagram_url,
             'facebook_url' => $barbershop->facebook_url,
             'qr_path' => $barbershop->qr_path,
