@@ -525,14 +525,11 @@ function appointmentTone(appointment: Appointment) {
     return "border-[#7D7370] bg-[#605957] text-white";
   }
 
-  const serviceName = appointment.service?.name.toLowerCase() ?? "";
+  if (appointment.status === "completed") {
+    return "border-emerald-300 bg-emerald-100 text-emerald-950";
+  }
 
-  if (serviceName.includes("barba")) return "border-[#7A6043] bg-[#76644A] text-white";
-  if (serviceName.includes("combo")) return "border-[#4E5865] bg-[#424854] text-white";
-  if (serviceName.includes("premium") || serviceName.includes("corte")) return "border-[#7FA3D5] bg-[#9DBCE8] text-[#23314A]";
-  if (serviceName.includes("pigment") || serviceName.includes("color")) return "border-[#D3A95E] bg-[#EBCF8E] text-[#4A361F]";
-
-  return "border-[#BBB5AC] bg-[#D1CBC2] text-[#2B2118]";
+  return "border-red-300 bg-red-100 text-red-950";
 }
 
 function addDaysToDate(value: string, days: number) {
@@ -2058,10 +2055,14 @@ export function BackofficePanel() {
     const calendarBarbers = barbers.length > 0 ? barbers : [{ id: 0, name: "Agenda", email: null, phone: null } satisfies Barber];
     const nowTop = currentTimeTop(selectedDate, timezone);
     const hasMultipleBarbers = barbers.length > 1;
-    const hasMobileBarberSelection = !hasMultipleBarbers || Boolean(mobileAgendaBarberId);
-    const mobileAppointments = mobileAgendaBarberId === "all"
-      ? sortedAppointments
-      : sortedAppointments.filter((appointment) => String(appointment.barber_id) === mobileAgendaBarberId);
+    const selectedAgendaBarbers = hasMultipleBarbers
+      ? barbers.filter((barber) => String(barber.id) === mobileAgendaBarberId)
+      : calendarBarbers;
+    const hasAgendaBarberSelection = !hasMultipleBarbers || selectedAgendaBarbers.length > 0;
+    const visibleAgendaBarbers = hasAgendaBarberSelection ? selectedAgendaBarbers : [];
+    const visibleAppointments = hasMultipleBarbers
+      ? sortedAppointments.filter((appointment) => String(appointment.barber_id) === mobileAgendaBarberId)
+      : sortedAppointments;
 
     return (
       <div className="space-y-6">
@@ -2116,7 +2117,7 @@ export function BackofficePanel() {
             </div>
           ) : (
             <>
-            <div className="bg-[#EEE7DC] p-4 md:hidden">
+            <div className="bg-[#EEE7DC] p-4">
               {hasMultipleBarbers ? (
                 <div className="mb-3 rounded-2xl border border-[#D8C3A5]/70 bg-[#FFF7EC] p-4">
                   <p className="text-sm font-black text-[#2B2118]">Escolhe um barbeiro para abrir a agenda</p>
@@ -2138,32 +2139,19 @@ export function BackofficePanel() {
                     {barber.name}
                   </button>
                 ))}
-                {hasMultipleBarbers ? (
-                  <button
-                    type="button"
-                    onClick={() => setMobileAgendaBarberId("all")}
-                    className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold ${
-                      mobileAgendaBarberId === "all"
-                        ? "border-[#A86840] bg-[#A86840] text-[#FFF7EC]"
-                        : "border-[#D8C3A5]/70 bg-[#FFF7EC] text-[#5B4F3A]"
-                    }`}
-                  >
-                    Ver todos
-                  </button>
-                ) : null}
               </div>
 
-              <div className="space-y-3">
-                {!hasMobileBarberSelection ? (
+              <div className="space-y-3 md:hidden">
+                {!hasAgendaBarberSelection ? (
                   <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] p-5 text-sm font-medium text-[#5B4F3A]/75">
                     Seleciona um barbeiro acima para veres as marcações do dia.
                   </div>
-                ) : mobileAppointments.length === 0 ? (
+                ) : visibleAppointments.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] p-5 text-sm font-medium text-[#5B4F3A]/75">
                     Sem marcações para este filtro neste dia.
                   </div>
                 ) : (
-                  mobileAppointments.map((appointment) => (
+                  visibleAppointments.map((appointment) => (
                     <button
                       key={appointment.id}
                       type="button"
@@ -2189,13 +2177,20 @@ export function BackofficePanel() {
             </div>
 
             <div className="hidden overflow-x-auto bg-[#EEE7DC] md:block">
-              <div className="min-w-[920px]">
+              {!hasAgendaBarberSelection ? (
+                <div className="p-6">
+                  <div className="rounded-2xl border border-dashed border-[#D8C3A5]/70 bg-[#FFF7EC] p-6 text-sm font-medium text-[#5B4F3A]/75">
+                    Seleciona um barbeiro acima para abrir a agenda.
+                  </div>
+                </div>
+              ) : (
+              <div className="min-w-[720px]">
                 <div
                   className="grid border-b border-[#D8C3A5]/70 bg-[#FFF7EC]"
-                  style={{ gridTemplateColumns: `74px repeat(${calendarBarbers.length}, minmax(190px, 1fr))` }}
+                  style={{ gridTemplateColumns: `74px repeat(${visibleAgendaBarbers.length}, minmax(260px, 1fr))` }}
                 >
                   <div className="border-r border-[#D8C3A5]/70 px-3 py-3 text-xs font-black text-[#5B4F3A]/70">Hora</div>
-                  {calendarBarbers.map((barber) => {
+                  {visibleAgendaBarbers.map((barber) => {
                     const barberAppointments = sortedAppointments.filter((appointment) => appointment.barber_id === barber.id);
 
                     return (
@@ -2218,7 +2213,7 @@ export function BackofficePanel() {
 
                 <div
                   className="grid"
-                  style={{ gridTemplateColumns: `74px repeat(${calendarBarbers.length}, minmax(190px, 1fr))` }}
+                  style={{ gridTemplateColumns: `74px repeat(${visibleAgendaBarbers.length}, minmax(260px, 1fr))` }}
                 >
                   <div className="relative border-r border-[#D8C3A5]/70 bg-[#FFF7EC]" style={{ height: `${calendarHeight}px` }}>
                     {DAY_SLOTS.map((slot, index) => (
@@ -2232,7 +2227,7 @@ export function BackofficePanel() {
                     ))}
                   </div>
 
-                  {calendarBarbers.map((barber) => {
+                  {visibleAgendaBarbers.map((barber) => {
                     const barberAppointments = sortedAppointments.filter((appointment) => appointment.barber_id === barber.id);
 
                     return (
@@ -2282,6 +2277,7 @@ export function BackofficePanel() {
                   })}
                 </div>
               </div>
+              )}
             </div>
             </>
           )}
